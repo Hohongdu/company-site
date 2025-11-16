@@ -9,66 +9,37 @@
 </head>
 
 <body>
-    <!-- 네비게이션 공통 -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">우리 회사</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">홈</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/about">회사 소개</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact">문의하기</a>
-                    </li>
-                </ul>
+    <%- include('partials/header') %>
+
+        <main class="py-5">
+            <div class="container">
+                <h1 class="mb-4">회사 소개</h1>
+
+                <section class="mb-4">
+                    <h2 class="h4">회사 개요</h2>
+                    <p>여기에 회사가 어떤 일을 하는지, 언제 설립되었는지, 어떤 목표를 가지고 있는지를 작성하면 됩니다.</p>
+                </section>
+
+                <section class="mb-4">
+                    <h2 class="h4">비전 & 미션</h2>
+                    <p>예시) “우리는 기술과 디자인을 통해 고객의 일상을 더 편리하고 즐겁게 만드는 것을 목표로 합니다.”</p>
+                </section>
+
+                <section class="mb-4">
+                    <h2 class="h4">연혁</h2>
+                    <ul class="list-group">
+                        <li class="list-group-item">2023년 – 회사 설립</li>
+                        <li class="list-group-item">2024년 – 첫 서비스 런칭</li>
+                        <li class="list-group-item">2025년 – B2B 파트너십 확대</li>
+                    </ul>
+                </section>
             </div>
-        </div>
-    </nav>
+        </main>
 
-    <main class="py-5">
-        <div class="container">
-            <h1 class="mb-4">회사 소개</h1>
+        <%- include('partials/footer') %>
 
-            <section class="mb-4">
-                <h2 class="h4">회사 개요</h2>
-                <p>
-                    여기에 회사가 어떤 일을 하는지, 언제 설립되었는지, 어떤 목표를 가지고 있는지를 작성하면 됩니다.
-                </p>
-            </section>
-
-            <section class="mb-4">
-                <h2 class="h4">비전 & 미션</h2>
-                <p>
-                    예시) “우리는 기술과 디자인을 통해 고객의 일상을 더 편리하고 즐겁게 만드는 것을 목표로 합니다.”
-                </p>
-            </section>
-
-            <section class="mb-4">
-                <h2 class="h4">연혁</h2>
-                <ul class="list-group">
-                    <li class="list-group-item">2023년 – 회사 설립</li>
-                    <li class="list-group-item">2024년 – 첫 서비스 런칭</li>
-                    <li class="list-group-item">2025년 – B2B 파트너십 확대</li>
-                </ul>
-            </section>
-        </div>
-    </main>
-
-    <footer class="bg-dark text-white py-3 mt-5">
-        <div class="container text-center small">
-            © <span id="year"></span> 우리 회사. All rights reserved.
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/main.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            <script src="/js/main.js"></script>
 </body>
 
 </html>

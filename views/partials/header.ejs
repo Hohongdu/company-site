@@ -1,0 +1,50 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">우리 회사</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- 왼쪽: 일반 메뉴 -->
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/">홈</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPath === '/about' ? 'active' : '' %>" href="/about">회사 소개</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPath === '/products' || currentPath.startsWith('/products/') ? 'active' : '' %>"
+                        href="/products">상품</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPath === '/contact' ? 'active' : '' %>" href="/contact">문의하기</a>
+                </li>
+            </ul>
+
+            <!-- 오른쪽: 로그인/회원가입 -->
+            <div class="d-flex align-items-center">
+                <% if (user) { %>
+                    <span class="text-white me-3">
+                        <strong>
+                            <%= user.name %>
+                        </strong> 님 환영합니다 👋
+                    </span>
+                    <a href="/logout" class="btn btn-outline-light btn-sm">
+                        로그아웃
+                    </a>
+                    <% } else { %>
+                        <a href="/login"
+                            class="btn btn-outline-light btn-sm me-2 <%= currentPath === '/login' ? 'active' : '' %>">
+                            로그인
+                        </a>
+                        <a href="/register"
+                            class="btn btn-primary btn-sm <%= currentPath === '/register' ? 'active' : '' %>">
+                            회원가입
+                        </a>
+                        <% } %>
+            </div>
+        </div>
+    </div>
+</nav>
