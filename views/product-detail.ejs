@@ -44,9 +44,26 @@
                         </p>
 
                         <!-- 나중에 옵션 / 수량 / 장바구니 / 결제 버튼 등 연결 -->
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary" disabled>바로 구매 (결제 API 준비중)</button>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <form method="POST" action="/orders">
+                                <input type="hidden" name="productId" value="<%= product.id %>">
+                                <button type="submit" class="btn btn-primary">
+                                    바로 구매
+                                </button>
+                            </form>
                             <button class="btn btn-outline-secondary" disabled>장바구니 (준비중)</button>
+
+                            <% if (typeof user !=='undefined' && user) { %>
+                                <a href="/admin/products/<%= product.id %>/edit" class="btn btn-outline-warning">
+                                    수정
+                                </a>
+                                <form method="POST" action="/admin/products/<%= product.id %>/delete"
+                                    onsubmit="return confirm('정말 이 상품을 삭제하시겠습니까?');" style="display: inline;">
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        삭제
+                                    </button>
+                                </form>
+                                <% } %>
                         </div>
                     </div>
                 </div>
