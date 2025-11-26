@@ -19,6 +19,9 @@
                         href="/products">상품</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <%= currentPath.startsWith('/cart') ? 'active' : '' %>" href="/cart">장바구니</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <%= currentPath === '/contact' ? 'active' : '' %>" href="/contact">문의하기</a>
                 </li>
             </ul>
