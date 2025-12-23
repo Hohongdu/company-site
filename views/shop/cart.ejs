@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <%- include('partials/header') %>
+    <%- include('../partials/header') %>
 
         <main class="py-5">
             <div class="container">
@@ -17,7 +17,7 @@
 
                 <% if (items.length===0) { %>
                     <p>장바구니에 담긴 상품이 없습니다.</p>
-                    <a href="/products" class="btn btn-primary mt-3">상품 보러가기</a>
+					<a href="/shop/products" class="btn btn-primary mt-3">상품 보러가기</a>
                     <% } else { %>
                         <div class="table-responsive">
                             <table class="table align-middle">
@@ -40,7 +40,7 @@
                                                             style="width:60px;height:60px;object-fit:cover;">
                                                         <% } %>
                                                             <div>
-                                                                <a href="/products/<%= item.product_id %>"
+												<a href="/shop/products/<%= item.product_id %>"
                                                                     class="fw-semibold text-decoration-none">
                                                                     <%= item.name %>
                                                                 </a>
@@ -48,7 +48,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <form method="POST" action="/cart/update" class="d-flex">
+												<form method="POST" action="/shop/cart/update" class="d-flex">
                                                     <input type="hidden" name="cartItemId"
                                                         value="<%= item.cart_item_id %>">
                                                     <input type="number" name="quantity" value="<%= item.quantity %>"
@@ -64,7 +64,7 @@
                                                 <%= (item.price * item.quantity).toLocaleString() %> 원
                                             </td>
                                             <td>
-                                                <form method="POST" action="/cart/remove">
+												<form method="POST" action="/shop/cart/remove">
                                                     <input type="hidden" name="cartItemId"
                                                         value="<%= item.cart_item_id %>">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -88,7 +88,7 @@
             </div>
         </main>
 
-        <%- include('partials/footer') %>
+        <%- include('../partials/footer') %>
 </body>
 
 </html>

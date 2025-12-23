@@ -15,11 +15,10 @@
                     <a class="nav-link <%= currentPath === '/about' ? 'active' : '' %>" href="/about">회사 소개</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath === '/products' || currentPath.startsWith('/products/') ? 'active' : '' %>"
-                        href="/products">상품</a>
+                    <a class="nav-link <%= currentPath.startsWith('/shop') ? 'active' : '' %>" href="/shop/products">상품몰</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= currentPath.startsWith('/cart') ? 'active' : '' %>" href="/cart">장바구니</a>
+                    <a class="nav-link <%= currentPath === '/shop/cart' ? 'active' : '' %>" href="/shop/cart">장바구니</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <%= currentPath === '/contact' ? 'active' : '' %>" href="/contact">문의하기</a>
@@ -34,16 +33,16 @@
                             <%= user.name %>
                         </strong> 님 환영합니다 👋
                     </span>
-                    <a href="/logout" class="btn btn-outline-light btn-sm">
+                    <a href="/auth/logout" class="btn btn-outline-light btn-sm">
                         로그아웃
                     </a>
                     <% } else { %>
-                        <a href="/login"
-                            class="btn btn-outline-light btn-sm me-2 <%= currentPath === '/login' ? 'active' : '' %>">
+                        <a href="/auth/login"
+                            class="btn btn-outline-light btn-sm me-2 <%= currentPath === '/auth/login' ? 'active' : '' %>">
                             로그인
                         </a>
-                        <a href="/register"
-                            class="btn btn-primary btn-sm <%= currentPath === '/register' ? 'active' : '' %>">
+                        <a href="/auth/register"
+                            class="btn btn-primary btn-sm <%= currentPath === '/auth/register' ? 'active' : '' %>">
                             회원가입
                         </a>
                         <% } %>

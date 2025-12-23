@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <%- include('partials/header') %>
+    <%- include('../partials/header') %>
 
         <main class="py-5">
             <div class="container" style="max-width: 720px;">
@@ -42,14 +42,14 @@
                     <button type="submit" class="btn btn-primary">
                         수정 완료
                     </button>
-                    <a href="/products/<%= product.id %>" class="btn btn-secondary ms-2">
+					<a href="/shop/products/<%= product.id %>" class="btn btn-secondary ms-2">
                         취소
                     </a>
                 </form>
             </div>
         </main>
 
-        <%- include('partials/footer') %>
+        <%- include('../partials/footer') %>
 
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
             <script src="/js/main.js"></script>

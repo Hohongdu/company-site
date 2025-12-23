@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <%- include('partials/header') %>
+    <%- include('../partials/header') %>
 
         <main class="py-5">
             <div class="container">
@@ -48,7 +48,7 @@
                                                     </p>
 
                                                     <div class="mt-auto d-flex flex-wrap gap-2">
-                                                        <a href="/products/<%= item.id %>"
+												<a href="/shop/products/<%= item.id %>"
                                                             class="btn btn-sm btn-outline-secondary">
                                                             상세 보기
                                                         </a>
@@ -89,7 +89,7 @@
             </div>
         </main>
 
-        <%- include('partials/footer') %>
+        <%- include('../partials/footer') %>
 
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
             <script src="/js/main.js"></script>
