@@ -2,79 +2,104 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
-        <%= product.name %> - 상품 상세
+        <%= product.name %> - SHOP
     </title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/shop.css">
 </head>
 
-<body>
-    <%- include('../partials/header') %>
+<body class="shop-wrap">
+    <%- include('../partials/header-shop') %>
 
-        <main class="py-5">
+        <main class="py-4">
             <div class="container">
-			<a href="/shop/products" class="btn btn-link mb-3">&laquo; 상품 목록으로 돌아가기</a>
+                <div class="mb-3">
+                    <a href="/shop/products" class="text-decoration-none text-muted">← 상품 목록</a>
+                </div>
 
                 <div class="row g-4">
-                    <!-- 이미지 영역 -->
-                    <div class="col-md-5">
-                        <% if (product.image) { %>
-                            <img src="<%= product.image %>" class="img-fluid rounded" alt="<%= product.name %>">
-                            <% } else { %>
-                                <div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white"
-                                    style="height: 300px;">
-                                    이미지 준비중
-                                </div>
-                                <% } %>
+                    <!-- 이미지 -->
+                    <div class="col-lg-6">
+                        <div class="card shop-card">
+                            <img src="<%= product.image ? product.image : 'https://via.placeholder.com/900x650?text=No+Image' %>"
+                                class="w-100" style="height:420px; object-fit:cover; background:#eee;"
+                                alt="<%= product.name %>" />
+                        </div>
                     </div>
 
-                    <!-- 정보 영역 -->
-                    <div class="col-md-7">
-                        <h1 class="mb-3">
-                            <%= product.name %>
-                        </h1>
-                        <p class="lead text-muted mb-3">
-                            <%= product.description %>
-                        </p>
-                        <p class="fs-4 fw-bold mb-4">
-                            <%= product.price.toLocaleString() %>원
-                        </p>
+                    <!-- 정보 -->
+                    <div class="col-lg-6">
+                        <div class="card shop-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start justify-content-between gap-2">
+                                    <h3 class="fw-bold mb-1">
+                                        <%= product.name %>
+                                    </h3>
+                                    <% if (product.category_name) { %>
+                                        <span class="badge-soft">
+                                            <%= product.category_name %>
+                                        </span>
+                                        <% } %>
+                                </div>
 
-						<!-- 장바구니 담기 (회원/비회원 공통) -->
-						<div class="d-flex flex-wrap gap-2 mt-3 align-items-start">
-							<form method="POST" action="/shop/cart/add" class="d-flex" style="max-width: 260px;">
-								<input type="hidden" name="productId" value="<%= product.id %>">
-								<div class="input-group">
-									<input type="number" name="quantity" value="1" min="1" class="form-control">
-									<button type="submit" class="btn btn-primary">장바구니 담기</button>
-								</div>
-							</form>
-							<a href="/shop/cart" class="btn btn-outline-secondary">장바구니 보기</a>
+                                <% if (product.code) { %>
+                                    <div class="text-muted small mb-2">상품코드: <%= product.code %>
+                                    </div>
+                                    <% } %>
 
-							<% if (typeof user !=='undefined' && user) { %>
-                                <a href="/admin/products/<%= product.id %>/edit" class="btn btn-outline-warning">
-                                    수정
-                                </a>
-                                <form method="POST" action="/admin/products/<%= product.id %>/delete"
-                                    onsubmit="return confirm('정말 이 상품을 삭제하시겠습니까?');" style="display: inline;">
-                                    <button type="submit" class="btn btn-outline-danger">
-                                        삭제
-                                    </button>
-                                </form>
-								<% } %>
+                                        <div class="price fs-3 mb-3">
+                                            <%= Number(product.price||0).toLocaleString() %>원
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-12">
+                                                <div class="p-3 rounded-4 bg-light border">
+                                                    <div class="fw-semibold mb-1">규격(Spec)</div>
+                                                    <div class="text-muted">
+                                                        <%= product.spec ? product.spec : '규격 정보 준비중' %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <% if (product.description) { %>
+                                            <div class="mb-3">
+                                                <div class="fw-semibold mb-1">설명</div>
+                                                <div class="text-muted">
+                                                    <%= product.description %>
+                                                </div>
+                                            </div>
+                                            <% } %>
+
+                                                <!-- 장바구니 담기 -->
+                                                <form action="/shop/cart/add" method="post"
+                                                    class="d-flex gap-2 align-items-center">
+                                                    <input type="hidden" name="productId" value="<%= product.id %>">
+                                                    <input type="number" name="quantity" class="form-control" value="1"
+                                                        min="1" style="max-width:110px;">
+                                                    <button type="submit" class="btn btn-dark w-100">장바구니 담기</button>
+                                                </form>
+
+                                                <div class="d-flex gap-2 mt-3">
+                                                    <a href="/shop/cart" class="btn btn-outline-dark w-100">장바구니로</a>
+                                                    <a href="/shop/products" class="btn btn-outline-secondary w-100">계속
+                                                        쇼핑</a>
+                                                </div>
+
+                                                <div class="small text-muted mt-3">
+                                                    비회원도 장바구니 사용 가능 (브라우저 세션 종료 시 초기화)
+                                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
-        <%- include('../partials/footer') %>
-
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="/js/main.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
