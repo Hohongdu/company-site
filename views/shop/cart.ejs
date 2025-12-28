@@ -23,7 +23,19 @@
                                 <div class="text-muted small">회원 장바구니입니다. 로그인 상태에서 유지됩니다.</div>
                                 <% } %>
                     </div>
-                    <a href="/shop/products" class="btn btn-sm btn-outline-dark">상품 더 보기</a>
+                    <!-- ✅ 여기 한 군데에 버튼 2개를 같이 둔다 -->
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <a class="btn btn-outline-dark btn-sm" href="/shop/products">상품 더 보기</a>
+
+                        <form action="/shop/cart/clear" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('장바구니를 비울까요?');">
+                                장바구니 전체 비우기
+                            </button>
+                        </form>
+                    </div>
+
+
                 </div>
 
 
@@ -148,11 +160,6 @@
                         </div>
 
                         <% } %>
-                            <form action="/shop/cart/clear" method="POST" onsubmit="return confirm('장바구니를 비우시겠습니까?');">
-                                <button class="btn btn-outline-danger">
-                                    장바구니 전체 비우기
-                                </button>
-                            </form>
             </div>
         </main>
 

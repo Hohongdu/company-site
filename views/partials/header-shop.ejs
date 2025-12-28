@@ -24,6 +24,14 @@
                 <ul class="navbar-nav ms-lg-3 align-items-lg-center">
                     <!-- 장바구니 -->
                     <li class="nav-item me-2">
+                        <% if (user && user.is_admin) { %>
+                    <li class="nav-item me-2">
+                        <a class="btn btn-outline-dark btn-sm" href="/admin">관리자</a>
+                    </li>
+                    <% } %>
+
+                        <a class="btn btn-outline-secondary btn-sm" href="/">회사로</a>
+
                         <a class="btn btn-sm position-relative <%= isShopCart ? 'btn-dark' : 'btn-outline-dark' %>"
                             href="/shop/cart">
                             장바구니
@@ -34,41 +42,41 @@
                                 </span>
                                 <% } %>
                         </a>
-                    </li>
+                        </li>
 
-                    <!-- 상품보기 -->
-                    <li class="nav-item me-2">
-                        <a class="btn btn-sm <%= isShopProducts ? 'btn-dark' : 'btn-outline-dark' %>"
-                            href="/shop/products">
-                            상품보기
-                        </a>
-                    </li>
-
-                    <% if (user) { %>
+                        <!-- 상품보기 -->
                         <li class="nav-item me-2">
-                            <span class="small text-muted">
-                                <strong>
-                                    <%= user.name %>
-                                </strong> 님
-                            </span>
+                            <a class="btn btn-sm <%= isShopProducts ? 'btn-dark' : 'btn-outline-dark' %>"
+                                href="/shop/products">
+                                상품보기
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="btn btn-outline-secondary btn-sm" href="/auth/logout">로그아웃</a>
-                        </li>
-                        <% } else { %>
+
+                        <% if (user) { %>
                             <li class="nav-item me-2">
-                                <a class="btn btn-sm <%= isLogin ? 'btn-dark' : 'btn-outline-secondary' %>"
-                                    href="/auth/login">
-                                    로그인
-                                </a>
+                                <span class="small text-muted">
+                                    <strong>
+                                        <%= user.name %>
+                                    </strong> 님
+                                </span>
                             </li>
                             <li class="nav-item">
-                                <a class="btn btn-sm <%= isRegister ? 'btn-dark' : 'btn-primary' %>"
-                                    href="/auth/register">
-                                    회원가입
-                                </a>
+                                <a class="btn btn-outline-secondary btn-sm" href="/auth/logout">로그아웃</a>
                             </li>
-                            <% } %>
+                            <% } else { %>
+                                <li class="nav-item me-2">
+                                    <a class="btn btn-sm <%= isLogin ? 'btn-dark' : 'btn-outline-secondary' %>"
+                                        href="/auth/login">
+                                        로그인
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="btn btn-sm <%= isRegister ? 'btn-dark' : 'btn-primary' %>"
+                                        href="/auth/register">
+                                        회원가입
+                                    </a>
+                                </li>
+                                <% } %>
                 </ul>
             </div>
         </div>
