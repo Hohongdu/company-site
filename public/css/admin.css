@@ -1,0 +1,74 @@
+/* admin 전용 톤: 회사/상품몰과 확실히 다르게 */
+.admin-body {
+	background: #0b1220;
+	color: #e8eefc;
+	min-height: 100vh;
+}
+
+.admin-topbar {
+	background: rgba(17, 24, 39, 0.92);
+	backdrop-filter: blur(6px);
+	border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.admin-brand {
+	font-weight: 800;
+	letter-spacing: 0.5px;
+}
+
+.admin-shell {
+	display: grid;
+	grid-template-columns: 260px 1fr;
+	min-height: calc(100vh - 56px);
+}
+
+.admin-sidebar {
+	border-right: 1px solid rgba(148, 163, 184, 0.12);
+	background: rgba(15, 23, 42, 0.85);
+}
+
+.admin-sidebar .nav-link {
+	color: rgba(226, 232, 240, 0.86);
+	border-radius: 10px;
+	padding: 10px 12px;
+	margin: 4px 0;
+}
+
+.admin-sidebar .nav-link:hover {
+	background: rgba(148, 163, 184, 0.12);
+	color: #fff;
+}
+
+.admin-sidebar .nav-link.active {
+	background: rgba(59, 130, 246, 0.22);
+	color: #fff;
+	border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.admin-content {
+	padding: 22px;
+}
+
+.admin-card {
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(148, 163, 184, 0.14);
+	border-radius: 14px;
+}
+
+.admin-card .card-header {
+	background: transparent;
+	border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.admin-muted {
+	color: rgba(226, 232, 240, 0.65);
+}
+
+@media (max-width: 992px) {
+	.admin-shell {
+		grid-template-columns: 1fr;
+	}
+	.admin-sidebar {
+		display: none;
+	}
+}

@@ -1,0 +1,19 @@
+<header class="admin-topbar">
+    <div class="wrap">
+        <div>
+            <p class="admin-page-title">
+                <%= title || 'Admin' %>
+            </p>
+            <p class="admin-page-sub">
+                <%= subtitle || '' %>
+            </p>
+        </div>
+
+        <div class="admin-actions">
+            <!-- 관리자 영역 밖 이동 -->
+            <a class="btn btn-outline-secondary btn-sm btn-admin-outline" href="/" target="_blank">회사</a>
+            <a class="btn btn-outline-secondary btn-sm btn-admin-outline" href="/shop" target="_blank">상품몰</a>
+            <a class="btn btn-outline-danger btn-sm btn-admin-outline" href="/auth/logout">로그아웃</a>
+        </div>
+    </div>
+</header>
