@@ -11,20 +11,26 @@
 
         <div class="card-body">
             <form action="/admin/products/new" method="post" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label admin-muted">상품 코드(code)</label>
-                    <input type="text" name="code" class="form-control" placeholder="예) MAT-001">
+                <!-- code 입력 줄 예시 -->
+                <div class="admin-field">
+                    <label class="admin-label">상품 코드(code) *</label>
+
+                    <div class="code-row">
+                        <input type="text" name="code" id="codeInput" class="admin-input" placeholder="예: MAT-001"
+                            required />
+
+                        <button type="button" id="checkCodeBtn" class="admin-btn admin-btn-outline">
+                            중복 체크
+                        </button>
+
+                        <span id="codeCheckMsg" class="code-msg"></span>
+                    </div>
+
+                    <div class="admin-help">코드는 중복되면 저장이 안 됩니다.</div>
+                    <input type="hidden" id="codeChecked" value="0">
                 </div>
-                <div class="col-md-3">
-                    <button type="button" id="checkCodeBtn" class="btn btn-outline-dark w-100">
-                        중복 체크
-                    </button>
-                </div>
-                <div class="col-md-3">
-                    <button type="button" id="checkCodeBtn" class="btn btn-outline-dark w-100">
-                        중복 체크
-                    </button>
-                </div>
+
+
 
                 <div class="col-md-8">
                     <label class="form-label admin-muted">상품명(name) <span class="text-warning">*</span></label>
@@ -76,5 +82,56 @@
             </form>
         </div>
     </div>
+    <script>
+        const codeInput = document.getElementById('codeInput');
+        const checkBtn = document.getElementById('checkCodeBtn');
+        const msgEl = document.getElementById('codeCheckMsg');
+        const checkedEl = document.getElementById('codeChecked');
+
+        function setMsg(text, type) {
+            msgEl.textContent = text;
+            msgEl.className = 'code-msg ' + (type || 'info');
+        }
+
+        codeInput.addEventListener('input', () => {
+            checkedEl.value = '0';
+            setMsg('코드 변경됨 → 중복 체크 다시 해주세요.', 'info');
+        });
+
+        checkBtn.addEventListener('click', async () => {
+            const code = (codeInput.value || '').trim();
+            if (!code) {
+                checkedEl.value = '0';
+                return setMsg('코드를 입력하세요.', 'bad');
+            }
+
+            setMsg('확인 중...', 'info');
+
+            try {
+                const res = await fetch(`/admin/api/products/check-code?code=${encodeURIComponent(code)}`);
+                const data = await res.json();
+
+                if (!res.ok || !data.ok) {
+                    checkedEl.value = '0';
+                    return setMsg(data.message || '중복 체크 실패', 'bad');
+                }
+
+                checkedEl.value = '1';
+                setMsg(data.message || '사용 가능한 코드입니다.', 'ok');
+            } catch (e) {
+                checkedEl.value = '0';
+                setMsg('네트워크 오류로 실패했습니다.', 'bad');
+            }
+        });
+
+        document.querySelector('form')?.addEventListener('submit', (e) => {
+            if (checkedEl.value !== '1') {
+                e.preventDefault();
+                alert('상품 코드 중복 체크를 먼저 해주세요.');
+            }
+        });
+    </script>
+
+
 
     <%- include('partials/admin-footer') %>

@@ -1,192 +1,58 @@
-<!doctype html>
-<html lang="ko">
+<%- include('../layouts/company-top', { title: '우리 회사' , active: 'home' }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <title>우리 회사 메인</title>
-
-    <!-- 부트스트랩 (이미 header.ejs에서 넣었다면 중복 제거해도 됨) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- 메인 스타일 -->
-    <link rel="stylesheet" href="/css/main.css">
-</head>
-
-<body>
-    <!-- 상단 메뉴 -->
-    <%- include('../partials/header-company') %>
-
-        <!-- 히어로 섹션 -->
-        <section class="hero-section">
-            <div class="hero-bg"></div>
-            <div class="hero-overlay"></div>
-
-            <!-- 왼쪽 점 네비 (꾸미기용) -->
-            <div class="hero-side-nav">
-                <div class="hero-dot active"></div>
-                <div class="hero-dot"></div>
-                <div class="hero-dot"></div>
-                <div class="hero-dot"></div>
-            </div>
-
-            <!-- 오른쪽 스크롤 표시 -->
-            <div class="hero-scroll-indicator">
-                SCROLL DOWN
-            </div>
-
-            <div class="container hero-content">
-                <div class="col-lg-7">
-                    <p class="hero-title-sub mb-1">The new future of key management</p>
-                    <h1 class="hero-title-main">Key 관리의 새로운 미래</h1>
-                    <p class="hero-title-desc mb-4">
-                        우리 회사가 만드는 보안 · 인증 · 키 관리의 새로운 기준을 소개합니다.
+    <section class="company-hero py-5">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-12 col-lg-6">
+                    <h1 class="display-6 fw-bold mb-3">신뢰할 수 있는 파트너, <span class="text-primary">우리 회사</span></h1>
+                    <p class="text-muted mb-4">
+                        기업 소개는 깔끔하게, 상품은 쇼핑몰에서 제대로.
+                        회사 페이지는 브랜드 중심, 쇼핑몰은 구매 경험 중심으로 분리했습니다.
                     </p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/about" class="btn btn-primary">회사 소개</a>
+                        <a href="/shop" class="btn btn-outline-primary">상품몰 가기</a>
+                        <a href="/contact" class="btn btn-outline-secondary">문의하기</a>
+                    </div>
+                </div>
 
-                    <div class="d-flex align-items-center gap-3">
-                        <a href="/contact" class="btn btn-danger px-4 py-2">
-                            제품문의 +
-                        </a>
-                        <span class="small opacity-75">
-                            보안 솔루션 · 특수 소재 · 시스템 통합까지 한 번에.
-                        </span>
+                <div class="col-12 col-lg-6">
+                    <div class="company-card p-4 p-lg-5">
+                        <div class="small text-muted mb-2">핵심 가치</div>
+                        <ul class="mb-0 text-muted">
+                            <li>분리된 정보 구조(회사/상품/관리자)</li>
+                            <li>모바일/태블릿 반응형 우선</li>
+                            <li>관리자 기능으로 상품 운영</li>
+                        </ul>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- 공지사항 섹션 -->
-        <section class="notice-section">
-            <div class="container">
-                <div class="row align-items-end mb-4">
-                    <div class="col-md-6">
-                        <div class="section-title-en">Notice</div>
-                        <div class="section-title-kr">공지사항</div>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <a href="#" class="btn btn-outline-light btn-sm">
-                            View More +
-                        </a>
+    <section class="py-4">
+        <div class="container">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="company-info-card p-4 h-100">
+                        <div class="fw-semibold mb-1">회사 소개</div>
+                        <div class="text-muted small">우리 회사가 무엇을 하는지 한눈에</div>
                     </div>
                 </div>
-
-                <div class="row g-4">
-                    <% /* 나중엔 DB에서 공지 가져와서 루프 돌리면 됨. 지금은 목업 */ %>
-
-                        <div class="col-md-4">
-                            <div class="notice-card">
-                                <div>
-                                    <div class="text-uppercase small opacity-75 mb-2">Notice</div>
-                                    <div class="notice-card-title">신규 Key 관리 솔루션 출시 안내</div>
-                                    <p class="notice-card-meta mt-2">
-                                        금융 · 공공기관 환경에서 사용할 수 있는 신규 키 관리 솔루션을 소개드립니다.
-                                    </p>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-3 small">
-                                    <span>2025-03-01</span>
-                                    <span>자세히 보기 ↗</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="notice-card">
-                                <div>
-                                    <div class="text-uppercase small opacity-75 mb-2">Notice</div>
-                                    <div class="notice-card-title">HSM 유지보수 일정 안내</div>
-                                    <p class="notice-card-meta mt-2">
-                                        일부 고객사의 장비에 대한 정기 점검 및 유지보수 일정을 안내드립니다.
-                                    </p>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-3 small">
-                                    <span>2025-02-10</span>
-                                    <span>자세히 보기 ↗</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="notice-card">
-                                <div>
-                                    <div class="text-uppercase small opacity-75 mb-2">Notice</div>
-                                    <div class="notice-card-title">블록체인 키 관리 웨비나 참가 모집</div>
-                                    <p class="notice-card-meta mt-2">
-                                        블록체인 환경에서의 키 보호 전략과 실제 적용 사례를 공유합니다.
-                                    </p>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-3 small">
-                                    <span>2025-01-22</span>
-                                    <span>자세히 보기 ↗</span>
-                                </div>
-                            </div>
-                        </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 사업 소개 섹션 -->
-        <section class="business-section">
-            <div class="container">
-                <div class="d-flex justify-content-between align-items-end mb-4">
-                    <div>
-                        <div class="section-title-en">Our Business</div>
-                        <div class="section-title-kr">사업 소개</div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-secondary btn-sm" type="button">&lt;</button>
-                        <button class="btn btn-outline-secondary btn-sm" type="button">&gt;</button>
+                <div class="col-12 col-md-4">
+                    <div class="company-info-card p-4 h-100">
+                        <div class="fw-semibold mb-1">상품몰</div>
+                        <div class="text-muted small">상품 탐색/장바구니/구매 흐름</div>
                     </div>
                 </div>
-
-                <div class="row g-4">
-                    <div class="col-md-3 col-sm-6">
-                        <div class="business-card">
-                            <img src="/img/biz-pki.jpg" alt="PKI">
-                            <div class="business-card-overlay"></div>
-                            <div class="business-card-label">PKI (CA)</div>
-                            <div class="business-card-index">01</div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 col-sm-6">
-                        <div class="business-card">
-                            <img src="/img/biz-blockchain.jpg" alt="Blockchain">
-                            <div class="business-card-overlay"></div>
-                            <div class="business-card-label">BlockChain</div>
-                            <div class="business-card-index">02</div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 col-sm-6">
-                        <div class="business-card">
-                            <img src="/img/biz-kms.jpg" alt="KMS">
-                            <div class="business-card-overlay"></div>
-                            <div class="business-card-label">KMS</div>
-                            <div class="business-card-index">03</div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3 col-sm-6">
-                        <div class="business-card">
-                            <img src="/img/biz-custom.jpg" alt="Custom HSM">
-                            <div class="business-card-overlay"></div>
-                            <div class="business-card-label">Custom HSM</div>
-                            <div class="business-card-index">04</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="business-page-indicator">
-                    <div class="business-page-indicator-line"></div>
-                    <div class="business-page-indicator-text">
-                        <strong>01</strong> / 06
+                <div class="col-12 col-md-4">
+                    <div class="company-info-card p-4 h-100">
+                        <div class="fw-semibold mb-1">관리자</div>
+                        <div class="text-muted small">상품/카테고리/엑셀 업로드 운영</div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <%- include('../partials/footer') %>
-
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+    <%- include('../layouts/company-bottom') %>

@@ -1,74 +1,46 @@
-/* admin 전용 톤: 회사/상품몰과 확실히 다르게 */
-.admin-body {
-	background: #0b1220;
-	color: #e8eefc;
-	min-height: 100vh;
+/* public/css/main.css */
+:root {
+	--brand: #2563eb; /* blue */
+	--brand2: #1d4ed8;
+	--ink: #0f172a; /* slate */
+	--muted: #64748b;
+	--line: #e2e8f0;
+	--bg: #f8fafc;
 }
 
-.admin-topbar {
-	background: rgba(17, 24, 39, 0.92);
-	backdrop-filter: blur(6px);
-	border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+body {
+	color: var(--ink);
 }
 
-.admin-brand {
-	font-weight: 800;
-	letter-spacing: 0.5px;
+.company-hero {
+	background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
 }
 
-.admin-shell {
-	display: grid;
-	grid-template-columns: 260px 1fr;
-	min-height: calc(100vh - 56px);
+.company-card {
+	background: #fff;
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
-.admin-sidebar {
-	border-right: 1px solid rgba(148, 163, 184, 0.12);
-	background: rgba(15, 23, 42, 0.85);
+.company-info-card {
+	background: #fff;
+	border: 1px solid var(--line);
+	border-radius: 16px;
 }
 
-.admin-sidebar .nav-link {
-	color: rgba(226, 232, 240, 0.86);
-	border-radius: 10px;
-	padding: 10px 12px;
-	margin: 4px 0;
+.btn-primary {
+	background: var(--brand) !important;
+	border-color: var(--brand) !important;
+}
+.btn-primary:hover {
+	background: var(--brand2) !important;
+	border-color: var(--brand2) !important;
 }
 
-.admin-sidebar .nav-link:hover {
-	background: rgba(148, 163, 184, 0.12);
-	color: #fff;
-}
-
-.admin-sidebar .nav-link.active {
-	background: rgba(59, 130, 246, 0.22);
-	color: #fff;
-	border: 1px solid rgba(59, 130, 246, 0.35);
-}
-
-.admin-content {
-	padding: 22px;
-}
-
-.admin-card {
-	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(148, 163, 184, 0.14);
-	border-radius: 14px;
-}
-
-.admin-card .card-header {
-	background: transparent;
-	border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.admin-muted {
-	color: rgba(226, 232, 240, 0.65);
-}
-
-@media (max-width: 992px) {
-	.admin-shell {
-		grid-template-columns: 1fr;
-	}
-	.admin-sidebar {
-		display: none;
-	}
+/* 모바일에서 버튼/텍스트 깨짐 방지 */
+.container,
+.row,
+.col {
+	min-width: 0;
 }

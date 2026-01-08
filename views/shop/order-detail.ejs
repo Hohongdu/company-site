@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <%- include('../partials/header-shop') %>
+    <%- include('../layouts/shop-top', { title: '주문정보' , active: '' }) %>
 
         <main class="py-5">
             <div class="container" style="max-width: 720px;">
@@ -94,7 +94,7 @@
             </div>
         </main>
 
-        <%- include('../partials/footer') %>
+        <%- include('../layouts/shop-bottom') %>
 
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
             <script src="/js/main.js"></script>

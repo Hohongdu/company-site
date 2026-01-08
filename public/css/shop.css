@@ -1,55 +1,70 @@
 /* public/css/shop.css */
+:root {
+	--shop: #2563eb;
+	--shop2: #1d4ed8;
+	--ink: #0f172a;
+	--muted: #64748b;
+	--line: #e2e8f0;
+	--bg: #f8fafc;
+}
+
 .shop-wrap {
-	background: #f7f7f9;
-	min-height: 100vh;
+	background: var(--bg);
+	color: var(--ink);
 }
 
-.shop-title {
-	letter-spacing: -0.5px;
+/* 헤더 버튼/검색 줄바꿈 안정 */
+header .container {
+	min-width: 0;
+}
+header form {
+	min-width: 0;
+}
+header input {
+	min-width: 0;
 }
 
+/* 버튼 파란 톤 통일 */
+.btn-outline-primary {
+	border-color: var(--shop) !important;
+	color: var(--shop) !important;
+}
+.btn-outline-primary:hover {
+	background: var(--shop) !important;
+	color: #fff !important;
+}
+
+.btn-primary {
+	background: var(--shop) !important;
+	border-color: var(--shop) !important;
+}
+.btn-primary:hover {
+	background: var(--shop2) !important;
+	border-color: var(--shop2) !important;
+}
+
+/* 카드/박스 통일 */
 .shop-card {
-	border: 0;
+	background: #fff;
+	border: 1px solid var(--line);
 	border-radius: 16px;
+	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+/* 모바일에서 “버튼 나란히” 깨질 때 자동 줄바꿈 */
+.flex-wrap {
+	flex-wrap: wrap !important;
+}
+
+/* 테이블/리스트가 화면 넘치지 않게 */
+.table-responsive {
+	overflow-x: auto;
+}
+
+/* 긴 유저명/텍스트 말줄임 */
+.ellipsis {
+	max-width: 160px;
+	white-space: nowrap;
 	overflow: hidden;
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.shop-card:hover {
-	transform: translateY(-3px);
-	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-}
-
-.shop-thumb {
-	width: 100%;
-	height: 190px;
-	object-fit: cover;
-	background: #eee;
-}
-
-.price {
-	font-weight: 800;
-	letter-spacing: -0.3px;
-}
-
-.badge-soft {
-	background: #111;
-	color: #fff;
-	border-radius: 999px;
-	padding: 0.35rem 0.6rem;
-	font-size: 0.75rem;
-}
-
-.category-pill {
-	border-radius: 999px;
-}
-
-.searchbar {
-	border-radius: 999px;
-}
-
-.sticky-filters {
-	position: sticky;
-	top: 70px;
-	z-index: 5;
+	text-overflow: ellipsis;
 }

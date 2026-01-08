@@ -1,45 +1,24 @@
-<!doctype html>
-<html lang="ko">
+<%- include('../layouts/company-top', { title: '회사 소개' , active: 'about' }) %>
 
-<head>
-    <meta charset="utf-8">
-    <title>우리 회사 - 회사 소개</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+    <section class="py-5">
+        <div class="container">
+            <h2 class="fw-bold mb-3">회사 소개</h2>
+            <p class="text-muted mb-4">
+                회사 페이지에서는 회사의 정보만 집중해서 보여주고, 상품 관련 기능은 상품몰로 분리합니다.
+            </p>
 
-<body>
-    <%- include('../partials/header-company') %>
-
-        <main class="py-5">
-            <div class="container">
-                <h1 class="mb-4">회사 소개</h1>
-
-                <section class="mb-4">
-                    <h2 class="h4">회사 개요</h2>
-                    <p>여기에 회사가 어떤 일을 하는지, 언제 설립되었는지, 어떤 목표를 가지고 있는지를 작성하면 됩니다.</p>
-                </section>
-
-                <section class="mb-4">
-                    <h2 class="h4">비전 & 미션</h2>
-                    <p>예시) “우리는 기술과 디자인을 통해 고객의 일상을 더 편리하고 즐겁게 만드는 것을 목표로 합니다.”</p>
-                </section>
-
-                <section class="mb-4">
-                    <h2 class="h4">연혁</h2>
-                    <ul class="list-group">
-                        <li class="list-group-item">2023년 – 회사 설립</li>
-                        <li class="list-group-item">2024년 – 첫 서비스 런칭</li>
-                        <li class="list-group-item">2025년 – B2B 파트너십 확대</li>
-                    </ul>
-                </section>
+            <div class="company-card p-4">
+                <h5 class="fw-semibold mb-2">비전 & 미션</h5>
+                <p class="text-muted mb-0">
+                    고객이 필요로 하는 서비스를 가장 간단하고 안정적으로 제공하는 것을 목표로 합니다.
+                </p>
             </div>
-        </main>
 
-        <%- include('../partials/footer') %>
+            <div class="mt-4 d-flex gap-2 flex-wrap">
+                <a href="/shop" class="btn btn-outline-primary">상품몰로 이동</a>
+                <a href="/contact" class="btn btn-outline-secondary">문의하기</a>
+            </div>
+        </div>
+    </section>
 
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="/js/main.js"></script>
-</body>
-
-</html>
+    <%- include('../layouts/company-bottom') %>

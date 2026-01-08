@@ -1,0 +1,67 @@
+<% const pageTitle=(typeof title !=='undefined' && title) ? title : 'SHOP' ; const activeKey=(typeof active
+    !=='undefined' && active) ? active : '' ; const q=(typeof query !=='undefined' && query) ? query : '' ; %>
+    <!doctype html>
+    <html lang="ko">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>
+            <%= pageTitle %> | Shop
+        </title>
+
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/css/shop.css" />
+    </head>
+
+    <body class="shop-wrap bg-light">
+        <header class="border-bottom bg-white sticky-top">
+            <div class="container py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <a class="text-decoration-none fw-bold text-dark" href="/shop">SHOP</a>
+
+                    <!-- 검색(모바일 깨짐 방지: flex-grow) -->
+                    <form class="d-flex ms-2 flex-grow-1" action="/shop/products" method="get" style="max-width:520px;">
+                        <input class="form-control form-control-sm me-2" name="q" placeholder="상품 검색 (코드/이름/규격)"
+                            value="<%= q %>">
+                        <button class="btn btn-sm btn-outline-primary" type="submit">검색</button>
+                    </form>
+
+                    <div class="ms-auto d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="/">회사</a>
+
+                        <a class="btn btn-sm <%= activeKey==='cart' ? 'btn-dark' : 'btn-outline-dark' %> position-relative"
+                            href="/shop/cart">
+                            장바구니
+                            <% if (cartCount> 0) { %>
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    <%= cartCount %>
+                                </span>
+                                <% } %>
+                        </a>
+
+                        <a class="btn btn-sm <%= activeKey==='products' ? 'btn-primary' : 'btn-outline-primary' %>"
+                            href="/shop/products">상품보기</a>
+
+                        <% if (user) { %>
+                            <span class="small text-muted d-none d-sm-inline-block"
+                                style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                <strong>
+                                    <%= user.name %>
+                                </strong> 님
+                            </span>
+                            <a class="btn btn-sm btn-outline-secondary" href="/auth/logout">로그아웃</a>
+                            <% if (user.is_admin) { %>
+                                <a class="btn btn-sm btn-outline-dark" href="/admin">관리자</a>
+                                <% } %>
+                                    <% } else { %>
+                                        <a class="btn btn-sm btn-outline-secondary" href="/auth/login">로그인</a>
+                                        <a class="btn btn-sm btn-primary" href="/auth/register">회원가입</a>
+                                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container py-4">

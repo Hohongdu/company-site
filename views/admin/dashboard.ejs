@@ -1,63 +1,87 @@
-<%- include('partials/admin-header', { title: '관리자 대시보드' , active: 'dashboard' }) %>
+<%- include('../layouts/admin-top', { title: '관리자 대시보드' , active: 'dashboard' }) %>
 
-    <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div>
             <h3 class="mb-1">대시보드</h3>
-            <div class="text-muted small">관리자 전용 관리 페이지</div>
+            <div class="text-muted small">관리자 기능 요약</div>
         </div>
 
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary btn-sm" href="/">회사로</a>
-            <a class="btn btn-outline-dark btn-sm" href="/shop">상품몰로</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary btn-sm" href="/admin/products/new">+ 새 상품</a>
+            <a class="btn btn-outline-primary btn-sm" href="/admin/products/import">엑셀 업로드</a>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-muted small mb-1">상품 수</div>
-                    <div class="fs-4 fw-bold">
-                        <%= typeof totalProducts !=='undefined' ? totalProducts : '-' %>
+    <% const statsSafe=(typeof stats !=='undefined' && stats) ? stats : {}; const
+        totalProducts=Number(statsSafe.totalProducts || 0); const totalCategories=Number(statsSafe.totalCategories ||
+        0); const totalUploads=Number(statsSafe.totalUploads || 0); %>
+
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">상품 수</div>
+                        <div class="fs-3 fw-bold">
+                            <%= totalProducts %>
+                        </div>
+                        <a class="small text-decoration-none" href="/admin/products">상품 관리 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">카테고리 수</div>
+                        <div class="fs-3 fw-bold">
+                            <%= totalCategories %>
+                        </div>
+                        <a class="small text-decoration-none" href="/admin/categories">카테고리 관리 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">업로드 히스토리</div>
+                        <div class="fs-3 fw-bold">
+                            <%= totalUploads %>
+                        </div>
+                        <a class="small text-decoration-none" href="/admin/products/import">업로드 보기 →</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-muted small mb-1">카테고리 수</div>
-                    <div class="fs-4 fw-bold">
-                        <%= typeof totalCategories !=='undefined' ? totalCategories : '-' %>
+        <hr class="my-4">
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-2">빠른 작업</h5>
+                        <div class="d-grid gap-2 d-sm-flex">
+                            <a class="btn btn-outline-primary" href="/admin/products/new">상품 등록</a>
+                            <a class="btn btn-outline-primary" href="/admin/categories">카테고리 관리</a>
+                            <a class="btn btn-outline-primary" href="/admin/products/import">엑셀 업로드</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-2">안정성 팁</h5>
+                        <ul class="small text-muted mb-0">
+                            <li>모바일 깨짐 방지: 버튼/텍스트는 flex-wrap 사용</li>
+                            <li>유저명 길이: max-width + ellipsis 처리</li>
+                            <li>테이블은 table-responsive로 감싸기</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-muted small mb-1">최근 업로드</div>
-                    <div class="fs-4 fw-bold">
-                        <%= typeof lastUploadAt !=='undefined' && lastUploadAt ? lastUploadAt : '-' %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mt-3">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <strong>빠른 이동</strong>
-            <span class="text-muted small">자주 쓰는 메뉴</span>
-        </div>
-        <div class="card-body d-flex flex-wrap gap-2">
-            <a class="btn btn-dark btn-sm" href="/admin/products">상품 관리</a>
-            <a class="btn btn-outline-dark btn-sm" href="/admin/products/new">상품 등록</a>
-            <a class="btn btn-outline-dark btn-sm" href="/admin/products/import">엑셀 업로드</a>
-            <a class="btn btn-outline-dark btn-sm" href="/admin/categories">카테고리</a>
-        </div>
-    </div>
-
-    <%- include('partials/admin-footer') %>
+        <%- include('../layouts/admin-bottom') %>
