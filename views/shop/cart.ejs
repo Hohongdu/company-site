@@ -108,7 +108,8 @@
                         <% if (isGuest) { %>
                             <div class="text-muted small mt-3">
                                 로그인하면 장바구니를 유지할 수 있어요.
-                                <a href="/auth/login" class="text-decoration-none">로그인</a>
+                                <a href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>"
+                                    class="text-decoration-none">로그인</a>
                             </div>
                             <% } %>
                     </div>

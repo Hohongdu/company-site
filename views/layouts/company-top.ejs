@@ -39,9 +39,13 @@
                                     <%= user.name %>
                                 </strong> 님
                             </span>
+                            <% if (user.is_admin) { %>
+                                <a class="btn btn-sm btn-outline-dark" href="/admin">관리자</a>
+                                <% } %>
                             <a class="btn btn-sm btn-outline-secondary" href="/auth/logout">로그아웃</a>
                             <% } else { %>
-                                <a class="btn btn-sm btn-outline-secondary" href="/auth/login">로그인</a>
+                                <a class="btn btn-sm btn-outline-secondary"
+                                    href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>">로그인</a>
                                 <a class="btn btn-sm btn-primary" href="/auth/register">회원가입</a>
                                 <% } %>
 
@@ -59,6 +63,9 @@
                         <a class="btn btn-outline-primary btn-sm" href="/about">회사 소개</a>
                         <a class="btn btn-outline-primary btn-sm" href="/contact">문의하기</a>
                         <a class="btn btn-outline-dark btn-sm" href="/shop">상품몰</a>
+                        <% if (user && user.is_admin) { %>
+                            <a class="btn btn-outline-dark btn-sm" href="/admin">관리자</a>
+                            <% } %>
                     </div>
                 </div>
             </div>

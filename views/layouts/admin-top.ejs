@@ -27,6 +27,11 @@
                     </div>
 
                     <div class="ms-auto d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <button class="btn btn-outline-dark btn-sm d-md-none" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#adminNav" aria-controls="adminNav" aria-expanded="false"
+                            aria-label="관리자 메뉴 열기">
+                            ☰
+                        </button>
                         <!-- 상단 빠른 이동 -->
                         <a class="btn btn-outline-secondary btn-sm" href="/">회사</a>
                         <a class="btn btn-outline-primary btn-sm" href="/shop">상품몰</a>
@@ -41,13 +46,14 @@
                             </span>
                             <a class="btn btn-outline-dark btn-sm" href="/auth/logout">로그아웃</a>
                             <% } else { %>
-                                <a class="btn btn-outline-dark btn-sm" href="/auth/login">로그인</a>
+                                <a class="btn btn-outline-dark btn-sm"
+                                    href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>">로그인</a>
                                 <% } %>
                     </div>
                 </div>
 
                 <!-- 관리자 메뉴 -->
-                <nav class="mt-2">
+                <nav class="collapse d-md-block mt-2" id="adminNav">
                     <div class="d-flex gap-2 flex-wrap">
                         <a class="btn btn-sm <%= activeKey==='dashboard' ? 'btn-primary' : 'btn-outline-primary' %>"
                             href="/admin/dashboard">대시보드</a>

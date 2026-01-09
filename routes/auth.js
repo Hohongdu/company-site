@@ -5,7 +5,18 @@ const { mergeGuestCartToUserCart } = require('../lib/cart');
 
 const router = express.Router();
 
-router.get('/login', (req, res) => res.render('auth/login'));
+const sanitizeReturnTo = (value) => {
+	if (typeof value !== 'string') return '';
+	const trimmed = value.trim();
+	if (!trimmed.startsWith('/') || trimmed.startsWith('//')) return '';
+	if (trimmed.startsWith('/auth')) return '';
+	return trimmed;
+};
+
+router.get('/login', (req, res) => {
+	const returnTo = sanitizeReturnTo(req.query.redirect);
+	return res.render('auth/login', { returnTo });
+});
 router.get('/register', (req, res) => res.render('auth/register'));
 
 router.post('/register', async (req, res) => {
@@ -47,7 +58,8 @@ router.post('/login', async (req, res) => {
 		// 게스트 장바구니 병합
 		await mergeGuestCartToUserCart(req);
 
-		return res.redirect('/shop');
+		const returnTo = sanitizeReturnTo(req.body.returnTo);
+		return res.redirect(returnTo || '/shop');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('로그인 중 오류');

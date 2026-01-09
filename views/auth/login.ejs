@@ -13,6 +13,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         <form method="POST" action="/auth/login" class="d-grid gap-3">
+                            <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
                             <div>
                                 <label class="form-label">이메일</label>
                                 <input type="email" name="email" class="form-control" placeholder="example@company.com"
