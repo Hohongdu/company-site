@@ -2,7 +2,7 @@
 
     <div class="mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
         <a href="/shop/products" class="btn btn-sm btn-outline-secondary">← 목록으로</a>
-        <a href="/shop/cart" class="btn btn-sm btn-outline-dark">장바구니 보기</a>
+        <a href="/shop/cart" class="btn btn-sm btn-outline-dark">장바구니</a>
     </div>
 
     <div class="row g-3">
@@ -22,10 +22,10 @@
                         <h3 class="fw-bold mb-1">
                             <%= product.name %>
                         </h3>
-                        <div class="text-muted small">
-                            <% if (product.code) { %>코드: <%= product.code %>
-                                    <% } %>
-                        </div>
+                        <% if (product.code) { %>
+                            <div class="text-muted small">코드: <%= product.code %>
+                            </div>
+                            <% } %>
                     </div>
                     <span class="badge text-bg-light border">
                         <%= product.category_name || '미분류' %>
@@ -59,7 +59,6 @@
                             <input type="number" name="quantity" min="1" value="1" class="form-control"
                                 style="max-width:110px;">
                             <button class="btn btn-primary flex-grow-1" type="submit">장바구니 담기</button>
-                            <a class="btn btn-outline-dark" href="/shop/cart">장바구니</a>
                         </form>
 
                         <div class="text-muted small mt-3">

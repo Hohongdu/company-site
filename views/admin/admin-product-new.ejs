@@ -1,51 +1,48 @@
-<%- include('partials/admin-header', { title: '상품 등록' , subtitle: '새 상품을 추가합니다. (spec 사용 가능)' , active: 'product_new' ,
-    backHref: '/admin/products' }) %>
+<%- include('../layouts/admin-top', { title: '상품 등록' , active: 'products' , backUrl: '/admin/products' }) %>
 
-    <div class="admin-card card">
-        <div class="card-header py-3 d-flex align-items-center justify-content-between">
-            <div class="fw-semibold"><i class="bi bi-plus-circle"></i> 새 상품 등록</div>
-            <a href="/admin/products" class="btn btn-outline-light btn-sm">
-                <i class="bi bi-list"></i> 상품 목록
-            </a>
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h3 class="fw-bold mb-1">상품 등록</h3>
+            <div class="text-muted small">새 상품을 추가합니다. (spec 사용 가능)</div>
         </div>
 
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-sm btn-outline-secondary" href="/admin/products">상품 목록</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
         <div class="card-body">
             <form action="/admin/products/new" method="post" class="row g-3">
-                <!-- code 입력 줄 예시 -->
-                <div class="admin-field">
-                    <label class="admin-label">상품 코드(code) *</label>
 
-                    <div class="code-row">
-                        <input type="text" name="code" id="codeInput" class="admin-input" placeholder="예: MAT-001"
-                            required />
+                <!-- 코드 + 중복 체크 -->
+                <div class="col-12">
+                    <label class="form-label small text-muted">상품 코드(code) *</label>
 
-                        <button type="button" id="checkCodeBtn" class="admin-btn admin-btn-outline">
-                            중복 체크
-                        </button>
-
-                        <span id="codeCheckMsg" class="code-msg"></span>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <input id="codeInput" class="form-control" name="code" placeholder="예: MAT-001" required
+                            style="max-width:360px;">
+                        <button type="button" id="checkCodeBtn" class="btn btn-outline-primary">중복 체크</button>
+                        <span id="codeCheckMsg" class="small"></span>
                     </div>
 
-                    <div class="admin-help">코드는 중복되면 저장이 안 됩니다.</div>
+                    <div class="form-text">코드는 중복되면 저장이 안 됩니다.</div>
                     <input type="hidden" id="codeChecked" value="0">
                 </div>
 
-
-
-                <div class="col-md-8">
-                    <label class="form-label admin-muted">상품명(name) <span class="text-warning">*</span></label>
-                    <input type="text" name="name" class="form-control" required placeholder="예) 특수소재 A">
+                <div class="col-12 col-lg-8">
+                    <label class="form-label small text-muted">상품명(name) *</label>
+                    <input class="form-control" name="name" placeholder="예) 특수소재 A" required>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label admin-muted">가격(price) <span class="text-warning">*</span></label>
-                    <input type="number" name="price" class="form-control" required min="1" step="1"
-                        placeholder="예) 12000">
+                <div class="col-12 col-lg-4">
+                    <label class="form-label small text-muted">가격(price) *</label>
+                    <input class="form-control" name="price" type="number" min="1" placeholder="예) 12000" required>
                 </div>
 
-                <div class="col-md-8">
-                    <label class="form-label admin-muted">카테고리(category)</label>
-                    <select name="category_id" class="form-select">
+                <div class="col-12 col-lg-6">
+                    <label class="form-label small text-muted">카테고리(category)</label>
+                    <select class="form-select" name="category_id">
                         <option value="">카테고리 없음</option>
                         <% (categories || []).forEach(function(c){ %>
                             <option value="<%= c.id %>">
@@ -55,33 +52,29 @@
                     </select>
                 </div>
 
-                <div class="col-12">
-                    <label class="form-label admin-muted">규격/스펙(spec)</label>
-                    <input type="text" name="spec" class="form-control" placeholder="예) 1000x2000 / t=3.0mm">
+                <div class="col-12 col-lg-6">
+                    <label class="form-label small text-muted">규격/스펙(spec)</label>
+                    <input class="form-control" name="spec" placeholder="예) 1000x2000 / t=3.0mm">
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label admin-muted">이미지 URL(image)</label>
-                    <input type="text" name="image" class="form-control"
-                        placeholder="예) /images/sample.png 또는 https://...">
+                    <label class="form-label small text-muted">이미지 URL(image)</label>
+                    <input class="form-control" name="image" placeholder="예) /images/sample.png 또는 https://...">
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label admin-muted">설명(description)</label>
-                    <textarea name="description" rows="4" class="form-control" placeholder="상품 설명을 입력하세요"></textarea>
+                    <label class="form-label small text-muted">설명(description)</label>
+                    <textarea class="form-control" name="description" rows="4" placeholder="상품 설명을 입력하세요"></textarea>
                 </div>
 
-                <div class="col-12 d-flex gap-2">
-                    <button class="btn btn-admin">
-                        <i class="bi bi-check2-circle"></i> 등록하기
-                    </button>
-                    <a href="/admin/products" class="btn btn-outline-light">
-                        취소
-                    </a>
+                <div class="col-12 d-flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" type="submit">등록</button>
+                    <a class="btn btn-outline-secondary" href="/admin/products">취소</a>
                 </div>
             </form>
         </div>
     </div>
+
     <script>
         const codeInput = document.getElementById('codeInput');
         const checkBtn = document.getElementById('checkCodeBtn');
@@ -90,7 +83,10 @@
 
         function setMsg(text, type) {
             msgEl.textContent = text;
-            msgEl.className = 'code-msg ' + (type || 'info');
+            msgEl.className = 'small';
+            if (type === 'ok') msgEl.classList.add('text-success');
+            else if (type === 'bad') msgEl.classList.add('text-danger');
+            else msgEl.classList.add('text-muted');
         }
 
         codeInput.addEventListener('input', () => {
@@ -100,13 +96,9 @@
 
         checkBtn.addEventListener('click', async () => {
             const code = (codeInput.value || '').trim();
-            if (!code) {
-                checkedEl.value = '0';
-                return setMsg('코드를 입력하세요.', 'bad');
-            }
+            if (!code) { checkedEl.value = '0'; return setMsg('코드를 입력하세요.', 'bad'); }
 
             setMsg('확인 중...', 'info');
-
             try {
                 const res = await fetch(`/admin/api/products/check-code?code=${encodeURIComponent(code)}`);
                 const data = await res.json();
@@ -117,10 +109,10 @@
                 }
 
                 checkedEl.value = '1';
-                setMsg(data.message || '사용 가능한 코드입니다.', 'ok');
+                return setMsg(data.message || '사용 가능한 코드입니다.', 'ok');
             } catch (e) {
                 checkedEl.value = '0';
-                setMsg('네트워크 오류로 실패했습니다.', 'bad');
+                return setMsg('네트워크 오류', 'bad');
             }
         });
 
@@ -132,6 +124,4 @@
         });
     </script>
 
-
-
-    <%- include('partials/admin-footer') %>
+    <%- include('../layouts/admin-bottom') %>

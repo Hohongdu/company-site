@@ -17,42 +17,57 @@
         0); const totalUploads=Number(statsSafe.totalUploads || 0); %>
 
         <div class="row g-3">
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm h-100">
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card h-100">
                     <div class="card-body">
-                        <div class="text-muted small">상품 수</div>
-                        <div class="fs-3 fw-bold">
-                            <%= totalProducts %>
+                        <div class="fw-semibold mb-2">상품 관리</div>
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-primary btn-sm w-100" href="/admin/products">상품 목록</a>
+                            <a class="btn btn-outline-primary btn-sm w-100" href="/admin/products/new">상품 등록</a>
                         </div>
-                        <a class="small text-decoration-none" href="/admin/products">상품 관리 →</a>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm h-100">
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card h-100">
                     <div class="card-body">
-                        <div class="text-muted small">카테고리 수</div>
-                        <div class="fs-3 fw-bold">
-                            <%= totalCategories %>
+                        <div class="fw-semibold mb-2">카테고리</div>
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-primary btn-sm w-100" href="/admin/categories">카테고리 관리</a>
+                            <a class="btn btn-outline-primary btn-sm w-100" href="/admin/categories/export">엑셀
+                                Export</a>
                         </div>
-                        <a class="small text-decoration-none" href="/admin/categories">카테고리 관리 →</a>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm h-100">
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card h-100">
                     <div class="card-body">
-                        <div class="text-muted small">업로드 히스토리</div>
-                        <div class="fs-3 fw-bold">
-                            <%= totalUploads %>
+                        <div class="fw-semibold mb-2">엑셀 업로드</div>
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-primary btn-sm w-100" href="/admin/products/import">업로드</a>
+                            <a class="btn btn-outline-primary btn-sm w-100" href="/admin/uploads/export">업로드 히스토리
+                                Export</a>
                         </div>
-                        <a class="small text-decoration-none" href="/admin/products/import">업로드 보기 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="fw-semibold mb-2">바로가기</div>
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-outline-dark btn-sm w-100" href="/">회사</a>
+                            <a class="btn btn-outline-dark btn-sm w-100" href="/shop">상품몰</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
 
         <hr class="my-4">
 

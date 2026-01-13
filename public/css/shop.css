@@ -1,11 +1,11 @@
-/* public/css/shop.css */
 :root {
-	--shop: #2563eb;
-	--shop2: #1d4ed8;
+	--blue: #2563eb;
+	--blue2: #1d4ed8;
 	--ink: #0f172a;
 	--muted: #64748b;
-	--line: #e2e8f0;
 	--bg: #f8fafc;
+	--line: #e2e8f0;
+	--radius: 12px;
 }
 
 .shop-wrap {
@@ -13,58 +13,57 @@
 	color: var(--ink);
 }
 
-/* 헤더 버튼/검색 줄바꿈 안정 */
-header .container {
-	min-width: 0;
-}
-header form {
-	min-width: 0;
-}
-header input {
-	min-width: 0;
-}
-
-/* 버튼 파란 톤 통일 */
-.btn-outline-primary {
-	border-color: var(--shop) !important;
-	color: var(--shop) !important;
-}
-.btn-outline-primary:hover {
-	background: var(--shop) !important;
-	color: #fff !important;
+.btn,
+.form-control,
+.form-select {
+	border-radius: var(--radius) !important;
 }
 
 .btn-primary {
-	background: var(--shop) !important;
-	border-color: var(--shop) !important;
+	background: var(--blue) !important;
+	border-color: var(--blue) !important;
 }
 .btn-primary:hover {
-	background: var(--shop2) !important;
-	border-color: var(--shop2) !important;
+	background: var(--blue2) !important;
+	border-color: var(--blue2) !important;
 }
 
-/* 카드/박스 통일 */
+.btn-outline-primary {
+	border-color: var(--blue) !important;
+	color: var(--blue) !important;
+}
+.btn-outline-primary:hover {
+	background: var(--blue) !important;
+	color: #fff !important;
+}
+
 .shop-card {
 	background: #fff;
 	border: 1px solid var(--line);
 	border-radius: 16px;
-	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
-/* 모바일에서 “버튼 나란히” 깨질 때 자동 줄바꿈 */
-.flex-wrap {
-	flex-wrap: wrap !important;
+.price {
+	font-weight: 800;
+	letter-spacing: -0.2px;
 }
 
-/* 테이블/리스트가 화면 넘치지 않게 */
-.table-responsive {
-	overflow-x: auto;
+.container,
+.row,
+.col {
+	min-width: 0;
 }
-
-/* 긴 유저명/텍스트 말줄임 */
 .ellipsis {
 	max-width: 160px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+/* 모바일에서 햄버거 안 메뉴는 “긴 버튼” */
+@media (max-width: 992px) {
+	#shopNav .d-grid .btn {
+		width: 100%;
+	}
 }
