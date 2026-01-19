@@ -8,6 +8,24 @@ const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
+	filename: (req, file, cb) => {
+		const ext = path.extname(file.originalname).toLowerCase();
+		cb(null, `p_${Date.now()}${ext}`);
+	},
+});
+
+const fileFilter = (req, file, cb) => {
+	const ok = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype);
+	cb(ok ? null : new Error('이미지 파일만 업로드 가능합니다.'), ok);
+};
+
+const uploadImage = multer({
+	storage,
+	fileFilter,
+	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
 
 /* =========================
    공통: 관리자만 접근
@@ -65,15 +83,21 @@ router.get('/products/new', async (req, res) => {
 	res.render('admin/admin-product-new', { categories });
 });
 
-router.post('/products/new', async (req, res) => {
+router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
 	try {
-		const { code, name, description, price, spec, image, category_id } = req.body;
+		const { code, name, description, price, spec, category_id, image } = req.body;
+		// 파일 업로드가 있으면 그걸 사용, 없으면 기존 URL 입력값(image) 사용
+		const imagePath = req.file ? `/uploads/${req.file.filename}` : image || null;
 
-		await db.execute(
-			`INSERT INTO products (code, name, description, price, spec, image, category_id)
-			 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			[code || null, name, description || null, Number(price) || 0, spec || null, image || null, category_id || null]
-		);
+		await db.execute(`INSERT INTO products (code, name, description, price, spec, image, category_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+			code || null,
+			name,
+			description || null,
+			Number(price) || 0,
+			spec || null,
+			imagePath,
+			category_id || null,
+		]);
 
 		res.redirect('/admin/products');
 	} catch (err) {
@@ -96,18 +120,20 @@ router.get('/products/:id/edit', async (req, res) => {
 	res.render('admin/admin-product-edit', { product, categories });
 });
 
-router.post('/products/:id/edit', async (req, res) => {
+router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
 	const productId = Number(req.params.id);
-	const { code, name, description, price, spec, image, category_id } = req.body;
+	const { code, name, description, price, spec, category_id, image } = req.body;
+
+	const imagePath = req.file ? `/uploads/${req.file.filename}` : image || null;
 
 	await db.execute(
 		`UPDATE products
-		 SET code=?, name=?, description=?, price=?, spec=?, image=?, category_id=?
-		 WHERE id=?`,
-		[code || null, name, description || null, Number(price) || 0, spec || null, image || null, category_id || null, productId]
+     SET code=?, name=?, description=?, price=?, spec=?, image=?, category_id=?
+     WHERE id=?`,
+		[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, category_id || null, productId]
 	);
 
-	res.redirect('/admin/products');
+	return res.redirect('/admin/products');
 });
 
 /* =========================

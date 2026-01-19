@@ -57,10 +57,12 @@
                     <input class="form-control" name="spec" placeholder="예) 1000x2000 / t=3.0mm">
                 </div>
 
-                <div class="col-12">
-                    <label class="form-label small text-muted">이미지 URL(image)</label>
-                    <input class="form-control" name="image" placeholder="예) /images/sample.png 또는 https://...">
-                </div>
+                <label class="form-label small text-muted">이미지 업로드</label>
+                <input class="form-control" type="file" name="imageFile" accept="image/*">
+
+                <div class="form-text">또는 이미지 URL 입력(선택)</div>
+                <input class="form-control mt-2" name="image" placeholder="https://... 또는 /uploads/...">
+
 
                 <div class="col-12">
                     <label class="form-label small text-muted">설명(description)</label>
