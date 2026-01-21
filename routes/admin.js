@@ -2,9 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const xlsx = require('xlsx');
-const fs = require('fs');
+const fs = require('fs/promises');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
+const sharp = require('sharp');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -26,6 +27,27 @@ const uploadImage = multer({
 	fileFilter,
 	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
+
+async function processImageToWebp(reqFilePath) {
+	const base = `p_${Date.now()}`;
+	const fileName = `${base}.webp`;
+	const thumbName = `${base}_thumb.webp`;
+
+	const outDir = path.join(__dirname, '..', 'public', 'uploads');
+	const outFull = path.join(outDir, fileName);
+	const outThumb = path.join(outDir, thumbName);
+
+	// 원본(상세용): 최대 1200px
+	await sharp(reqFilePath).resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 75 }).toFile(outFull);
+
+	// 썸네일(목록용): 320px
+	await sharp(reqFilePath).resize({ width: 320, withoutEnlargement: true }).webp({ quality: 70 }).toFile(outThumb);
+
+	return {
+		image: `/uploads/${fileName}`,
+		image_thumb: `/uploads/${thumbName}`,
+	};
+}
 
 /* =========================
    공통: 관리자만 접근
@@ -86,23 +108,30 @@ router.get('/products/new', async (req, res) => {
 router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image } = req.body;
-		// 파일 업로드가 있으면 그걸 사용, 없으면 기존 URL 입력값(image) 사용
-		const imagePath = req.file ? `/uploads/${req.file.filename}` : image || null;
 
-		await db.execute(`INSERT INTO products (code, name, description, price, spec, image, category_id) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
-			code || null,
-			name,
-			description || null,
-			Number(price) || 0,
-			spec || null,
-			imagePath,
-			category_id || null,
-		]);
+		let imagePath = image || null;
+		let thumbPath = null;
 
-		res.redirect('/admin/products');
+		if (req.file) {
+			const processed = await processImageToWebp(req.file.path);
+
+			// multer 임시파일 삭제
+			await fs.unlink(req.file.path).catch(() => {});
+
+			imagePath = processed.image;
+			thumbPath = processed.image_thumb;
+		}
+
+		await db.execute(
+			`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, thumbPath, category_id || null],
+		);
+
+		return res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 등록 오류');
+		return res.status(500).send('상품 등록 오류');
 	}
 });
 
@@ -121,19 +150,44 @@ router.get('/products/:id/edit', async (req, res) => {
 });
 
 router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
-	const productId = Number(req.params.id);
-	const { code, name, description, price, spec, category_id, image } = req.body;
+	try {
+		const productId = Number(req.params.id);
+		const { code, name, description, price, spec, category_id, image } = req.body;
 
-	const imagePath = req.file ? `/uploads/${req.file.filename}` : image || null;
+		// 기존 이미지 유지용 조회
+		const [rows] = await db.execute('SELECT image, image_thumb FROM products WHERE id = ? LIMIT 1', [productId]);
+		if (!rows.length) return res.status(404).send('상품 없음');
 
-	await db.execute(
-		`UPDATE products
-     SET code=?, name=?, description=?, price=?, spec=?, image=?, category_id=?
-     WHERE id=?`,
-		[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, category_id || null, productId]
-	);
+		let imagePath = rows[0].image || null;
+		let thumbPath = rows[0].image_thumb || null;
 
-	return res.redirect('/admin/products');
+		// 새 파일 업로드가 있으면 교체
+		if (req.file) {
+			const processed = await processImageToWebp(req.file.path);
+			await fs.unlink(req.file.path).catch(() => {});
+
+			imagePath = processed.image;
+			thumbPath = processed.image_thumb;
+		} else {
+			// 파일 없고 URL 입력(image)이 있으면 그걸로 교체 (thumb는 null)
+			if (image && String(image).trim()) {
+				imagePath = String(image).trim();
+				thumbPath = null;
+			}
+		}
+
+		await db.execute(
+			`UPDATE products
+       SET code=?, name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?
+       WHERE id=?`,
+			[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, thumbPath, category_id || null, productId],
+		);
+
+		return res.redirect('/admin/products');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('상품 수정 오류');
+	}
 });
 
 /* =========================
@@ -186,7 +240,7 @@ router.post('/products/import', upload.single('file'), async (req, res) => {
 			await db.execute(
 				`INSERT INTO products (code, name, price, spec)
 				 VALUES (?, ?, ?, ?)`,
-				[r.code || null, r.name, Number(r.price) || 0, r.spec || null]
+				[r.code || null, r.name, Number(r.price) || 0, r.spec || null],
 			);
 
 			success.push({ row: i + 2, name: r.name });
@@ -250,7 +304,7 @@ router.get('/products/export', requireAdmin, async (req, res) => {
 				image: r.image,
 				description: r.description,
 				created_at: r.created_at,
-			}))
+			})),
 		);
 
 		// (선택) 컬럼 폭 자동 느낌
@@ -375,7 +429,7 @@ router.get('/uploads/:id/fails/export', requireAdmin, async (req, res) => {
       WHERE upload_id = ?
       ORDER BY row_number ASC
     `,
-			[uploadId]
+			[uploadId],
 		);
 
 		const ws = xlsx.utils.json_to_sheet(rows);
