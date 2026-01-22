@@ -7,6 +7,9 @@ const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const sharp = require('sharp');
 const os = require('os');
+const cpuCores = os.cpus().length;
+const loadInfo = loadHealth(load[0], cpuCores);
+const memUsedPct = pct(usedMem, totalMem);
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -30,6 +33,35 @@ const uploadImage = multer({
 });
 
 const { exec } = require('child_process');
+
+function pct(part, total) {
+	if (!total) return 0;
+	return Math.round((part / total) * 100);
+}
+
+function healthLabel(level) {
+	if (level === 'good') return { text: '좋음', badge: 'success' };
+	if (level === 'warn') return { text: '주의', badge: 'warning' };
+	return { text: '위험', badge: 'danger' };
+}
+
+function loadHealth(load1, cpuCores) {
+	// 코어 대비 0.7 미만 = good, 0.7~1.0 = warn, 1.0 이상 = bad
+	const ratio = cpuCores ? load1 / cpuCores : load1;
+	if (ratio < 0.7) return { level: 'good', ratio };
+	if (ratio < 1.0) return { level: 'warn', ratio };
+	return { level: 'bad', ratio };
+}
+
+function diskHealth(usedPct) {
+	if (usedPct < 70) return 'good';
+	if (usedPct < 85) return 'warn';
+	return 'bad';
+}
+const dfLine = await execAsync(`df -h / | tail -n 1 | awk '{print $2,$3,$4,$5}'`);
+// 예: "29G 7.5G 20G 28%"
+const [diskTotal, diskUsed, diskAvail, diskUsedPctRaw] = (dfLine || '').split(/\s+/);
+const diskUsedPct = Number((diskUsedPctRaw || '0').replace('%', '')) || 0;
 
 function execAsync(cmd) {
 	return new Promise((resolve) => {
@@ -100,12 +132,26 @@ router.get('/dashboard', async (req, res) => {
 				load1: load[0],
 				load5: load[1],
 				load15: load[2],
+				cpuCores,
 				memTotalMB: Math.round(totalMem / 1024 / 1024),
 				memUsedMB: Math.round(usedMem / 1024 / 1024),
 				memFreeMB: Math.round(freeMem / 1024 / 1024),
-				diskLine: df, // "총 사용 가능 사용%"
-				nginxHead: nginxHead, // "HTTP/1.1 200 OK"
-				vnstatLine: vn, // 길게 한 줄
+				memUsedPct,
+				diskTotal,
+				diskUsed,
+				diskAvail,
+				diskUsedPct,
+				nginxHead, // "HTTP/1.1 200 OK"
+				// vnstat는 oneline 대신 보기 좋게(가능하면) 2줄로 뽑기
+				vnstatDaily: await execAsync(`vnstat -d 2>/dev/null | tail -n 1`),
+				vnstatMonthly: await execAsync(`vnstat -m 2>/dev/null | tail -n 1`),
+
+				// 해석(비전공자용)
+				cpuStatus: healthLabel(loadInfo.level),
+				cpuRatioPct: Math.round(loadInfo.ratio * 100), // 코어 대비 %
+				memStatus: healthLabel(memUsedPct < 70 ? 'good' : memUsedPct < 85 ? 'warn' : 'bad'),
+				diskStatus: healthLabel(diskHealth(diskUsedPct)),
+				nginxStatus: nginxHead.includes('200') ? healthLabel('good') : healthLabel('warn'),
 			},
 		});
 	} catch (err) {

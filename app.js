@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
@@ -12,11 +14,9 @@ const authRouter = require('./routes/auth');
 const shopRouter = require('./routes/shop');
 const adminRouter = require('./routes/admin');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 app.use(
 	session({
@@ -24,7 +24,7 @@ app.use(
 		resave: false,
 		saveUninitialized: false,
 		cookie: { maxAge: 1000 * 60 * 60 },
-	})
+	}),
 );
 
 // locals
@@ -66,6 +66,8 @@ app.use('/', companyRouter);
 app.use('/auth', authRouter);
 app.use('/shop', shopRouter);
 app.use('/admin', adminRouter);
+// ✅ API 라우팅 (RN 전용)
+app.use('/api', require('./routes/api'));
 
 // 404
 app.use((req, res) => {

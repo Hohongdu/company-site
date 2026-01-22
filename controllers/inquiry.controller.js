@@ -1,0 +1,40 @@
+const inquiryService = require('../services/inquiry.service');
+
+const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+
+exports.create = async (req, res) => {
+	try {
+		const name = String(req.body?.name || '').trim();
+		const email = String(req.body?.email || '').trim();
+		const message = String(req.body?.message || '').trim();
+
+		if (!name || !email || !message) {
+			return res.status(400).json({ ok: false, message: '필수값 누락' });
+		}
+		if (!isEmail(email)) {
+			return res.status(400).json({ ok: false, message: '이메일 형식 오류' });
+		}
+		if (name.length > 50) {
+			return res.status(400).json({ ok: false, message: '이름이 너무 깁니다' });
+		}
+
+		const saved = await inquiryService.createInquiry({ name, email, message });
+		return res.json({ ok: true, id: saved.id });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ ok: false });
+	}
+};
+
+exports.list = async (req, res) => {
+	try {
+		const limit = req.query?.limit;
+		const offset = req.query?.offset;
+
+		const rows = await inquiryService.listInquiries({ limit, offset });
+		return res.json({ ok: true, data: rows });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ ok: false });
+	}
+};
