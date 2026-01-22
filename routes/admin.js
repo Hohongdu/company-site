@@ -10,7 +10,7 @@ const sharp = require('sharp');
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 const storage = multer.diskStorage({
-	destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
+	destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'tmp')),
 	filename: (req, file, cb) => {
 		const ext = path.extname(file.originalname).toLowerCase();
 		cb(null, `p_${Date.now()}${ext}`);
@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-	const ok = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype);
+	const ok = ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype);
 	cb(ok ? null : new Error('이미지 파일만 업로드 가능합니다.'), ok);
 };
 
@@ -253,7 +253,7 @@ router.post('/products/import', upload.single('file'), async (req, res) => {
 	}
 
 	// 🔥 업로드 파일 삭제 (C-4)
-	fs.unlinkSync(filePath);
+	await fs.unlink(filePath);
 
 	res.render('admin/import-result', {
 		success,
