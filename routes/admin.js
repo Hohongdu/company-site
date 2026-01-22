@@ -6,6 +6,7 @@ const fs = require('fs/promises');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const sharp = require('sharp');
+const os = require('os');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -27,6 +28,17 @@ const uploadImage = multer({
 	fileFilter,
 	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
+
+const { exec } = require('child_process');
+
+function execAsync(cmd) {
+	return new Promise((resolve) => {
+		exec(cmd, (err, stdout) => {
+			if (err) return resolve('');
+			resolve(String(stdout || '').trim());
+		});
+	});
+}
 
 async function processImageToWebp(reqFilePath) {
 	const base = `p_${Date.now()}`;
@@ -66,10 +78,34 @@ router.get('/dashboard', async (req, res) => {
 		const [[productCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM products');
 		const [[categoryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM categories');
 
+		// --- 시스템 상태 ---
+		const load = os.loadavg(); // [1m,5m,15m]
+		const totalMem = os.totalmem();
+		const freeMem = os.freemem();
+		const usedMem = totalMem - freeMem;
+
+		// 디스크 사용량(루트)
+		const df = await execAsync(`df -h / | tail -n 1 | awk '{print $2,$3,$4,$5}'`);
+		// nginx 응답 체크
+		const nginxHead = await execAsync(`curl -I -s http://127.0.0.1:8080/ | head -n 1`);
+		// vnstat (있으면)
+		const vn = await execAsync(`vnstat --oneline 2>/dev/null`);
+
 		res.render('admin/dashboard', {
 			stats: {
 				productCnt: productCnt.cnt,
 				categoryCnt: categoryCnt.cnt,
+			},
+			sys: {
+				load1: load[0],
+				load5: load[1],
+				load15: load[2],
+				memTotalMB: Math.round(totalMem / 1024 / 1024),
+				memUsedMB: Math.round(usedMem / 1024 / 1024),
+				memFreeMB: Math.round(freeMem / 1024 / 1024),
+				diskLine: df, // "총 사용 가능 사용%"
+				nginxHead: nginxHead, // "HTTP/1.1 200 OK"
+				vnstatLine: vn, // 길게 한 줄
 			},
 		});
 	} catch (err) {

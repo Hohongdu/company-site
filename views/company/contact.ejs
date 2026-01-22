@@ -44,4 +44,52 @@
         </div>
     </section>
 
-    <%- include('../layouts/company-bottom') %>
+    <%- include('../layouts/company-bottom') %><%- include('../layouts/company-top', { title: '문의하기 - CERAMIC PRO' ,
+            active: 'contact' }) %>
+
+            <section class="section" id="contact">
+                <div class="container-wide">
+                    <h2 class="section-title">문의하기</h2>
+                    <p class="section-sub">제품 문의, 견적 요청 등 언제든지 연락주세요</p>
+
+                    <div class="contact-grid">
+                        <div>
+                            <h3 class="contact-title">연락처 정보</h3>
+                            <div class="kv">
+                                <div><a href="tel:02-1234-0000">전화</a></div>
+                                <div>02-1234-xxxx</div>
+                                <div><a href="mailto:info@ceramicpro.com">이메일</a></div>
+                                <div>info@ceramicpro.com</div>
+                                <div><span style="color:var(--accent); font-weight:800;">팩스</span></div>
+                                <div>02-1234-xxxx</div>
+                                <div><span style="color:var(--accent); font-weight:800;">주소</span></div>
+                                <div>
+                                    서울특별시 강남구 테헤란로 123<br />
+                                    세라믹프로 빌딩 5층
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="contact-title">운영 시간</h3>
+                            <div class="hours">
+                                <div class="row2">
+                                    <div class="label">평일</div>
+                                    <div class="val">오전 9:00 - 오후 6:00</div>
+                                </div>
+                                <div class="row2">
+                                    <div class="label">토요일</div>
+                                    <div class="val">오전 9:00 - 오후 1:00</div>
+                                </div>
+                                <div class="row2">
+                                    <div class="label">일요일 및 공휴일</div>
+                                    <div class="val">휴무</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <%- include('../layouts/company-bottom') %>

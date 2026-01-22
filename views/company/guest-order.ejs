@@ -1,0 +1,26 @@
+<%- include('../layouts/company-top', { title: '비회원 주문배송 조회 - CERAMIC PRO' }) %>
+
+    <section class="section">
+        <div class="container-wide" style="max-width:720px;">
+            <h2 class="section-title" style="text-align:left;">비회원 주문배송 조회</h2>
+            <p class="section-sub" style="text-align:left; margin-left:0;">
+                현재 데모 사이트에서는 실제 주문조회 기능이 연결되어 있지 않습니다.<br />
+                주문번호/연락처 조회 기능을 붙이려면 주문 테이블 연동 후 이 페이지를 확장하면 됩니다.
+            </p>
+
+            <div class="p-4 border rounded-4 bg-white">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">주문번호</label>
+                    <input class="form-control" placeholder="예: ODR-2026-0001" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">연락처</label>
+                    <input class="form-control" placeholder="예: 010-1234-5678" />
+                </div>
+                <button class="btn btn-primary w-100" type="button" disabled>조회</button>
+                <div class="small text-muted mt-2">* 기능 연결 시 활성화됩니다.</div>
+            </div>
+        </div>
+    </section>
+
+    <%- include('../layouts/company-bottom') %>
