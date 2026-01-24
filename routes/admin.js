@@ -1,39 +1,21 @@
+// routes/admin.js
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const xlsx = require('xlsx');
 const fs = require('fs/promises');
+const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const sharp = require('sharp');
 const os = require('os');
-const cpuCores = os.cpus().length;
-const loadInfo = loadHealth(load[0], cpuCores);
-const memUsedPct = pct(usedMem, totalMem);
-
-const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
-const storage = multer.diskStorage({
-	destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'tmp')),
-	filename: (req, file, cb) => {
-		const ext = path.extname(file.originalname).toLowerCase();
-		cb(null, `p_${Date.now()}${ext}`);
-	},
-});
-
-const fileFilter = (req, file, cb) => {
-	const ok = ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype);
-	cb(ok ? null : new Error('이미지 파일만 업로드 가능합니다.'), ok);
-};
-
-const uploadImage = multer({
-	storage,
-	fileFilter,
-	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-});
-
 const { exec } = require('child_process');
 
+const router = express.Router();
+
+/* =========================
+   유틸
+========================= */
 function pct(part, total) {
 	if (!total) return 0;
 	return Math.round((part / total) * 100);
@@ -58,10 +40,6 @@ function diskHealth(usedPct) {
 	if (usedPct < 85) return 'warn';
 	return 'bad';
 }
-const dfLine = await execAsync(`df -h / | tail -n 1 | awk '{print $2,$3,$4,$5}'`);
-// 예: "29G 7.5G 20G 28%"
-const [diskTotal, diskUsed, diskAvail, diskUsedPctRaw] = (dfLine || '').split(/\s+/);
-const diskUsedPct = Number((diskUsedPctRaw || '0').replace('%', '')) || 0;
 
 function execAsync(cmd) {
 	return new Promise((resolve) => {
@@ -72,14 +50,43 @@ function execAsync(cmd) {
 	});
 }
 
+/* =========================
+   업로드/이미지 설정
+========================= */
+const upload = multer({ dest: 'uploads/' });
+
+// tmp / public/uploads 폴더 보장
+const tmpDir = path.join(__dirname, '..', 'tmp');
+const publicUploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fssync.existsSync(tmpDir)) fssync.mkdirSync(tmpDir, { recursive: true });
+if (!fssync.existsSync(publicUploadsDir)) fssync.mkdirSync(publicUploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => cb(null, tmpDir),
+	filename: (req, file, cb) => {
+		const ext = path.extname(file.originalname).toLowerCase();
+		cb(null, `p_${Date.now()}${ext}`);
+	},
+});
+
+const fileFilter = (req, file, cb) => {
+	const ok = ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype);
+	cb(ok ? null : new Error('이미지 파일만 업로드 가능합니다.'), ok);
+};
+
+const uploadImage = multer({
+	storage,
+	fileFilter,
+	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
 async function processImageToWebp(reqFilePath) {
 	const base = `p_${Date.now()}`;
 	const fileName = `${base}.webp`;
 	const thumbName = `${base}_thumb.webp`;
 
-	const outDir = path.join(__dirname, '..', 'public', 'uploads');
-	const outFull = path.join(outDir, fileName);
-	const outThumb = path.join(outDir, thumbName);
+	const outFull = path.join(publicUploadsDir, fileName);
+	const outThumb = path.join(publicUploadsDir, thumbName);
 
 	// 원본(상세용): 최대 1200px
 	await sharp(reqFilePath).resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 75 }).toFile(outFull);
@@ -101,9 +108,7 @@ router.use(requireAdmin);
 /* =========================
    관리자 메인 → 대시보드
 ========================= */
-router.get('/', (req, res) => {
-	return res.redirect('/admin/dashboard');
-});
+router.get('/', (req, res) => res.redirect('/admin/dashboard'));
 
 router.get('/dashboard', async (req, res) => {
 	try {
@@ -111,17 +116,42 @@ router.get('/dashboard', async (req, res) => {
 		const [[categoryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM categories');
 
 		// --- 시스템 상태 ---
+		const cpuCores = os.cpus().length;
 		const load = os.loadavg(); // [1m,5m,15m]
 		const totalMem = os.totalmem();
 		const freeMem = os.freemem();
 		const usedMem = totalMem - freeMem;
 
-		// 디스크 사용량(루트)
-		const df = await execAsync(`df -h / | tail -n 1 | awk '{print $2,$3,$4,$5}'`);
-		// nginx 응답 체크
-		const nginxHead = await execAsync(`curl -I -s http://127.0.0.1:8080/ | head -n 1`);
-		// vnstat (있으면)
-		const vn = await execAsync(`vnstat --oneline 2>/dev/null`);
+		const memUsedPct = pct(usedMem, totalMem);
+		const loadInfo = loadHealth(load[0], cpuCores);
+
+		// 플랫폼별(라즈베리파이/리눅스 vs 윈도우) 처리
+		let diskTotal = 'N/A';
+		let diskUsed = 'N/A';
+		let diskAvail = 'N/A';
+		let diskUsedPct = 0;
+
+		let nginxHead = 'N/A';
+		let vnstatDaily = 'N/A';
+		let vnstatMonthly = 'N/A';
+
+		if (process.platform !== 'win32') {
+			// 디스크 사용량(루트)
+			const dfLine = await execAsync(`df -h / | tail -n 1 | awk '{print $2,$3,$4,$5}'`);
+			// 예: "29G 7.5G 20G 28%"
+			const [t, u, a, pctRaw] = (dfLine || '').split(/\s+/);
+			diskTotal = t || '';
+			diskUsed = u || '';
+			diskAvail = a || '';
+			diskUsedPct = Number(String(pctRaw || '0').replace('%', '')) || 0;
+
+			// nginx 응답 체크 (너가 8080 프록시로 쓰는 전제)
+			nginxHead = await execAsync(`curl -I -s http://127.0.0.1:8080/ | head -n 1`);
+
+			// vnstat (있으면)
+			vnstatDaily = await execAsync(`vnstat -d 2>/dev/null | tail -n 1`);
+			vnstatMonthly = await execAsync(`vnstat -m 2>/dev/null | tail -n 1`);
+		}
 
 		res.render('admin/dashboard', {
 			stats: {
@@ -137,21 +167,22 @@ router.get('/dashboard', async (req, res) => {
 				memUsedMB: Math.round(usedMem / 1024 / 1024),
 				memFreeMB: Math.round(freeMem / 1024 / 1024),
 				memUsedPct,
+
 				diskTotal,
 				diskUsed,
 				diskAvail,
 				diskUsedPct,
-				nginxHead, // "HTTP/1.1 200 OK"
-				// vnstat는 oneline 대신 보기 좋게(가능하면) 2줄로 뽑기
-				vnstatDaily: await execAsync(`vnstat -d 2>/dev/null | tail -n 1`),
-				vnstatMonthly: await execAsync(`vnstat -m 2>/dev/null | tail -n 1`),
+
+				nginxHead, // "HTTP/1.1 200 OK" or "N/A"
+				vnstatDaily,
+				vnstatMonthly,
 
 				// 해석(비전공자용)
 				cpuStatus: healthLabel(loadInfo.level),
 				cpuRatioPct: Math.round(loadInfo.ratio * 100), // 코어 대비 %
 				memStatus: healthLabel(memUsedPct < 70 ? 'good' : memUsedPct < 85 ? 'warn' : 'bad'),
 				diskStatus: healthLabel(diskHealth(diskUsedPct)),
-				nginxStatus: nginxHead.includes('200') ? healthLabel('good') : healthLabel('warn'),
+				nginxStatus: String(nginxHead || '').includes('200') ? healthLabel('good') : healthLabel('warn'),
 			},
 		});
 	} catch (err) {
@@ -171,7 +202,6 @@ router.get('/products', async (req, res) => {
 			LEFT JOIN categories c ON c.id = p.category_id
 			ORDER BY p.id DESC
 		`);
-
 		res.render('admin/products', { products });
 	} catch (err) {
 		console.error(err);
@@ -183,8 +213,13 @@ router.get('/products', async (req, res) => {
    상품 등록
 ========================= */
 router.get('/products/new', async (req, res) => {
-	const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
-	res.render('admin/admin-product-new', { categories });
+	try {
+		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
+		res.render('admin/admin-product-new', { categories });
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('상품 등록 페이지 로딩 오류');
+	}
 });
 
 router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
@@ -196,10 +231,8 @@ router.post('/products/new', uploadImage.single('imageFile'), async (req, res) =
 
 		if (req.file) {
 			const processed = await processImageToWebp(req.file.path);
-
 			// multer 임시파일 삭제
 			await fs.unlink(req.file.path).catch(() => {});
-
 			imagePath = processed.image;
 			thumbPath = processed.image_thumb;
 		}
@@ -221,14 +254,18 @@ router.post('/products/new', uploadImage.single('imageFile'), async (req, res) =
    상품 수정
 ========================= */
 router.get('/products/:id/edit', async (req, res) => {
-	const productId = Number(req.params.id);
+	try {
+		const productId = Number(req.params.id);
 
-	const [[product]] = await db.execute('SELECT * FROM products WHERE id = ?', [productId]);
-	const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
+		const [[product]] = await db.execute('SELECT * FROM products WHERE id = ?', [productId]);
+		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
 
-	if (!product) return res.status(404).send('상품 없음');
-
-	res.render('admin/admin-product-edit', { product, categories });
+		if (!product) return res.status(404).send('상품 없음');
+		res.render('admin/admin-product-edit', { product, categories });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('상품 수정 페이지 로딩 오류');
+	}
 });
 
 router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
@@ -247,7 +284,6 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, r
 		if (req.file) {
 			const processed = await processImageToWebp(req.file.path);
 			await fs.unlink(req.file.path).catch(() => {});
-
 			imagePath = processed.image;
 			thumbPath = processed.image_thumb;
 		} else {
@@ -276,12 +312,17 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, r
    상품 삭제 (장바구니 정리 포함)
 ========================= */
 router.post('/products/:id/delete', async (req, res) => {
-	const productId = Number(req.params.id);
+	try {
+		const productId = Number(req.params.id);
 
-	await db.execute('DELETE FROM cart_items WHERE product_id = ?', [productId]);
-	await db.execute('DELETE FROM products WHERE id = ?', [productId]);
+		await db.execute('DELETE FROM cart_items WHERE product_id = ?', [productId]);
+		await db.execute('DELETE FROM products WHERE id = ?', [productId]);
 
-	res.redirect('/admin/products');
+		res.redirect('/admin/products');
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('상품 삭제 오류');
+	}
 });
 
 /* =========================
@@ -290,7 +331,6 @@ router.post('/products/:id/delete', async (req, res) => {
 router.get('/products/import', async (req, res) => {
 	try {
 		// 업로드 히스토리 테이블명이 예: upload_histories 라고 가정
-		// 너 프로젝트에서 테이블명 다르면 여기만 바꾸면 됨
 		const [uploads] = await db.execute(`
       SELECT id, original_name, stored_name, status, success_count, fail_count, created_at
       FROM upload_histories
@@ -301,52 +341,52 @@ router.get('/products/import', async (req, res) => {
 		return res.render('admin/admin-product-import', { uploads });
 	} catch (err) {
 		console.error(err);
-		// 히스토리 못 불러와도 페이지는 떠야 하니까 빈 배열
 		return res.render('admin/admin-product-import', { uploads: [] });
 	}
 });
 
 router.post('/products/import', upload.single('file'), async (req, res) => {
-	const filePath = req.file.path;
-	const workbook = xlsx.readFile(filePath);
-	const sheet = workbook.Sheets[workbook.SheetNames[0]];
-	const rows = xlsx.utils.sheet_to_json(sheet);
+	try {
+		const filePath = req.file.path;
+		const workbook = xlsx.readFile(filePath);
+		const sheet = workbook.Sheets[workbook.SheetNames[0]];
+		const rows = xlsx.utils.sheet_to_json(sheet);
 
-	const success = [];
-	const fail = [];
+		const success = [];
+		const fail = [];
 
-	for (let i = 0; i < rows.length; i++) {
-		try {
-			const r = rows[i];
+		for (let i = 0; i < rows.length; i++) {
+			try {
+				const r = rows[i];
 
-			await db.execute(
-				`INSERT INTO products (code, name, price, spec)
-				 VALUES (?, ?, ?, ?)`,
-				[r.code || null, r.name, Number(r.price) || 0, r.spec || null],
-			);
+				await db.execute(
+					`INSERT INTO products (code, name, price, spec)
+					 VALUES (?, ?, ?, ?)`,
+					[r.code || null, r.name, Number(r.price) || 0, r.spec || null],
+				);
 
-			success.push({ row: i + 2, name: r.name });
-		} catch (err) {
-			fail.push({
-				row: i + 2,
-				reason: err.message,
-			});
+				success.push({ row: i + 2, name: r.name });
+			} catch (err) {
+				fail.push({
+					row: i + 2,
+					reason: err.message,
+				});
+			}
 		}
+
+		// 업로드 파일 삭제
+		await fs.unlink(filePath).catch(() => {});
+
+		res.render('admin/import-result', { success, fail });
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('엑셀 업로드 처리 오류');
 	}
-
-	// 🔥 업로드 파일 삭제 (C-4)
-	await fs.unlink(filePath);
-
-	res.render('admin/import-result', {
-		success,
-		fail,
-	});
 });
 
 // ✅ 상품 엑셀 다운로드
-router.get('/products/export', requireAdmin, async (req, res) => {
+router.get('/products/export', async (req, res) => {
 	try {
-		// (선택) 카테고리 필터: /admin/products/export?category=3
 		const categoryId = req.query.category ? Number(req.query.category) : null;
 
 		let sql = `
@@ -374,7 +414,6 @@ router.get('/products/export', requireAdmin, async (req, res) => {
 
 		const [rows] = await db.execute(sql, params);
 
-		// 1) JSON -> Sheet
 		const worksheet = xlsx.utils.json_to_sheet(
 			rows.map((r) => ({
 				id: r.id,
@@ -382,31 +421,18 @@ router.get('/products/export', requireAdmin, async (req, res) => {
 				name: r.name,
 				category_name: r.category_name,
 				price: r.price,
-				spec: r.spec, // ✅ spec 포함
+				spec: r.spec,
 				image: r.image,
 				description: r.description,
 				created_at: r.created_at,
 			})),
 		);
 
-		// (선택) 컬럼 폭 자동 느낌
-		worksheet['!cols'] = [
-			{ wch: 6 }, // id
-			{ wch: 14 }, // code
-			{ wch: 24 }, // name
-			{ wch: 16 }, // category_name
-			{ wch: 10 }, // price
-			{ wch: 24 }, // spec
-			{ wch: 28 }, // image
-			{ wch: 40 }, // description
-			{ wch: 20 }, // created_at
-		];
+		worksheet['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 24 }, { wch: 16 }, { wch: 10 }, { wch: 24 }, { wch: 28 }, { wch: 40 }, { wch: 20 }];
 
-		// 2) Workbook 생성
 		const wb = xlsx.utils.book_new();
 		xlsx.utils.book_append_sheet(wb, worksheet, 'products');
 
-		// 3) Buffer로 만들어서 다운로드 응답
 		const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
 		const fileName = categoryId ? `products_category_${categoryId}_${Date.now()}.xlsx` : `products_${Date.now()}.xlsx`;
@@ -425,32 +451,46 @@ router.get('/products/export', requireAdmin, async (req, res) => {
    카테고리
 ========================= */
 router.get('/categories', async (req, res) => {
-	const [categories] = await db.execute('SELECT * FROM categories ORDER BY id DESC');
-	res.render('admin/categories', { categories });
+	try {
+		const [categories] = await db.execute('SELECT * FROM categories ORDER BY id DESC');
+		res.render('admin/categories', { categories });
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('카테고리 로딩 오류');
+	}
 });
 
 router.post('/categories', async (req, res) => {
-	const name = req.body.name.trim();
-	const slug = name.toLowerCase().replace(/\s+/g, '-');
+	try {
+		const name = String(req.body.name || '').trim();
+		const slug = name.toLowerCase().replace(/\s+/g, '-');
 
-	await db.execute('INSERT INTO categories (name, slug) VALUES (?, ?)', [name, slug]);
-	res.redirect('/admin/categories');
+		if (!name) return res.status(400).send('카테고리 이름이 필요합니다.');
+
+		await db.execute('INSERT INTO categories (name, slug) VALUES (?, ?)', [name, slug]);
+		res.redirect('/admin/categories');
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('카테고리 추가 오류');
+	}
 });
 
 router.post('/categories/:id/delete', async (req, res) => {
-	const id = Number(req.params.id);
+	try {
+		const id = Number(req.params.id);
 
-	const [[cnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM products WHERE category_id=?', [id]);
+		const [[cnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM products WHERE category_id=?', [id]);
+		if (cnt.cnt > 0) return res.send('이 카테고리를 사용하는 상품이 있습니다.');
 
-	if (cnt.cnt > 0) {
-		return res.send('이 카테고리를 사용하는 상품이 있습니다.');
+		await db.execute('DELETE FROM categories WHERE id=?', [id]);
+		res.redirect('/admin/categories');
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('카테고리 삭제 오류');
 	}
-
-	await db.execute('DELETE FROM categories WHERE id=?', [id]);
-	res.redirect('/admin/categories');
 });
 
-router.get('/categories/export', requireAdmin, async (req, res) => {
+router.get('/categories/export', async (req, res) => {
 	try {
 		const [rows] = await db.execute(`
       SELECT id, name, slug, created_at
@@ -474,7 +514,7 @@ router.get('/categories/export', requireAdmin, async (req, res) => {
 	}
 });
 
-router.get('/uploads/export', requireAdmin, async (req, res) => {
+router.get('/uploads/export', async (req, res) => {
 	try {
 		const [rows] = await db.execute(`
       SELECT id, original_name, stored_name, status, success_count, fail_count, created_at
@@ -498,7 +538,7 @@ router.get('/uploads/export', requireAdmin, async (req, res) => {
 	}
 });
 
-router.get('/uploads/:id/fails/export', requireAdmin, async (req, res) => {
+router.get('/uploads/:id/fails/export', async (req, res) => {
 	try {
 		const uploadId = Number(req.params.id);
 		if (!uploadId) return res.status(400).send('upload_id가 올바르지 않습니다.');
@@ -530,9 +570,10 @@ router.get('/uploads/:id/fails/export', requireAdmin, async (req, res) => {
 	}
 });
 
-// routes/admin.js 상단에 이미 requireAdmin, router.use(requireAdmin) 되어있다고 가정
-
-// ✅ 상품 코드 중복 체크 (AJAX)
+/* =========================
+   (관리자 내부) 상품 코드 중복 체크 (AJAX)
+   - 기존 코드 유지: /admin/api/products/check-code
+========================= */
 router.get('/api/products/check-code', async (req, res) => {
 	try {
 		const code = String(req.query.code || '').trim();

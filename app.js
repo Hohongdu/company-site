@@ -60,6 +60,7 @@ app.use(async (req, res, next) => {
 // view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('trust proxy', 1);
 
 // 라우터 연결
 app.use('/', companyRouter);
@@ -72,6 +73,22 @@ app.use('/api', require('./routes/api'));
 // 404
 app.use((req, res) => {
 	res.status(404).render('404', { message: '페이지를 찾을 수 없습니다.' });
+});
+
+// 500 (에러 핸들러: 파라미터 4개여야 함)
+app.use((err, req, res, next) => {
+	console.error('SERVER ERROR:', err);
+
+	// 오류 추적용 ID (로그와 매칭)
+	const errorId = `E-${Date.now()}`;
+
+	// 헤더가 이미 전송된 경우(드물지만) Express 기본 처리로 넘김
+	if (res.headersSent) return next(err);
+
+	res.status(500).render('500', {
+		message: '서버 오류가 발생했습니다.',
+		errorId,
+	});
 });
 
 app.listen(PORT, () => {
