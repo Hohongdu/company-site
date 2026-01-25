@@ -6,7 +6,6 @@ const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const helmet = require('helmet');
-const session = require('express-session');
 const csurf = require('csurf');
 
 const db = require('./db');
