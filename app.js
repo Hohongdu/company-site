@@ -5,6 +5,9 @@ const path = require('path');
 const session = require('express-session');
 const app = express();
 const PORT = process.env.PORT || 3000;
+const helmet = require('helmet');
+const session = require('express-session');
+const csurf = require('csurf');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
@@ -17,7 +20,44 @@ const adminRouter = require('./routes/admin');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+// 1) helmet (CSP는 nginx에서 하니까 off 추천)
+app.use(helmet({ contentSecurityPolicy: false }));
 
+// 3) session (csurf보다 먼저!)
+app.use(
+	session({
+		name: 'sid',
+		secret: process.env.SESSION_SECRET,
+		resave: false,
+		saveUninitialized: false,
+		cookie: {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production', // HTTPS면 true가 맞음
+			sameSite: 'lax',
+			maxAge: 1000 * 60 * 60 * 2, // 2시간
+		},
+	}),
+);
+
+/**
+ * 4) csurf
+ *   - 전체에 걸면 개발 중 폼이 많은 곳에서 한 번에 다 깨질 수 있어서
+ *   - 먼저 관리자(/admin) + 로그인(/auth) 같은 “폼 POST 많은 곳”에만 거는 걸 추천
+ */
+const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
+
+// 관리자/인증 라우트에만 적용 (추천)
+app.use('/admin', csrfProtection);
+app.use('/auth', csrfProtection);
+
+// EJS에서 csrfToken 쓰게 주입 (csrf 적용된 요청에서만 생성 가능)
+app.use((req, res, next) => {
+	// csurf가 걸린 경로에서만 req.csrfToken이 생김
+	if (typeof req.csrfToken === 'function') {
+		res.locals.csrfToken = req.csrfToken();
+	}
+	next();
+});
 app.use(
 	session({
 		secret: process.env.SESSION_SECRET || 'change_me_in_env',
@@ -89,6 +129,12 @@ app.use((err, req, res, next) => {
 		message: '서버 오류가 발생했습니다.',
 		errorId,
 	});
+});
+app.use((err, req, res, next) => {
+	if (err && err.code === 'EBADCSRFTOKEN') {
+		return res.status(403).send('CSRF 토큰이 유효하지 않습니다. 새로고침 후 다시 시도해주세요.');
+	}
+	next(err);
 });
 
 app.listen(PORT, () => {

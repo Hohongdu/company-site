@@ -10,7 +10,12 @@
         </div>
 
         <div class="card-body">
+
+            <!-- ✅ 수정 폼 -->
             <form action="/admin/products/<%= product.id %>/edit" method="post" class="row g-3">
+                <!-- ✅ CSRF -->
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                 <div class="col-md-4">
                     <label class="form-label admin-muted">상품 코드(code)</label>
                     <input type="text" name="code" class="form-control" value="<%= product.code || '' %>">
@@ -47,6 +52,7 @@
                 <div class="col-12">
                     <label class="form-label admin-muted">이미지 URL(image)</label>
                     <input type="text" name="image" class="form-control" value="<%= product.image || '' %>">
+
                     <% if (product.image) { %>
                         <div class="mt-2 admin-muted small">미리보기</div>
                         <img src="<%= product.image %>" alt="preview"
@@ -61,22 +67,25 @@
                 </div>
 
                 <div class="col-12 d-flex flex-wrap gap-2">
-                    <button class="btn btn-admin">
+                    <button type="submit" class="btn btn-admin">
                         <i class="bi bi-save2"></i> 저장하기
                     </button>
 
-                    <a href="/admin/products" class="btn btn-outline-light">
-                        취소
-                    </a>
+                    <a href="/admin/products" class="btn btn-outline-light">취소</a>
 
-                    <form action="/admin/products/<%= product.id %>/delete" method="post" class="ms-auto">
-                        <button class="btn btn-outline-danger"
-                            onclick="return confirm('정말 삭제할까요? 장바구니 항목도 같이 정리됩니다.');">
-                            <i class="bi bi-trash3"></i> 삭제
-                        </button>
-                    </form>
+                    <!-- ✅ 삭제 버튼은 아래 별도 폼의 submit로 연결 -->
+                    <button type="submit" class="btn btn-outline-danger ms-auto" form="deleteForm"
+                        onclick="return confirm('정말 삭제할까요? 장바구니 항목도 같이 정리됩니다.');">
+                        <i class="bi bi-trash3"></i> 삭제
+                    </button>
                 </div>
             </form>
+
+            <!-- ✅ 삭제 폼(중첩 제거) -->
+            <form id="deleteForm" action="/admin/products/<%= product.id %>/delete" method="post" class="d-none">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            </form>
+
         </div>
     </div>
 

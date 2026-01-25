@@ -1,97 +1,100 @@
 <%- include('../layouts/admin-top', { title: '카테고리 관리' , active: 'categories' }) %>
-
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-            <h3 class="mb-1">카테고리</h3>
-            <div class="text-muted small">추가/삭제 및 slug 관리</div>
+    <form action="/admin/products/import" method="post" enctype="multipart/form-data" class="d-grid gap-2">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+                <h3 class="mb-1">카테고리</h3>
+                <div class="text-muted small">추가/삭제 및 slug 관리</div>
+            </div>
         </div>
-    </div>
 
-    <% const list=(typeof categories !=='undefined' && categories) ? categories : []; %>
+        <% const list=(typeof categories !=='undefined' && categories) ? categories : []; %>
 
-        <div class="row g-3">
-            <div class="col-12 col-lg-5">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="mb-3">카테고리 추가</h5>
-                        <form action="/admin/categories" method="post" class="d-grid gap-2">
-                            <div>
-                                <label class="form-label small text-muted">이름</label>
-                                <input class="form-control" name="name" placeholder="예) 보안키, HSM, 부자재" required>
-                            </div>
+            <div class="row g-3">
+                <div class="col-12 col-lg-5">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="mb-3">카테고리 추가</h5>
+                            <form action="/admin/categories" method="post" class="d-grid gap-2">
+                                <div>
+                                    <label class="form-label small text-muted">이름</label>
+                                    <input class="form-control" name="name" placeholder="예) 보안키, HSM, 부자재" required>
+                                </div>
 
-                            <div>
-                                <label class="form-label small text-muted">Slug(선택)</label>
-                                <input class="form-control" name="slug" placeholder="예) hsm / 자동생성 가능">
-                                <div class="form-text">비우면 이름 기반으로 자동 생성됩니다.</div>
-                            </div>
+                                <div>
+                                    <label class="form-label small text-muted">Slug(선택)</label>
+                                    <input class="form-control" name="slug" placeholder="예) hsm / 자동생성 가능">
+                                    <div class="form-text">비우면 이름 기반으로 자동 생성됩니다.</div>
+                                </div>
 
-                            <button class="btn btn-primary" type="submit">추가</button>
-                        </form>
+                                <button class="btn btn-primary" type="submit">추가</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-12 col-lg-7">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                            <h5 class="mb-0">목록</h5>
-                            <a class="btn btn-outline-secondary btn-sm" href="/admin/categories/export">엑셀 Export</a>
-                        </div>
+                <div class="col-12 col-lg-7">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <h5 class="mb-0">목록</h5>
+                                <a class="btn btn-outline-secondary btn-sm" href="/admin/categories/export">엑셀
+                                    Export</a>
+                            </div>
 
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0">
-                                <thead>
-                                    <tr class="text-muted small">
-                                        <th style="min-width:80px;">ID</th>
-                                        <th style="min-width:180px;">이름</th>
-                                        <th style="min-width:180px;">Slug</th>
-                                        <th style="min-width:160px;">생성일</th>
-                                        <th style="min-width:120px;">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (list.length===0) { %>
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted py-4">카테고리가 없습니다.</td>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                        <tr class="text-muted small">
+                                            <th style="min-width:80px;">ID</th>
+                                            <th style="min-width:180px;">이름</th>
+                                            <th style="min-width:180px;">Slug</th>
+                                            <th style="min-width:160px;">생성일</th>
+                                            <th style="min-width:120px;">관리</th>
                                         </tr>
-                                        <% } %>
+                                    </thead>
+                                    <tbody>
+                                        <% if (list.length===0) { %>
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted py-4">카테고리가 없습니다.</td>
+                                            </tr>
+                                            <% } %>
 
-                                            <% list.forEach((c)=> { %>
-                                                <tr>
-                                                    <td>
-                                                        <%= c.id %>
-                                                    </td>
-                                                    <td class="fw-semibold">
-                                                        <%= c.name %>
-                                                    </td>
-                                                    <td class="text-muted">
-                                                        <%= c.slug %>
-                                                    </td>
-                                                    <td class="text-muted">
-                                                        <%= c.created_at ? String(c.created_at).slice(0,
-                                                            19).replace('T',' ') : ' -' %>
-                                                    </td>
-                                                    <td>
-                                                        <form action="/admin/categories/<%= c.id %>/delete"
-                                                            method="post" onsubmit="return confirm('삭제할까요?');">
-                                                            <button class="btn btn-sm btn-outline-danger"
-                                                                type="submit">삭제</button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                                <% }) %>
-                                </tbody>
-                            </table>
-                        </div>
+                                                <% list.forEach((c)=> { %>
+                                                    <tr>
+                                                        <td>
+                                                            <%= c.id %>
+                                                        </td>
+                                                        <td class="fw-semibold">
+                                                            <%= c.name %>
+                                                        </td>
+                                                        <td class="text-muted">
+                                                            <%= c.slug %>
+                                                        </td>
+                                                        <td class="text-muted">
+                                                            <%= c.created_at ? String(c.created_at).slice(0,
+                                                                19).replace('T',' ') : ' -' %>
+                                                        </td>
+                                                        <td>
+                                                            <form action="/admin/categories/<%= c.id %>/delete"
+                                                                method="post" onsubmit="return confirm('삭제할까요?');">
+                                                                <button class="btn btn-sm btn-outline-danger"
+                                                                    type="submit">삭제</button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                    <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <div class="small text-muted mt-2">
-                            * 사용 중인 카테고리는 삭제가 제한될 수 있어요.
+                            <div class="small text-muted mt-2">
+                                * 사용 중인 카테고리는 삭제가 제한될 수 있어요.
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+    </form>
 
-        <%- include('../layouts/admin-bottom') %>
+    <%- include('../layouts/admin-bottom') %>
