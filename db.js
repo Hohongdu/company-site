@@ -1,4 +1,10 @@
 // db.js
+console.log('[DB ENV]', {
+	DB_HOST: process.env.DB_HOST,
+	DB_USER: process.env.DB_USER,
+	DB_NAME: process.env.DB_NAME,
+});
+
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
