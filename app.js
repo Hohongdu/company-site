@@ -111,7 +111,11 @@ app.use('/api', require('./routes/api'));
 
 // 404
 app.use((req, res) => {
-	res.status(404).render('404', { message: '페이지를 찾을 수 없습니다.' });
+	res.status(404).render('404', {
+		message: '페이지를 찾을 수 없습니다.',
+		currentPath: req.path,
+		currentUrl: req.originalUrl,
+	});
 });
 
 // 500 (에러 핸들러: 파라미터 4개여야 함)
@@ -127,6 +131,8 @@ app.use((err, req, res, next) => {
 	res.status(500).render('500', {
 		message: '서버 오류가 발생했습니다.',
 		errorId,
+		currentPath: req.path,
+		currentUrl: req.originalUrl,
 	});
 });
 app.use((err, req, res, next) => {
