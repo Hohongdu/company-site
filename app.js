@@ -115,6 +115,7 @@ app.use((req, res) => {
 		message: '페이지를 찾을 수 없습니다.',
 		currentPath: req.path,
 		currentUrl: req.originalUrl,
+		user: req.session?.user || null,
 	});
 });
 
@@ -133,6 +134,7 @@ app.use((err, req, res, next) => {
 		errorId,
 		currentPath: req.path,
 		currentUrl: req.originalUrl,
+		user: req.session?.user || null,
 	});
 });
 app.use((err, req, res, next) => {
