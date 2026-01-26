@@ -21,6 +21,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 // 1) helmet (CSP는 nginx에서 하니까 off 추천)
 app.use(helmet({ contentSecurityPolicy: false }));
+app.set('trust proxy', 1);
 
 // 3) session (csurf보다 먼저!)
 app.use(
