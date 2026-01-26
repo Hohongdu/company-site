@@ -15,7 +15,12 @@ const sanitizeReturnTo = (value) => {
 
 router.get('/login', (req, res) => {
 	const returnTo = sanitizeReturnTo(req.query.redirect);
-	return res.render('auth/login', { returnTo });
+
+	// csurf가 걸린 상태라면 req.csrfToken() 사용 가능
+	return res.render('auth/login', {
+		returnTo,
+		csrfToken: req.csrfToken(),
+	});
 });
 router.get('/register', (req, res) => res.render('auth/register'));
 
