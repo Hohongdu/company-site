@@ -65,7 +65,6 @@ const csrfProtection = csurf({
 	ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
 });
 
-app.use('/admin', csrfProtection);
 app.use('/auth', csrfProtection);
 
 // EJS에서 csrfToken 바로 사용 가능하게 주입

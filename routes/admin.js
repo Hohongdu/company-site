@@ -12,6 +12,8 @@ const os = require('os');
 const { exec } = require('child_process');
 
 const router = express.Router();
+const csurf = require('csurf');
+const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 /* =========================
    유틸
@@ -212,17 +214,17 @@ router.get('/products', async (req, res) => {
 /* =========================
    상품 등록
 ========================= */
-router.get('/products/new', async (req, res) => {
+router.get('/products/new', csrfProtection, async (req, res) => {
 	try {
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
-		res.render('admin/admin-product-new', { categories });
+		res.render('admin/admin-product-new', { categories, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 등록 페이지 로딩 오류');
 	}
 });
 
-router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
+router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image } = req.body;
 
