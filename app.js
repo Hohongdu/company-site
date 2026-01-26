@@ -57,14 +57,6 @@ app.use((req, res, next) => {
 	}
 	next();
 });
-app.use(
-	session({
-		secret: process.env.SESSION_SECRET || 'change_me_in_env',
-		resave: false,
-		saveUninitialized: false,
-		cookie: { maxAge: 1000 * 60 * 60 },
-	}),
-);
 
 // locals
 app.use((req, res, next) => {
