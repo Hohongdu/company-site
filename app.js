@@ -31,9 +31,9 @@ app.use(
 		saveUninitialized: false,
 		cookie: {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production', // HTTPS면 true가 맞음
+			secure: 'auto', // ✅ 핵심 (req.secure 기반)
 			sameSite: 'lax',
-			maxAge: 1000 * 60 * 60 * 2, // 2시간
+			maxAge: 1000 * 60 * 60 * 2,
 		},
 	}),
 );
