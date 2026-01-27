@@ -10,9 +10,9 @@ const { requireAdmin } = require('../middleware/auth');
 const sharp = require('sharp');
 const os = require('os');
 const { exec } = require('child_process');
+const csurf = require('csurf');
 
 const router = express.Router();
-const csurf = require('csurf');
 const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 /* =========================
@@ -106,6 +106,12 @@ async function processImageToWebp(reqFilePath) {
    공통: 관리자만 접근
 ========================= */
 router.use(requireAdmin);
+router.use((req, res, next) => {
+	if (req.method === 'GET' || !req.is('multipart/form-data')) {
+		return csrfProtection(req, res, next);
+	}
+	return next();
+});
 
 /* =========================
    관리자 메인 → 대시보드
@@ -321,7 +327,7 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 /* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
-router.post('/products/:id/delete', csrfProtection, async (req, res) => {
+router.post('/products/:id/delete', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
@@ -470,7 +476,7 @@ router.get('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories', csrfProtection, async (req, res) => {
+router.post('/categories', async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
 		const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -485,7 +491,7 @@ router.post('/categories', csrfProtection, async (req, res) => {
 	}
 });
 
-router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
+router.post('/categories/:id/delete', async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 
