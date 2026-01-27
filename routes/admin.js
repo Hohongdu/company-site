@@ -204,7 +204,7 @@ router.get('/products', async (req, res) => {
 			LEFT JOIN categories c ON c.id = p.category_id
 			ORDER BY p.id DESC
 		`);
-		res.render('admin/products', { products });
+		res.render('admin/products', { products, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 목록 로딩 오류');
@@ -214,10 +214,13 @@ router.get('/products', async (req, res) => {
 /* =========================
    상품 등록
 ========================= */
-router.get('/products/new', csrfProtection, async (req, res) => {
+router.get('/products/new', async (req, res) => {
 	try {
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
-		res.render('admin/admin-product-new', { categories, csrfToken: req.csrfToken() });
+		res.render('admin/admin-product-new', {
+			categories,
+			csrfToken: req.csrfToken(),
+		});
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 등록 페이지 로딩 오류');
@@ -263,14 +266,19 @@ router.get('/products/:id/edit', async (req, res) => {
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
 
 		if (!product) return res.status(404).send('상품 없음');
-		res.render('admin/admin-product-edit', { product, categories });
+
+		res.render('admin/admin-product-edit', {
+			product,
+			categories,
+			csrfToken: req.csrfToken(),
+		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('상품 수정 페이지 로딩 오류');
+		res.status(500).send('상품 수정 페이지 로딩 오류');
 	}
 });
 
-router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
+router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const { code, name, description, price, spec, category_id, image } = req.body;
@@ -313,7 +321,7 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, r
 /* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
-router.post('/products/:id/delete', async (req, res) => {
+router.post('/products/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
@@ -347,7 +355,7 @@ router.get('/products/import', async (req, res) => {
 	}
 });
 
-router.post('/products/import', upload.single('file'), async (req, res) => {
+router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
 	try {
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
@@ -455,14 +463,14 @@ router.get('/products/export', async (req, res) => {
 router.get('/categories', async (req, res) => {
 	try {
 		const [categories] = await db.execute('SELECT * FROM categories ORDER BY id DESC');
-		res.render('admin/categories', { categories });
+		res.render('admin/categories', { categories, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('카테고리 로딩 오류');
 	}
 });
 
-router.post('/categories', async (req, res) => {
+router.post('/categories', csrfProtection, async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
 		const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -477,7 +485,7 @@ router.post('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories/:id/delete', async (req, res) => {
+router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 

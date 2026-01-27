@@ -17,7 +17,7 @@
             <form id="productNewForm" action="/admin/products/new" method="post" enctype="multipart/form-data"
                 class="row g-3">
                 <!-- ✅ CSRF (제출되는 폼에 반드시 포함) -->
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken || ''%>">
 
                 <div class="col-12">
                     <label class="form-label small text-muted">상품 코드(code) *</label>
