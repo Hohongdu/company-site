@@ -106,6 +106,7 @@ async function processImageToWebp(reqFilePath) {
    공통: 관리자만 접근
 ========================= */
 router.use(requireAdmin);
+router.use(csrfProtection);
 
 /* =========================
    관리자 메인 → 대시보드
