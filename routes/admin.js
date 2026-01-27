@@ -10,8 +10,10 @@ const { requireAdmin } = require('../middleware/auth');
 const sharp = require('sharp');
 const os = require('os');
 const { exec } = require('child_process');
+const csurf = require('csurf');
 
 const router = express.Router();
+const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 /* =========================
    유틸
@@ -104,7 +106,12 @@ async function processImageToWebp(reqFilePath) {
    공통: 관리자만 접근
 ========================= */
 router.use(requireAdmin);
-router.use(csrfProtection);
+router.use((req, res, next) => {
+	if (req.method === 'GET' || !req.is('multipart/form-data')) {
+		return csrfProtection(req, res, next);
+	}
+	return next();
+});
 
 /* =========================
    관리자 메인 → 대시보드
