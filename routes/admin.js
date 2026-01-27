@@ -233,7 +233,7 @@ router.get('/products/new', async (req, res) => {
 	}
 });
 
-router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image } = req.body;
 
@@ -284,7 +284,7 @@ router.get('/products/:id/edit', async (req, res) => {
 	}
 });
 
-router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const { code, name, description, price, spec, category_id, image } = req.body;
@@ -361,7 +361,7 @@ router.get('/products/import', async (req, res) => {
 	}
 });
 
-router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
+router.post('/products/import', upload.single('file'), async (req, res) => {
 	try {
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
