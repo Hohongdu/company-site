@@ -12,8 +12,6 @@ const os = require('os');
 const { exec } = require('child_process');
 
 const router = express.Router();
-const csurf = require('csurf');
-const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 /* =========================
    유틸
@@ -227,7 +225,7 @@ router.get('/products/new', async (req, res) => {
 	}
 });
 
-router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image } = req.body;
 
@@ -278,7 +276,7 @@ router.get('/products/:id/edit', async (req, res) => {
 	}
 });
 
-router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const { code, name, description, price, spec, category_id, image } = req.body;
@@ -321,7 +319,7 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 /* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
-router.post('/products/:id/delete', csrfProtection, async (req, res) => {
+router.post('/products/:id/delete', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
@@ -355,7 +353,7 @@ router.get('/products/import', async (req, res) => {
 	}
 });
 
-router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
+router.post('/products/import', upload.single('file'), async (req, res) => {
 	try {
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
@@ -470,7 +468,7 @@ router.get('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories', csrfProtection, async (req, res) => {
+router.post('/categories', async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
 		const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -485,7 +483,7 @@ router.post('/categories', csrfProtection, async (req, res) => {
 	}
 });
 
-router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
+router.post('/categories/:id/delete', async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 
