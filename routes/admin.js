@@ -500,10 +500,10 @@ router.post('/categories/:id/delete', async (req, res) => {
 	}
 });
 
-router.get('/categories/export', async (req, res) => {
-	try {
-		const [rows] = await db.execute(`
-      SELECT id, name, slug, created_at
+	router.get('/categories/export', async (req, res) => {
+		try {
+			const [rows] = await db.execute(`
+      SELECT id, name, slug
       FROM categories
       ORDER BY id DESC
     `);
