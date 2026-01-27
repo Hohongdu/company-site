@@ -66,7 +66,12 @@ const csrfProtection = csurf({
 });
 
 app.use('/auth', csrfProtection);
-app.use('/admin', csrfProtection);
+app.use('/admin', (req, res, next) => {
+	if (req.method === 'GET' || !req.is('multipart/form-data')) {
+		return csrfProtection(req, res, next);
+	}
+	return next();
+});
 
 // EJS에서 csrfToken 바로 사용 가능하게 주입
 app.use((req, res, next) => {

@@ -106,12 +106,6 @@ async function processImageToWebp(reqFilePath) {
    공통: 관리자만 접근
 ========================= */
 router.use(requireAdmin);
-router.use((req, res, next) => {
-	if (req.method === 'GET' || !req.is('multipart/form-data')) {
-		return csrfProtection(req, res, next);
-	}
-	return next();
-});
 
 /* =========================
    관리자 메인 → 대시보드
@@ -233,7 +227,7 @@ router.get('/products/new', async (req, res) => {
 	}
 });
 
-router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
+router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image } = req.body;
 
@@ -284,7 +278,7 @@ router.get('/products/:id/edit', async (req, res) => {
 	}
 });
 
-router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
+router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const { code, name, description, price, spec, category_id, image } = req.body;
@@ -361,7 +355,7 @@ router.get('/products/import', async (req, res) => {
 	}
 });
 
-router.post('/products/import', upload.single('file'), async (req, res) => {
+router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
 	try {
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
