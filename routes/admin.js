@@ -357,6 +357,10 @@ router.get('/products/import', async (req, res) => {
 
 router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
 	try {
+		if (!req.file) {
+			return res.status(400).send('업로드 파일이 필요합니다.');
+		}
+
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
 		const sheet = workbook.Sheets[workbook.SheetNames[0]];
