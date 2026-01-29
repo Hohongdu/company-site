@@ -12,18 +12,18 @@
     </div>
 
     <% const uploadList=(typeof uploads !=='undefined' && uploads) ? uploads : []; %>
-        <% const flash=(typeof flash !=='undefined' && flash) ? flash : null; %>
+        <% const flashData=(typeof flash !=='undefined' && flash) ? flash : null; %>
 
-            <% if (flash) { %>
-                <div class="alert <%= flash.ok ? 'alert-success' : 'alert-danger' %> alert-dismissible fade show"
+            <% if (flashData) { %>
+                <div class="alert <%= flashData.ok ? 'alert-success' : 'alert-danger' %> alert-dismissible fade show"
                     role="alert">
                     <strong>
-                        <%= flash.ok ? '업로드 완료' : '업로드 실패' %>
+                        <%= flashData.ok ? '업로드 완료' : '업로드 실패' %>
                     </strong>
                     <div class="small mt-1">
-                        성공: <%= flash.success %>건 / 실패: <%= flash.fail %>건
-                                <% if (flash.uploadId) { %>
-                                    · 기록 ID: <%= flash.uploadId %>
+                        성공: <%= flashData.success %>건 / 실패: <%= flashData.fail %>건
+                                <% if (flashData.uploadId) { %>
+                                    · 기록 ID: <%= flashData.uploadId %>
                                         <% } %>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -126,11 +126,10 @@
                                                                 </td>
                                                                 <td class="text-end">
                                                                     <%= Number(u.fail_count || 0).toLocaleString() %>
-                                                                        </tda>
+                                                                </td>
                                                                 <td class="text-muted">
                                                                     <%= u.created_at ?
-                                                                        String(u.created_at).slice(0,19).replace('T',' ') : '
-                                                                        -' %>
+                                                                        String(u.created_at).slice(0,19).replace('T',' ') : '-' %>
                                                                 </td>
                                                                 <td>
                                                                     <div class="d-flex gap-2 flex-wrap">
