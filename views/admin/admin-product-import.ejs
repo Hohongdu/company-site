@@ -126,11 +126,10 @@
                                                                 </td>
                                                                 <td class="text-end">
                                                                     <%= Number(u.fail_count || 0).toLocaleString() %>
-                                                                        </tda>
+                                                                </td>
                                                                 <td class="text-muted">
                                                                     <%= u.created_at ?
-                                                                        String(u.created_at).slice(0,19).replace('T',' ') : '
-                                                                        -' %>
+                                                                        String(u.created_at).slice(0,19).replace('T',' ') : '-' %>
                                                                 </td>
                                                                 <td>
                                                                     <div class="d-flex gap-2 flex-wrap">
