@@ -338,9 +338,8 @@ router.post('/products/:id/delete', async (req, res) => {
 /* =========================
    엑셀 업로드
 ========================= */
-router.get('/products/import', async (req, res) => {
+router.get('/products/import', csrfProtection, async (req, res) => {
 	try {
-		// 업로드 히스토리 테이블명이 예: upload_histories 라고 가정
 		const [uploads] = await db.execute(`
       SELECT id, original_name, stored_name, status, success_count, fail_count, created_at
       FROM upload_histories
@@ -348,30 +347,62 @@ router.get('/products/import', async (req, res) => {
       LIMIT 30
     `);
 
-		return res.render('admin/admin-product-import', { uploads });
+		const flash =
+			req.query && req.query.ok
+				? {
+						ok: req.query.ok === '1',
+						success: Number(req.query.success || 0),
+						fail: Number(req.query.fail || 0),
+						uploadId: req.query.uploadId ? Number(req.query.uploadId) : null,
+					}
+				: null;
+
+		return res.render('admin/admin-product-import', {
+			uploads,
+			csrfToken: req.csrfToken(),
+			flash,
+		});
 	} catch (err) {
 		console.error(err);
-		return res.render('admin/admin-product-import', { uploads: [] });
+		return res.render('admin/admin-product-import', {
+			uploads: [],
+			csrfToken: req.csrfToken(),
+			flash: null,
+		});
 	}
 });
 
 router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
-	try {
-		if (!req.file) {
-			return res.status(400).send('업로드 파일이 필요합니다.');
-		}
+	let uploadId = null;
 
+	try {
+		if (!req.file) return res.status(400).send('업로드 파일이 필요합니다.');
+
+		// 1) upload_histories 기록 생성 (PROCESSING)
+		const originalName = req.file.originalname || null;
+		const storedName = req.file.filename || req.file.path || null;
+
+		const [ins] = await db.execute(
+			`INSERT INTO upload_histories (original_name, stored_name, status, success_count, fail_count)
+       VALUES (?, ?, 'PROCESSING', 0, 0)`,
+			[originalName, storedName],
+		);
+		uploadId = ins.insertId;
+
+		// 2) 파일 읽기
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
 		const sheet = workbook.Sheets[workbook.SheetNames[0]];
 		const rows = xlsx.utils.sheet_to_json(sheet);
 
+		// 카테고리 맵
 		const [categories] = await db.execute('SELECT id, name FROM categories');
 		const categoryMap = new Map(categories.map((c) => [c.name, c.id]));
 
-		const success = [];
-		const fail = [];
+		let successCount = 0;
+		let failCount = 0;
 
+		// 3) 처리
 		for (let i = 0; i < rows.length; i++) {
 			try {
 				const r = rows[i];
@@ -384,55 +415,73 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 				const categoryName = r.category_name ? String(r.category_name).trim() : null;
 				const categoryId = categoryName ? categoryMap.get(categoryName) || null : null;
 
-				if (!name) {
-					throw new Error('상품명이 누락되었습니다.');
-				}
+				if (!name) throw new Error('상품명이 누락되었습니다.');
 
-				let imagePath = image || null;
-				let thumbPath = image ? null : null;
-
+				// code가 있으면 upsert 느낌으로 처리
 				if (code) {
-					const [[existing]] = await db.execute('SELECT id, image, image_thumb FROM products WHERE code = ? LIMIT 1', [code]);
+					const [[existing]] = await db.execute('SELECT id FROM products WHERE code = ? LIMIT 1', [code]);
 					if (existing) {
-						if (!imagePath) {
-							imagePath = existing.image || null;
-							thumbPath = existing.image_thumb || null;
-						}
-
-						await db.execute(
-							`UPDATE products
-               SET name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?
-               WHERE id=?`,
-							[name, description, price, spec, imagePath, thumbPath, categoryId, existing.id],
-						);
-
-						success.push({ row: i + 2, name, action: 'updated' });
+						await db.execute(`UPDATE products SET name=?, description=?, price=?, spec=?, image=?, category_id=? WHERE id=?`, [
+							name,
+							description,
+							price,
+							spec,
+							image || null,
+							categoryId,
+							existing.id,
+						]);
+						successCount++;
 						continue;
 					}
 				}
 
 				await db.execute(
-					`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-					[code, name, description, price, spec, imagePath, thumbPath, categoryId],
+					`INSERT INTO products (code, name, description, price, spec, image, category_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+					[code, name, description, price, spec, image || null, categoryId],
 				);
+				successCount++;
+			} catch (e) {
+				failCount++;
 
-				success.push({ row: i + 2, name, action: 'created' });
-			} catch (err) {
-				fail.push({
-					row: i + 2,
-					reason: err.message,
-				});
+				// 실패 row 저장 (테이블 컬럼명은 너 DB에 맞춰 유지)
+				await db.execute(
+					`INSERT INTO upload_history_rows (upload_id, row_number, code, name, category_name, price, spec, image, description, reason)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+					[
+						uploadId,
+						i + 2,
+						rows[i]?.code || null,
+						rows[i]?.name || null,
+						rows[i]?.category_name || null,
+						rows[i]?.price || 0,
+						rows[i]?.spec || null,
+						rows[i]?.image || null,
+						rows[i]?.description || null,
+						String(e.message || 'unknown error'),
+					],
+				);
 			}
 		}
 
 		// 업로드 파일 삭제
-		await fs.unlink(filePath).catch(() => {});
+		await fs.unlink(req.file.path).catch(() => {});
 
-		res.render('admin/import-result', { success, fail, csrfToken: req.csrfToken() });
+		// 4) upload_histories 업데이트
+		const status = failCount > 0 ? (successCount > 0 ? 'FAILED' : 'FAILED') : 'SUCCESS';
+		await db.execute(`UPDATE upload_histories SET status=?, success_count=?, fail_count=? WHERE id=?`, [status, successCount, failCount, uploadId]);
+
+		// 5) 같은 페이지로 돌아가서 알림 표시
+		return res.redirect(`/admin/products/import?ok=1&uploadId=${uploadId}&success=${successCount}&fail=${failCount}`);
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('엑셀 업로드 처리 오류');
+
+		// 실패 시에도 히스토리 업데이트(가능하면)
+		if (uploadId) {
+			await db.execute(`UPDATE upload_histories SET status='FAILED' WHERE id=?`, [uploadId]).catch(() => {});
+		}
+
+		return res.redirect(`/admin/products/import?ok=0&uploadId=${uploadId || ''}&success=0&fail=0`);
 	}
 });
 
@@ -542,9 +591,9 @@ router.post('/categories/:id/delete', async (req, res) => {
 	}
 });
 
-	router.get('/categories/export', async (req, res) => {
-		try {
-			const [rows] = await db.execute(`
+router.get('/categories/export', async (req, res) => {
+	try {
+		const [rows] = await db.execute(`
       SELECT id, name, slug
       FROM categories
       ORDER BY id DESC

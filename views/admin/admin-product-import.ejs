@@ -1,136 +1,157 @@
 <%- include('../layouts/admin-top', { title: '엑셀 업로드' , active: 'import' }) %>
 
-    <form action="/admin/products/import" method="post" enctype="multipart/form-data" class="d-grid gap-2">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-
-
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-            <div>
-                <h3 class="mb-1">엑셀 업로드</h3>
-                <div class="text-muted small">상품 데이터를 엑셀로 반영하고 업로드 히스토리를 관리합니다.</div>
-            </div>
-
-            <div class="d-flex gap-2 flex-wrap">
-                <a class="btn btn-outline-secondary btn-sm" href="/admin/uploads/export">업로드 히스토리 Export</a>
-            </div>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h3 class="mb-1">엑셀 업로드</h3>
+            <div class="text-muted small">상품 데이터를 엑셀로 반영하고 업로드 히스토리를 관리합니다.</div>
         </div>
 
-        <% const uploadList=(typeof uploads !=='undefined' && uploads) ? uploads : []; %>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-outline-secondary btn-sm" href="/admin/uploads/export">업로드 히스토리 Export</a>
+        </div>
+    </div>
 
-            <div class="row g-3">
-                <div class="col-12 col-lg-5">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="mb-3">업로드 반영</h5>
+    <% const uploadList=(typeof uploads !=='undefined' && uploads) ? uploads : []; %>
+        <% const flash=(typeof flash !=='undefined' && flash) ? flash : null; %>
 
-                            <form action="/admin/products/import" method="post" enctype="multipart/form-data"
-                                class="d-grid gap-2">
-                                <div>
-                                    <label class="form-label small text-muted">엑셀 파일</label>
-                                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
-                                    <div class="form-text">
-                                        헤더 예시: code, name, category_slug(선택), category_name(선택), price, spec, image,
-                                        description
+            <% if (flash) { %>
+                <div class="alert <%= flash.ok ? 'alert-success' : 'alert-danger' %> alert-dismissible fade show"
+                    role="alert">
+                    <strong>
+                        <%= flash.ok ? '업로드 완료' : '업로드 실패' %>
+                    </strong>
+                    <div class="small mt-1">
+                        성공: <%= flash.success %>건 / 실패: <%= flash.fail %>건
+                                <% if (flash.uploadId) { %>
+                                    · 기록 ID: <%= flash.uploadId %>
+                                        <% } %>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <% } %>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-5">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="mb-3">업로드 반영</h5>
+
+                                    <!-- ✅ form 하나만 -->
+                                    <form action="/admin/products/import" method="post" enctype="multipart/form-data"
+                                        class="d-grid gap-2">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                        <div>
+                                            <label class="form-label small text-muted">엑셀 파일</label>
+                                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls"
+                                                required>
+                                            <div class="form-text">
+                                                헤더 예시: code, name, category_slug(선택), category_name(선택), price, spec,
+                                                image, description
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid gap-2 d-sm-flex">
+                                            <button class="btn btn-primary" type="submit">업로드 반영</button>
+                                            <a class="btn btn-outline-secondary" href="/admin/products">이전으로</a>
+                                        </div>
+                                    </form>
+
+                                    <hr class="my-3">
+
+                                    <h6 class="mb-2">샘플/데이터 Export</h6>
+                                    <div class="d-grid gap-2 d-sm-flex">
+                                        <a class="btn btn-outline-primary btn-sm" href="/admin/products/export">상품 목록
+                                            Export</a>
+                                        <a class="btn btn-outline-primary btn-sm" href="/admin/categories/export">카테고리
+                                            Export</a>
                                     </div>
                                 </div>
-
-                                <div class="d-grid gap-2 d-sm-flex">
-                                    <button class="btn btn-primary" type="submit">업로드 반영</button>
-                                    <a class="btn btn-outline-secondary" href="/admin/products">이전으로</a>
-                                </div>
-                            </form>
-
-                            <hr class="my-3">
-
-                            <h6 class="mb-2">샘플/데이터 Export</h6>
-                            <div class="d-grid gap-2 d-sm-flex">
-                                <a class="btn btn-outline-primary btn-sm" href="/admin/products/export">상품 목록 Export</a>
-                                <a class="btn btn-outline-primary btn-sm" href="/admin/categories/export">카테고리
-                                    Export</a>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="col-12 col-lg-7">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                <h5 class="mb-0">업로드 히스토리</h5>
-                                <a class="btn btn-outline-secondary btn-sm" href="/admin/uploads/export">엑셀 Export</a>
-                            </div>
+                        <div class="col-12 col-lg-7">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                        <h5 class="mb-0">업로드 히스토리</h5>
+                                        <a class="btn btn-outline-secondary btn-sm" href="/admin/uploads/export">엑셀
+                                            Export</a>
+                                    </div>
 
-                            <div class="table-responsive">
-                                <table class="table align-middle mb-0">
-                                    <thead>
-                                        <tr class="text-muted small">
-                                            <th style="min-width:70px;">ID</th>
-                                            <th style="min-width:220px;">파일명</th>
-                                            <th style="min-width:120px;">상태</th>
-                                            <th style="min-width:90px;" class="text-end">성공</th>
-                                            <th style="min-width:90px;" class="text-end">실패</th>
-                                            <th style="min-width:180px;">일시</th>
-                                            <th style="min-width:160px;">관리</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% if (uploadList.length===0) { %>
-                                            <tr>
-                                                <td colspan="7" class="text-center text-muted py-4">업로드 기록이 없습니다.</td>
-                                            </tr>
-                                            <% } %>
-
-                                                <% uploadList.forEach((u)=> { %>
+                                    <div class="table-responsive">
+                                        <table class="table align-middle mb-0">
+                                            <thead>
+                                                <tr class="text-muted small">
+                                                    <th style="min-width:70px;">ID</th>
+                                                    <th style="min-width:220px;">파일명</th>
+                                                    <th style="min-width:120px;">상태</th>
+                                                    <th style="min-width:90px;" class="text-end">성공</th>
+                                                    <th style="min-width:90px;" class="text-end">실패</th>
+                                                    <th style="min-width:180px;">일시</th>
+                                                    <th style="min-width:160px;">관리</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% if (uploadList.length===0) { %>
                                                     <tr>
-                                                        <td>
-                                                            <%= u.id %>
-                                                        </td>
-                                                        <td class="fw-semibold">
-                                                            <%= u.original_name || u.stored_name || '-' %>
-                                                        </td>
-                                                        <td>
-                                                            <% if (u.status==='SUCCESS' ) { %>
-                                                                <span class="badge text-bg-success">SUCCESS</span>
-                                                                <% } else if (u.status==='FAILED' ) { %>
-                                                                    <span class="badge text-bg-danger">FAILED</span>
-                                                                    <% } else { %>
-                                                                        <span class="badge text-bg-secondary">
-                                                                            <%= u.status || 'UNKNOWN' %>
-                                                                        </span>
-                                                                        <% } %>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            <%= Number(u.success_count || 0).toLocaleString() %>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            <%= Number(u.fail_count || 0).toLocaleString() %>
-                                                        </td>
-                                                        <td class="text-muted">
-                                                            <%= u.created_at ? String(u.created_at).slice(0,
-                                                                19).replace('T',' ') : ' -' %>
-                                                        </td>
-                                                        <td>
-                                                            <div class="d-flex gap-2 flex-wrap">
-                                                                <a class="btn btn-sm btn-outline-primary"
-                                                                    href="/admin/uploads/<%= u.id %>">상세</a>
-                                                                <a class="btn btn-sm btn-outline-secondary"
-                                                                    href="/admin/uploads/<%= u.id %>/export-fail">실패엑셀</a>
-                                                            </div>
-                                                        </td>
+                                                        <td colspan="7" class="text-center text-muted py-4">업로드 기록이
+                                                            없습니다.</td>
                                                     </tr>
-                                                    <% }) %>
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    <% } %>
 
-                            <div class="small text-muted mt-2">
-                                * “실패엑셀”은 실패한 행만 다시 다운로드하는 기능입니다.
+                                                        <% uploadList.forEach((u)=> { %>
+                                                            <tr>
+                                                                <td>
+                                                                    <%= u.id %>
+                                                                </td>
+                                                                <td class="fw-semibold">
+                                                                    <%= u.original_name || u.stored_name || '-' %>
+                                                                </td>
+                                                                <td>
+                                                                    <% if (u.status==='SUCCESS' ) { %>
+                                                                        <span
+                                                                            class="badge text-bg-success">SUCCESS</span>
+                                                                        <% } else if (u.status==='FAILED' ) { %>
+                                                                            <span
+                                                                                class="badge text-bg-danger">FAILED</span>
+                                                                            <% } else { %>
+                                                                                <span class="badge text-bg-secondary">
+                                                                                    <%= u.status || 'UNKNOWN' %>
+                                                                                </span>
+                                                                                <% } %>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <%= Number(u.success_count || 0).toLocaleString() %>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <%= Number(u.fail_count || 0).toLocaleString() %>
+                                                                        </tda>
+                                                                <td class="text-muted">
+                                                                    <%= u.created_at ?
+                                                                        String(u.created_at).slice(0,19).replace('T',' ') : '
+                                                                        -' %>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="d-flex gap-2 flex-wrap">
+                                                                        <a class="btn btn-sm btn-outline-primary"
+                                                                            href="/admin/uploads/<%= u.id %>">상세</a>
+                                                                        <a class="btn btn-sm btn-outline-secondary"
+                                                                            href="/admin/uploads/<%= u.id %>/export-fail">실패엑셀</a>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="small text-muted mt-2">
+                                        * “실패엑셀”은 실패한 행만 다시 다운로드하는 기능입니다.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-    </form>
-
-    <%- include('../layouts/admin-bottom') %>
+                    <%- include('../layouts/admin-bottom') %>
