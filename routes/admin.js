@@ -391,7 +391,7 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 		// 업로드 파일 삭제
 		await fs.unlink(filePath).catch(() => {});
 
-		res.render('admin/import-result', { success, fail });
+		res.render('admin/import-result', { success, fail, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('엑셀 업로드 처리 오류');
