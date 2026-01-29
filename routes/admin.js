@@ -366,20 +366,58 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 		const sheet = workbook.Sheets[workbook.SheetNames[0]];
 		const rows = xlsx.utils.sheet_to_json(sheet);
 
+		const [categories] = await db.execute('SELECT id, name FROM categories');
+		const categoryMap = new Map(categories.map((c) => [c.name, c.id]));
+
 		const success = [];
 		const fail = [];
 
 		for (let i = 0; i < rows.length; i++) {
 			try {
 				const r = rows[i];
+				const code = r.code ? String(r.code).trim() : null;
+				const name = r.name ? String(r.name).trim() : null;
+				const description = r.description ? String(r.description).trim() : null;
+				const price = Number(r.price) || 0;
+				const spec = r.spec ? String(r.spec).trim() : null;
+				const image = r.image ? String(r.image).trim() : null;
+				const categoryName = r.category_name ? String(r.category_name).trim() : null;
+				const categoryId = categoryName ? categoryMap.get(categoryName) || null : null;
+
+				if (!name) {
+					throw new Error('상품명이 누락되었습니다.');
+				}
+
+				let imagePath = image || null;
+				let thumbPath = image ? null : null;
+
+				if (code) {
+					const [[existing]] = await db.execute('SELECT id, image, image_thumb FROM products WHERE code = ? LIMIT 1', [code]);
+					if (existing) {
+						if (!imagePath) {
+							imagePath = existing.image || null;
+							thumbPath = existing.image_thumb || null;
+						}
+
+						await db.execute(
+							`UPDATE products
+               SET name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?
+               WHERE id=?`,
+							[name, description, price, spec, imagePath, thumbPath, categoryId, existing.id],
+						);
+
+						success.push({ row: i + 2, name, action: 'updated' });
+						continue;
+					}
+				}
 
 				await db.execute(
-					`INSERT INTO products (code, name, price, spec)
-					 VALUES (?, ?, ?, ?)`,
-					[r.code || null, r.name, Number(r.price) || 0, r.spec || null],
+					`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+					[code, name, description, price, spec, imagePath, thumbPath, categoryId],
 				);
 
-				success.push({ row: i + 2, name: r.name });
+				success.push({ row: i + 2, name, action: 'created' });
 			} catch (err) {
 				fail.push({
 					row: i + 2,
