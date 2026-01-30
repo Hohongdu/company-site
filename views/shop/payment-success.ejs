@@ -1,0 +1,28 @@
+<%- include('../layouts/shop-top', { title: '결제 완료' , active: '' }) %>
+
+<div class="shop-card p-4">
+    <h3 class="fw-bold mb-2">결제가 완료되었습니다 🎉</h3>
+    <p class="text-muted mb-4">카카오페이 결제가 정상적으로 처리되었습니다.</p>
+
+    <div class="border rounded-4 p-3 mb-3 bg-light">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">주문번호</span>
+            <strong><%= payment.orderId %></strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">상품</span>
+            <strong><%= payment.itemName %></strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span class="text-muted">결제 금액</span>
+            <strong><%= Number(payment.totalAmount || 0).toLocaleString() %>원</strong>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/shop/products" class="btn btn-primary">계속 쇼핑하기</a>
+        <a href="/shop/cart" class="btn btn-outline-secondary">장바구니로 이동</a>
+    </div>
+</div>
+
+<%- include('../layouts/shop-bottom') %>
