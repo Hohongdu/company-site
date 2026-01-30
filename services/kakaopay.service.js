@@ -3,8 +3,8 @@ const axios = require('axios');
 const KAKAOPAY_HOST = 'https://kapi.kakao.com';
 
 function getKakaoPayConfig() {
-	const adminKey = process.env.KAKAOPAY_ADMIN_KEY || process.env.KAKAO_PAY_ADMIN_KEY || '';
-	const cid = process.env.KAKAOPAY_CID || process.env.KAKAO_PAY_CID || 'TC0ONETIME';
+	const adminKey = process.env.KAKAO_ADMIN_KEY || process.env.KAKAOPAY_ADMIN_KEY || process.env.KAKAO_PAY_ADMIN_KEY || '';
+	const cid = process.env.KAKAO_CID || process.env.KAKAOPAY_CID || process.env.KAKAO_PAY_CID || 'TC0ONETIME';
 
 	return {
 		adminKey,
@@ -13,8 +13,8 @@ function getKakaoPayConfig() {
 }
 
 function isConfigured() {
-	const { adminKey } = getKakaoPayConfig();
-	return Boolean(adminKey);
+	const { adminKey, cid } = getKakaoPayConfig();
+	return Boolean(adminKey && cid);
 }
 
 async function ready({ orderId, userId, itemName, quantity, totalAmount, approvalUrl, cancelUrl, failUrl }) {

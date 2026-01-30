@@ -189,7 +189,7 @@ router.post('/cart/clear', async (req, res) => {
 router.post('/checkout/kakao', async (req, res) => {
 	try {
 		if (!kakaoPayService.isConfigured()) {
-			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAOPAY_ADMIN_KEY를 확인해주세요.');
+			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAO_ADMIN_KEY와 KAKAO_CID를 확인해주세요.');
 		}
 
 		const data = await getCartViewData(req);
@@ -202,7 +202,7 @@ router.post('/checkout/kakao', async (req, res) => {
 			data.items.length === 1 ? data.items[0].name : `${data.items[0].name} 외 ${data.items.length - 1}건`;
 		const quantity = data.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 		const orderId = `CART-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-		const baseUrl = `${req.protocol}://${req.get('host')}`;
+		const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
 
 		const readyResult = await kakaoPayService.ready({
 			orderId,
