@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
-const { getGuestCart, ensureUserCartId, getCartViewData } = require('../lib/cart');
+const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
+const kakaoPayService = require('../services/kakaopay.service');
 
 const router = express.Router();
 
@@ -90,7 +91,8 @@ router.get('/products/:id', async (req, res) => {
 router.get('/cart', async (req, res) => {
 	try {
 		const data = await getCartViewData(req);
-		res.render('shop/cart', data);
+		const paymentEnabled = kakaoPayService.isConfigured();
+		res.render('shop/cart', { ...data, paymentEnabled });
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('장바구니 오류');
@@ -182,6 +184,96 @@ router.post('/cart/clear', async (req, res) => {
 		console.error(err);
 		res.status(500).send('장바구니 비우기 오류');
 	}
+});
+
+router.post('/checkout/kakao', async (req, res) => {
+	try {
+		if (!kakaoPayService.isConfigured()) {
+			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAOPAY_ADMIN_KEY를 확인해주세요.');
+		}
+
+		const data = await getCartViewData(req);
+
+		if (!data.items.length || !data.totalAmount) {
+			return res.status(400).send('결제할 상품이 없습니다.');
+		}
+
+		const itemName =
+			data.items.length === 1 ? data.items[0].name : `${data.items[0].name} 외 ${data.items.length - 1}건`;
+		const quantity = data.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+		const orderId = `CART-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+		const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+		const readyResult = await kakaoPayService.ready({
+			orderId,
+			userId: req.session.user?.id,
+			itemName,
+			quantity,
+			totalAmount: data.totalAmount,
+			approvalUrl: `${baseUrl}/shop/checkout/kakao/approve`,
+			cancelUrl: `${baseUrl}/shop/checkout/kakao/cancel`,
+			failUrl: `${baseUrl}/shop/checkout/kakao/fail`,
+		});
+
+		req.session.kakaoPay = {
+			tid: readyResult.tid,
+			orderId,
+			itemName,
+			quantity,
+			totalAmount: data.totalAmount,
+			items: data.items,
+		};
+
+		return res.redirect(readyResult.next_redirect_pc_url);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('카카오페이 결제 준비 중 오류가 발생했습니다.');
+	}
+});
+
+router.get('/checkout/kakao/approve', async (req, res) => {
+	try {
+		const pgToken = req.query.pg_token;
+		const sessionPayment = req.session.kakaoPay;
+
+		if (!pgToken || !sessionPayment) {
+			return res.status(400).send('결제 승인 정보가 없습니다.');
+		}
+
+		const approvalResult = await kakaoPayService.approve({
+			tid: sessionPayment.tid,
+			orderId: sessionPayment.orderId,
+			userId: req.session.user?.id,
+			pgToken,
+		});
+
+		await clearCart(req);
+		req.session.kakaoPay = null;
+
+		return res.render('shop/payment-success', {
+			payment: sessionPayment,
+			approval: approvalResult,
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).render('shop/payment-fail', {
+			message: '카카오페이 결제 승인 중 오류가 발생했습니다.',
+		});
+	}
+});
+
+router.get('/checkout/kakao/cancel', (req, res) => {
+	req.session.kakaoPay = null;
+	return res.render('shop/payment-fail', {
+		message: '카카오페이 결제가 취소되었습니다.',
+	});
+});
+
+router.get('/checkout/kakao/fail', (req, res) => {
+	req.session.kakaoPay = null;
+	return res.render('shop/payment-fail', {
+		message: '카카오페이 결제에 실패했습니다. 다시 시도해주세요.',
+	});
 });
 
 module.exports = router;
