@@ -3,7 +3,8 @@
     <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
         <div>
             <h3 class="fw-bold mb-1">주문 상세</h3>
-            <div class="text-muted small">주문번호: <strong>#<%= order.id %></strong></div>
+            <div class="text-muted small">주문번호: <strong><%= order.order_number %></strong></div>
+            <div class="text-muted small">상태: <strong><%= order.status %></strong></div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-sm btn-outline-secondary" href="/shop/products">상품 더 보기</a>
@@ -21,26 +22,26 @@
                         <% items.forEach(it=> { %>
                             <div class="d-flex gap-3 flex-wrap py-3 border-top">
                                 <div class="bg-light rounded-3" style="width:120px; height:90px; overflow:hidden;">
-                                    <img src="<%= it.image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
-                                        alt="<%= it.name %>" style="width:100%; height:100%; object-fit:cover;">
+                                    <img src="<%= it.product_image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
+                                        alt="<%= it.product_name %>" style="width:100%; height:100%; object-fit:cover;">
                                 </div>
 
                                 <div class="flex-grow-1" style="min-width:220px;">
                                     <div class="d-flex justify-content-between flex-wrap gap-2">
                                         <div>
                                             <div class="fw-semibold">
-                                                <%= it.name %>
+                                                <%= it.product_name %>
                                             </div>
-                                            <div class="text-muted small">단가: <%= Number(it.price || 0).toLocaleString()
+                                            <div class="text-muted small">단가: <%= Number(it.unit_price || 0).toLocaleString()
                                                     %>원 · 수량: <%= it.quantity %>
                                             </div>
-                                            <% if (it.spec) { %>
-                                                <div class="text-muted small">규격: <%= it.spec %>
+                                            <% if (it.product_spec) { %>
+                                                <div class="text-muted small">규격: <%= it.product_spec %>
                                                 </div>
                                                 <% } %>
                                         </div>
                                         <div class="fw-bold">
-                                            <%= Number((it.price || 0) * (it.quantity || 0)).toLocaleString() %>원
+                                            <%= Number(it.total_price || 0).toLocaleString() %>원
                                         </div>
                                     </div>
 
@@ -62,7 +63,12 @@
                                 <%= Number(order.total_amount || 0).toLocaleString() %>원
                             </span>
                         </div>
-                        <button class="btn btn-primary w-100 mt-3" disabled>결제(추후 연동)</button>
+                        <div class="d-flex justify-content-between text-muted mt-1">
+                            <span>결제 상태</span><span>
+                                <%= payment?.status || '미결제' %>
+                            </span>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" disabled>결제 완료</button>
                     </div>
                 </div>
             </div>
