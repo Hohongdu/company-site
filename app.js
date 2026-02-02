@@ -11,6 +11,7 @@ const csurf = require('csurf');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
+const { requireLogin } = require('./middleware/auth');
 
 const companyRouter = require('./routes/company');
 const authRouter = require('./routes/auth');
