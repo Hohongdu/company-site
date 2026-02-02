@@ -1,0 +1,58 @@
+CREATE TABLE IF NOT EXISTS orders (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  order_number VARCHAR(32) NOT NULL UNIQUE,
+  user_id BIGINT NULL,
+  guest_name VARCHAR(100) NULL,
+  guest_email VARCHAR(150) NULL,
+  guest_phone VARCHAR(30) NULL,
+  status ENUM('PENDING', 'PAID', 'CANCELED', 'FAILED') NOT NULL DEFAULT 'PENDING',
+  total_amount INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_orders_user (user_id),
+  INDEX idx_orders_status (status)
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT NOT NULL,
+  product_id BIGINT NULL,
+  product_name VARCHAR(200) NOT NULL,
+  product_spec VARCHAR(200) NULL,
+  product_image VARCHAR(255) NULL,
+  unit_price INT NOT NULL DEFAULT 0,
+  quantity INT NOT NULL DEFAULT 1,
+  total_price INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_order_items_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS order_payments (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT NOT NULL,
+  provider ENUM('KAKAO') NOT NULL,
+  tid VARCHAR(100) NULL,
+  status ENUM('READY', 'APPROVED', 'CANCELED', 'FAILED') NOT NULL DEFAULT 'READY',
+  amount INT NOT NULL DEFAULT 0,
+  requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  approved_at DATETIME NULL,
+  CONSTRAINT fk_order_payments_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  INDEX idx_order_payments_tid (tid)
+);
+
+CREATE TABLE IF NOT EXISTS inquiries (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  order_id BIGINT NULL,
+  user_id BIGINT NULL,
+  guest_name VARCHAR(100) NULL,
+  guest_email VARCHAR(150) NULL,
+  guest_phone VARCHAR(30) NULL,
+  title VARCHAR(200) NOT NULL,
+  content TEXT NOT NULL,
+  status ENUM('NEW', 'ANSWERED', 'CLOSED') NOT NULL DEFAULT 'NEW',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_inquiries_status (status),
+  INDEX idx_inquiries_order (order_id),
+  CONSTRAINT fk_inquiries_order_id FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+);

@@ -1,0 +1,52 @@
+<%- include('partials/admin-header', { title: '문의 관리' , subtitle: '고객 문의 내역을 확인합니다.' , active: 'inquiries' }) %>
+
+<div class="admin-card card mb-4">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>상태</th>
+                        <th>제목</th>
+                        <th>문의자</th>
+                        <th>주문번호</th>
+                        <th>등록일</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!inquiries || inquiries.length === 0) { %>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">문의 내역이 없습니다.</td>
+                        </tr>
+                        <% } else { %>
+                            <% inquiries.forEach(inquiry => { %>
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-<%= inquiry.status === 'NEW' ? 'warning' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %>">
+                                            <%= inquiry.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold"><%= inquiry.title %></div>
+                                        <div class="admin-muted small"><%= inquiry.content %></div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold"><%= inquiry.user_name || inquiry.guest_name || '비회원' %></div>
+                                        <div class="admin-muted small">
+                                            <%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %>
+                                        </div>
+                                    </td>
+                                    <td class="admin-muted small"><%= inquiry.order_number || '-' %></td>
+                                    <td class="admin-muted small">
+                                        <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : '-' %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/admin-footer') %>

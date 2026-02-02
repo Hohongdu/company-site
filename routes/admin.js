@@ -696,4 +696,94 @@ router.get('/api/products/check-code', async (req, res) => {
 	}
 });
 
+/* =========================
+   주문 관리
+========================= */
+router.get('/orders', async (req, res) => {
+	try {
+		const [orders] = await db.execute(
+			`SELECT o.*, u.name AS user_name, u.email AS user_email,
+        op.provider AS payment_provider, op.status AS payment_status
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       LEFT JOIN (
+         SELECT op1.*
+         FROM order_payments op1
+         JOIN (
+           SELECT order_id, MAX(id) AS max_id
+           FROM order_payments
+           GROUP BY order_id
+         ) latest ON latest.max_id = op1.id
+       ) op ON op.order_id = o.id
+       ORDER BY o.created_at DESC`,
+		);
+
+		return res.render('admin/orders', { orders });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 목록 로딩 오류');
+	}
+});
+
+router.get('/orders/:orderNumber', async (req, res) => {
+	try {
+		const orderNumber = String(req.params.orderNumber || '').trim();
+
+		const [[order]] = await db.execute(
+			`SELECT o.*, u.name AS user_name, u.email AS user_email
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       WHERE o.order_number = ?
+       LIMIT 1`,
+			[orderNumber],
+		);
+
+		if (!order) {
+			return res.status(404).send('주문 정보를 찾을 수 없습니다.');
+		}
+
+		const [items] = await db.execute(
+			`SELECT *
+       FROM order_items
+       WHERE order_id = ?
+       ORDER BY id ASC`,
+			[order.id],
+		);
+
+		const [[payment]] = await db.execute(
+			`SELECT *
+       FROM order_payments
+       WHERE order_id = ?
+       ORDER BY id DESC
+       LIMIT 1`,
+			[order.id],
+		);
+
+		return res.render('admin/order-detail', { order, items, payment });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 상세 로딩 오류');
+	}
+});
+
+/* =========================
+   문의 관리
+========================= */
+router.get('/inquiries', async (req, res) => {
+	try {
+		const [inquiries] = await db.execute(
+			`SELECT i.*, o.order_number, u.name AS user_name, u.email AS user_email
+       FROM inquiries i
+       LEFT JOIN orders o ON o.id = i.order_id
+       LEFT JOIN users u ON u.id = i.user_id
+       ORDER BY i.created_at DESC`,
+		);
+
+		return res.render('admin/inquiries', { inquiries });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('문의 목록 로딩 오류');
+	}
+});
+
 module.exports = router;
