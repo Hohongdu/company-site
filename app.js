@@ -299,6 +299,8 @@ app.get('/payments/kakao/success', requireLogin, async (req, res) => {
 				},
 			},
 		);
+		console.log('[Kakao approve] query=', req.query);
+		console.log('[Kakao approve] session=', req.session?.kakaoPay || req.session);
 
 		console.log('KakaoPay approve result:', approveResponse.data);
 
