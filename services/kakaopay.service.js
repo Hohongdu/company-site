@@ -14,6 +14,11 @@ function getKakaoPayConfig() {
 
 function isConfigured() {
 	const { adminKey, cid } = getKakaoPayConfig();
+	console.log('[KakaoPay]', {
+		hasAdminKey: Boolean(adminKey),
+		cid,
+		adminKeyPreview: adminKey ? adminKey.slice(0, 6) + '***' : '(empty)',
+	});
 	return Boolean(adminKey && cid);
 }
 
@@ -35,7 +40,7 @@ async function ready({ orderId, userId, itemName, quantity, totalAmount, approva
 
 	const response = await axios.post(`${KAKAOPAY_HOST}/v1/payment/ready`, payload.toString(), {
 		headers: {
-			Authorization: `KakaoAK ${adminKey}`,
+			'Authorization': `KakaoAK ${adminKey}`,
 			'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
 		},
 	});
@@ -56,7 +61,7 @@ async function approve({ tid, orderId, userId, pgToken }) {
 
 	const response = await axios.post(`${KAKAOPAY_HOST}/v1/payment/approve`, payload.toString(), {
 		headers: {
-			Authorization: `KakaoAK ${adminKey}`,
+			'Authorization': `KakaoAK ${adminKey}`,
 			'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
 		},
 	});
