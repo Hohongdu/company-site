@@ -3,7 +3,7 @@
 <div class="admin-card card mb-4">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-dark align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
                         <th>주문번호</th>
@@ -48,7 +48,7 @@
                                         <%= order.created_at ? new Date(order.created_at).toLocaleString() : '-' %>
                                     </td>
                                     <td class="text-end">
-                                        <a class="btn btn-sm btn-outline-light"
+                                        <a class="btn btn-sm btn-outline-secondary"
                                             href="/admin/orders/<%= order.order_number %>">상세</a>
                                     </td>
                                 </tr>

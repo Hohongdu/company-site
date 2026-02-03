@@ -6,6 +6,12 @@
 	--bg: #f8fafc;
 	--line: #e2e8f0;
 	--radius: 12px;
+	--admin-bg: #f8fafc;
+	--admin-panel: #ffffff;
+	--admin-border: #e2e8f0;
+	--admin-text: #0f172a;
+	--admin-muted: #64748b;
+	--admin-accent: #2563eb;
 }
 
 .admin-wrap {
@@ -54,6 +60,129 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.admin-topbar {
+	position: sticky;
+	top: 0;
+	z-index: 1020;
+	background: rgba(255, 255, 255, 0.95);
+	border-bottom: 1px solid var(--admin-border);
+	backdrop-filter: blur(8px);
+}
+
+.brand-pill {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+	color: var(--admin-text);
+}
+
+.brand-pill .dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 999px;
+	background: var(--admin-accent);
+	box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.15);
+}
+
+.admin-shell {
+	display: flex;
+	gap: 18px;
+	padding: 18px 0;
+}
+
+.admin-sidebar {
+	width: 250px;
+	background: var(--admin-panel);
+	border: 1px solid var(--admin-border);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.admin-sidebar .side-head {
+	padding: 14px 14px 10px;
+	border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-sidebar .nav-link {
+	color: var(--admin-text);
+	border-radius: 10px;
+	padding: 10px 12px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.admin-sidebar .nav-link:hover {
+	background: rgba(37, 99, 235, 0.08);
+	color: var(--admin-text);
+}
+
+.admin-sidebar .nav-link.active {
+	background: rgba(37, 99, 235, 0.12);
+	color: var(--admin-text);
+	border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.admin-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.admin-card {
+	background: var(--admin-panel);
+	border: 1px solid var(--admin-border);
+	border-radius: 16px;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.admin-card .card-header {
+	background: transparent;
+	border-bottom: 1px solid var(--admin-border);
+	color: var(--admin-text);
+}
+
+.admin-muted {
+	color: var(--admin-muted);
+}
+
+.btn-admin {
+	background: var(--admin-accent);
+	border: none;
+	color: #fff;
+}
+
+.btn-admin:hover {
+	filter: brightness(0.95);
+	color: #fff;
+}
+
+.admin-badge {
+	font-size: 0.75rem;
+	padding: 0.35rem 0.6rem;
+	border: 1px solid var(--admin-border);
+	border-radius: 999px;
+	color: var(--admin-muted);
+	background: #fff;
+}
+
+.admin-inquiry-content {
+	color: var(--admin-text);
+	white-space: pre-wrap;
+}
+
+@media (max-width: 992px) {
+	.admin-shell {
+		flex-direction: column;
+	}
+
+	.admin-sidebar {
+		width: 100%;
+	}
 }
 
 /* 모바일에서 햄버거 안 메뉴는 “긴 버튼” */
