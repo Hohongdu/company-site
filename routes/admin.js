@@ -7,6 +7,7 @@ const fs = require('fs/promises');
 const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
+const { sendInquiryReplyEmail } = require('../services/notification.service');
 const sharp = require('sharp');
 const os = require('os');
 const { exec } = require('child_process');
@@ -808,6 +809,84 @@ router.get('/inquiries', async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('문의 목록 로딩 오류');
+	}
+});
+
+router.post('/inquiries/:id/reply', async (req, res) => {
+	try {
+		const inquiryId = Number(req.params.id);
+		const answerContent = String(req.body.answerContent || '').trim();
+		const shouldSendEmail = req.body.sendEmail === 'on';
+
+		if (!inquiryId || !answerContent) {
+			return res.status(400).send('답변 내용이 필요합니다.');
+		}
+
+		const [[inquiry]] = await db.execute(
+			`SELECT i.*, u.name AS user_name, u.email AS user_email
+       FROM inquiries i
+       LEFT JOIN users u ON u.id = i.user_id
+       WHERE i.id = ?
+       LIMIT 1`,
+			[inquiryId],
+		);
+
+		if (!inquiry) {
+			return res.status(404).send('문의가 존재하지 않습니다.');
+		}
+
+		const recipientEmail = inquiry.user_email || inquiry.guest_email || null;
+		let notificationStatus = 'SKIPPED';
+		let notificationError = null;
+		let notificationChannel = 'NONE';
+
+		if (shouldSendEmail && recipientEmail) {
+			notificationChannel = 'EMAIL';
+			const emailResult = await sendInquiryReplyEmail({
+				to: recipientEmail,
+				subject: `[문의 답변] ${inquiry.title || '문의 답변 안내'}`,
+				html: `
+          <div style="font-family:Arial,sans-serif; line-height:1.6;">
+            <h2 style="margin-bottom:8px;">문의 답변 안내</h2>
+            <p>안녕하세요 ${inquiry.user_name || inquiry.guest_name || '고객'}님,</p>
+            <p>문의 주신 내용에 대한 답변을 전달드립니다.</p>
+            <div style="padding:12px; background:#f7f7f7; border-radius:8px; margin:12px 0;">
+              <strong>문의 제목:</strong> ${inquiry.title || '-'}<br/>
+              <strong>문의 내용:</strong><br/>
+              <div style="white-space:pre-wrap;">${inquiry.content || '-'}</div>
+            </div>
+            <div style="padding:12px; background:#fff; border:1px solid #eee; border-radius:8px;">
+              <strong>답변:</strong><br/>
+              <div style="white-space:pre-wrap;">${answerContent}</div>
+            </div>
+            <p style="margin-top:16px;">추가 문의가 있으시면 언제든지 연락주세요.</p>
+          </div>
+        `,
+			});
+			notificationStatus = emailResult.status;
+			notificationError = emailResult.error;
+		} else if (shouldSendEmail && !recipientEmail) {
+			notificationChannel = 'EMAIL';
+			notificationStatus = 'FAILED';
+			notificationError = '이메일 정보가 없습니다.';
+		}
+
+		await db.execute(
+			`UPDATE inquiries
+       SET status = 'ANSWERED',
+           answer_content = ?,
+           answered_at = NOW(),
+           notification_channel = ?,
+           notification_status = ?,
+           notification_error = ?
+       WHERE id = ?`,
+			[answerContent, notificationChannel, notificationStatus, notificationError, inquiryId],
+		);
+
+		return res.redirect('/admin/inquiries');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('문의 답변 처리 중 오류가 발생했습니다.');
 	}
 });
 
