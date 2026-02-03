@@ -116,6 +116,27 @@ router.get('/dashboard', async (req, res) => {
 	try {
 		const [[productCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM products');
 		const [[categoryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM categories');
+		const [[orderCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM orders');
+		const [[inquiryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM inquiries');
+
+		const [recentOrders] = await db.execute(
+			`SELECT o.order_number, o.status, o.total_amount, o.created_at,
+        u.name AS user_name, o.guest_name
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       ORDER BY o.created_at DESC
+       LIMIT 5`,
+		);
+
+		const [recentInquiries] = await db.execute(
+			`SELECT i.title, i.status, i.created_at, o.order_number,
+        u.name AS user_name, i.guest_name
+       FROM inquiries i
+       LEFT JOIN orders o ON o.id = i.order_id
+       LEFT JOIN users u ON u.id = i.user_id
+       ORDER BY i.created_at DESC
+       LIMIT 5`,
+		);
 
 		// --- 시스템 상태 ---
 		const cpuCores = os.cpus().length;
@@ -157,8 +178,10 @@ router.get('/dashboard', async (req, res) => {
 
 		res.render('admin/dashboard', {
 			stats: {
-				productCnt: productCnt.cnt,
-				categoryCnt: categoryCnt.cnt,
+				totalProducts: productCnt.cnt,
+				totalCategories: categoryCnt.cnt,
+				totalOrders: orderCnt.cnt,
+				totalInquiries: inquiryCnt.cnt,
 			},
 			sys: {
 				load1: load[0],
@@ -186,6 +209,8 @@ router.get('/dashboard', async (req, res) => {
 				diskStatus: healthLabel(diskHealth(diskUsedPct)),
 				nginxStatus: String(nginxHead || '').includes('200') ? healthLabel('good') : healthLabel('warn'),
 			},
+			recentOrders,
+			recentInquiries,
 		});
 	} catch (err) {
 		console.error(err);
