@@ -11,12 +11,13 @@
                         <th>문의자</th>
                         <th>주문번호</th>
                         <th>등록일</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     <% if (!inquiries || inquiries.length === 0) { %>
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">문의 내역이 없습니다.</td>
+                            <td colspan="6" class="text-center text-muted py-4">문의 내역이 없습니다.</td>
                         </tr>
                         <% } else { %>
                             <% inquiries.forEach(inquiry => { %>
@@ -28,7 +29,7 @@
                                     </td>
                                     <td>
                                         <div class="fw-semibold"><%= inquiry.title %></div>
-                                        <div class="admin-inquiry-content small"><%= inquiry.content %></div>
+                                        <div class="admin-inquiry-preview small"><%= inquiry.content %></div>
                                     </td>
                                     <td>
                                         <div class="fw-semibold"><%= inquiry.user_name || inquiry.guest_name || '비회원' %></div>
@@ -39,6 +40,44 @@
                                     <td class="admin-muted small"><%= inquiry.order_number || '-' %></td>
                                     <td class="admin-muted small">
                                         <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : '-' %>
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-outline-primary btn-sm" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#inquiry-detail-<%= inquiry.id %>">
+                                            상세
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="collapse" id="inquiry-detail-<%= inquiry.id %>">
+                                    <td colspan="6" class="bg-light">
+                                        <div class="p-3">
+                                            <div class="d-flex flex-wrap gap-3 mb-2">
+                                                <div>
+                                                    <div class="admin-muted small">문의 상태</div>
+                                                    <div class="fw-semibold"><%= inquiry.status %></div>
+                                                </div>
+                                                <div>
+                                                    <div class="admin-muted small">주문번호</div>
+                                                    <div class="fw-semibold"><%= inquiry.order_number || '-' %></div>
+                                                </div>
+                                                <div>
+                                                    <div class="admin-muted small">연락처</div>
+                                                    <div class="fw-semibold">
+                                                        <%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="admin-muted small">등록일</div>
+                                                    <div class="fw-semibold">
+                                                        <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : '-' %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="admin-muted small mb-1">문의 내용</div>
+                                                <div class="admin-inquiry-content"><%= inquiry.content %></div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                                 <% }) %>
