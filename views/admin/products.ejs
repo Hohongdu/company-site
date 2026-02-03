@@ -1,4 +1,4 @@
-<%- include('../layouts/admin-top', { title: '상품 관리' , active: 'products' }) %>
+<%- include('partials/admin-header', { title: '상품 관리' , subtitle: '상품 등록/수정/삭제' , active: 'products' }) %>
 
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div>
@@ -77,4 +77,4 @@
             </div>
         </div>
 
-        <%- include('../layouts/admin-bottom') %>
+        <%- include('partials/admin-footer') %>

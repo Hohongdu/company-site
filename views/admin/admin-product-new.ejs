@@ -1,4 +1,4 @@
-<%- include('../layouts/admin-top', { title: '상품 등록' , active: 'products' , backUrl: '/admin/products' }) %>
+<%- include('partials/admin-header', { title: '상품 등록' , subtitle: '새 상품을 추가합니다.' , active: 'product_new' , backHref: '/admin/products' }) %>
 
     <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
         <div>
@@ -127,4 +127,4 @@
         });
     </script>
 
-    <%- include('../layouts/admin-bottom') %>
+    <%- include('partials/admin-footer') %>
