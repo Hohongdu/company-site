@@ -7,14 +7,11 @@ const fs = require('fs/promises');
 const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
-const sharp = require('sharp');
 const os = require('os');
 const { exec } = require('child_process');
-const csurf = require('csurf');
+const csrfProtection = require('../middleware/simple-csrf');
 
 const router = express.Router();
-const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
-
 /* =========================
    유틸
 ========================= */
@@ -83,6 +80,7 @@ const uploadImage = multer({
 });
 
 async function processImageToWebp(reqFilePath) {
+	const sharp = require('sharp');
 	const base = `p_${Date.now()}`;
 	const fileName = `${base}.webp`;
 	const thumbName = `${base}_thumb.webp`;
@@ -116,6 +114,27 @@ router.get('/dashboard', async (req, res) => {
 	try {
 		const [[productCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM products');
 		const [[categoryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM categories');
+		const [[orderCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM orders');
+		const [[inquiryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM inquiries');
+
+		const [recentOrders] = await db.execute(
+			`SELECT o.order_number, o.status, o.total_amount, o.created_at,
+        u.name AS user_name, o.guest_name
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       ORDER BY o.created_at DESC
+       LIMIT 5`,
+		);
+
+		const [recentInquiries] = await db.execute(
+			`SELECT i.title, i.status, i.created_at, o.order_number,
+        u.name AS user_name, i.guest_name
+       FROM inquiries i
+       LEFT JOIN orders o ON o.id = i.order_id
+       LEFT JOIN users u ON u.id = i.user_id
+       ORDER BY i.created_at DESC
+       LIMIT 5`,
+		);
 
 		// --- 시스템 상태 ---
 		const cpuCores = os.cpus().length;
@@ -157,8 +176,10 @@ router.get('/dashboard', async (req, res) => {
 
 		res.render('admin/dashboard', {
 			stats: {
-				productCnt: productCnt.cnt,
-				categoryCnt: categoryCnt.cnt,
+				totalProducts: productCnt.cnt,
+				totalCategories: categoryCnt.cnt,
+				totalOrders: orderCnt.cnt,
+				totalInquiries: inquiryCnt.cnt,
 			},
 			sys: {
 				load1: load[0],
@@ -186,6 +207,8 @@ router.get('/dashboard', async (req, res) => {
 				diskStatus: healthLabel(diskHealth(diskUsedPct)),
 				nginxStatus: String(nginxHead || '').includes('200') ? healthLabel('good') : healthLabel('warn'),
 			},
+			recentOrders,
+			recentInquiries,
 		});
 	} catch (err) {
 		console.error(err);
@@ -693,6 +716,96 @@ router.get('/api/products/check-code', async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json({ ok: false, message: '중복 체크 중 오류' });
+	}
+});
+
+/* =========================
+   주문 관리
+========================= */
+router.get('/orders', async (req, res) => {
+	try {
+		const [orders] = await db.execute(
+			`SELECT o.*, u.name AS user_name, u.email AS user_email,
+        op.provider AS payment_provider, op.status AS payment_status
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       LEFT JOIN (
+         SELECT op1.*
+         FROM order_payments op1
+         JOIN (
+           SELECT order_id, MAX(id) AS max_id
+           FROM order_payments
+           GROUP BY order_id
+         ) latest ON latest.max_id = op1.id
+       ) op ON op.order_id = o.id
+       ORDER BY o.created_at DESC`,
+		);
+
+		return res.render('admin/orders', { orders });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 목록 로딩 오류');
+	}
+});
+
+router.get('/orders/:orderNumber', async (req, res) => {
+	try {
+		const orderNumber = String(req.params.orderNumber || '').trim();
+
+		const [[order]] = await db.execute(
+			`SELECT o.*, u.name AS user_name, u.email AS user_email
+       FROM orders o
+       LEFT JOIN users u ON u.id = o.user_id
+       WHERE o.order_number = ?
+       LIMIT 1`,
+			[orderNumber],
+		);
+
+		if (!order) {
+			return res.status(404).send('주문 정보를 찾을 수 없습니다.');
+		}
+
+		const [items] = await db.execute(
+			`SELECT *
+       FROM order_items
+       WHERE order_id = ?
+       ORDER BY id ASC`,
+			[order.id],
+		);
+
+		const [[payment]] = await db.execute(
+			`SELECT *
+       FROM order_payments
+       WHERE order_id = ?
+       ORDER BY id DESC
+       LIMIT 1`,
+			[order.id],
+		);
+
+		return res.render('admin/order-detail', { order, items, payment });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 상세 로딩 오류');
+	}
+});
+
+/* =========================
+   문의 관리
+========================= */
+router.get('/inquiries', async (req, res) => {
+	try {
+		const [inquiries] = await db.execute(
+			`SELECT i.*, o.order_number, u.name AS user_name, u.email AS user_email
+       FROM inquiries i
+       LEFT JOIN orders o ON o.id = i.order_id
+       LEFT JOIN users u ON u.id = i.user_id
+       ORDER BY i.created_at DESC`,
+		);
+
+		return res.render('admin/inquiries', { inquiries });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('문의 목록 로딩 오류');
 	}
 });
 

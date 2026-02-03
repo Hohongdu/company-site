@@ -1,0 +1,57 @@
+<%- include('../layouts/admin-top', { title: '문의 관리' , active: 'inquiries' }) %>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>상태</th>
+                        <th>제목</th>
+                        <th>문의자</th>
+                        <th>주문번호</th>
+                        <th>등록일</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!inquiries || inquiries.length === 0) { %>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">문의 내역이 없습니다.</td>
+                        </tr>
+                        <% } else { %>
+                            <% inquiries.forEach(inquiry => { %>
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-<%= inquiry.status === 'NEW' ? 'warning' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %>">
+                                            <%= inquiry.status %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold"><%= inquiry.title %></div>
+                                        <details class="mt-1">
+                                            <summary class="text-muted small">상세 보기</summary>
+                                            <div class="small text-muted mt-2" style="white-space: pre-wrap;">
+                                                <%= inquiry.content %>
+                                            </div>
+                                        </details>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold"><%= inquiry.user_name || inquiry.guest_name || '비회원' %></div>
+                                        <div class="text-muted small">
+                                            <%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %>
+                                        </div>
+                                    </td>
+                                    <td class="text-muted small"><%= inquiry.order_number || '-' %></td>
+                                    <td class="text-muted small">
+                                        <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : '-' %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('../layouts/admin-bottom') %>

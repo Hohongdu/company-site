@@ -20,7 +20,11 @@
         </div>
     </div>
 
-    <% if (!items || items.length===0) { %>
+    <% if (cartError) { %>
+        <div class="alert alert-warning"><%= cartError %></div>
+        <% } %>
+
+            <% if (!items || items.length===0) { %>
         <div class="shop-card p-4">
             <div class="text-muted mb-3">장바구니가 비어 있어요.</div>
             <a href="/shop/products" class="btn btn-primary btn-sm">상품 보러가기</a>
@@ -103,6 +107,26 @@
                         </div>
                         <% if (paymentEnabled) { %>
                             <form action="/shop/checkout/kakao" method="post" class="m-0">
+                                <% if (isGuest) { %>
+                                    <div class="border rounded-3 p-3 mt-3 bg-light">
+                                        <div class="fw-semibold mb-2">비회원 주문 정보</div>
+                                        <div class="mb-2">
+                                            <label class="form-label small">이름</label>
+                                            <input class="form-control form-control-sm" name="guestName" required
+                                                value="<%= guestInfo?.guestName || '' %>">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small">이메일</label>
+                                            <input class="form-control form-control-sm" name="guestEmail" type="email"
+                                                placeholder="또는 연락처 입력" value="<%= guestInfo?.guestEmail || '' %>">
+                                        </div>
+                                        <div>
+                                            <label class="form-label small">연락처</label>
+                                            <input class="form-control form-control-sm" name="guestPhone"
+                                                placeholder="010-0000-0000" value="<%= guestInfo?.guestPhone || '' %>">
+                                        </div>
+                                    </div>
+                                <% } %>
                                 <button class="btn btn-primary w-100 mt-3" type="submit">카카오페이 결제하기</button>
                             </form>
                         <% } else { %>

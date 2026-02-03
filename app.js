@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
-const csurf = require('csurf');
+const csrfProtection = require('./middleware/simple-csrf');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
@@ -65,14 +65,17 @@ app.use(
 // =====================
 // CSRF (admin/auth만)
 // =====================
-const csrfProtection = csurf({
-	ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-});
-
-app.use('/auth', csrfProtection);
+app.use(
+	'/auth',
+	csrfProtection({
+		ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+	}),
+);
 app.use('/admin', (req, res, next) => {
 	if (req.method === 'GET' || !req.is('multipart/form-data')) {
-		return csrfProtection(req, res, next);
+		return csrfProtection({
+			ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+		})(req, res, next);
 	}
 	return next();
 });

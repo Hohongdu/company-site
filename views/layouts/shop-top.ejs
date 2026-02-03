@@ -86,6 +86,11 @@
                                 <% } %>
                         </a>
 
+                        <a class="btn btn-sm shop-navbtn <%= activeKey==='inquiry' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
+                            href="/shop/inquiries">문의하기</a>
+                        <a class="btn btn-sm shop-navbtn <%= activeKey==='order_lookup' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
+                            href="/shop/orders/guest">주문조회</a>
+
                         <% if (user && user.is_admin) { %>
                             <a class="btn btn-outline-dark btn-sm shop-navbtn" href="/admin/dashboard">관리자</a>
                             <% } %>
@@ -119,6 +124,8 @@
                                     </span>
                                     <% } %>
                             </a>
+                            <a class="btn btn-outline-secondary" href="/shop/inquiries">문의하기</a>
+                            <a class="btn btn-outline-secondary" href="/shop/orders/guest">주문조회</a>
                             <% if (user && user.is_admin) { %>
                                 <a class="btn btn-outline-dark" href="/admin/dashboard">관리자</a>
                                 <% } %>

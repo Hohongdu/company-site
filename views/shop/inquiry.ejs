@@ -1,0 +1,52 @@
+<%- include('../layouts/shop-top', { title: '문의하기' , active: 'inquiry' }) %>
+
+<div class="shop-card p-4">
+    <h3 class="fw-bold mb-2">문의하기</h3>
+    <p class="text-muted mb-4">주문/배송/제품 문의 내용을 남겨주시면 확인 후 답변드리겠습니다.</p>
+
+    <% if (success) { %>
+        <div class="alert alert-success">문의가 등록되었습니다. 빠르게 확인 후 연락드리겠습니다.</div>
+        <% } %>
+            <% if (error) { %>
+                <div class="alert alert-warning"><%= error %></div>
+                <% } %>
+
+                    <form action="/shop/inquiries" method="post" class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">주문번호 (선택)</label>
+                            <input class="form-control" name="orderNumber" value="<%= form.orderNumber %>">
+                        </div>
+
+                        <% if (!user) { %>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">이름</label>
+                                <input class="form-control" name="guestName" required value="<%= form.guestName %>">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">이메일</label>
+                                <input class="form-control" type="email" name="guestEmail"
+                                    value="<%= form.guestEmail %>">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">연락처</label>
+                                <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
+                                    value="<%= form.guestPhone %>">
+                            </div>
+                            <% } %>
+
+                                <div class="col-12">
+                                    <label class="form-label">문의 제목</label>
+                                    <input class="form-control" name="title" required value="<%= form.title %>">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">문의 내용</label>
+                                    <textarea class="form-control" rows="6" name="content"
+                                        required><%= form.content %></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-primary">문의 등록</button>
+                                </div>
+                    </form>
+</div>
+
+<%- include('../layouts/shop-bottom') %>
