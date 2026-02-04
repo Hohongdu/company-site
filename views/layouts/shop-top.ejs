@@ -91,9 +91,14 @@
                         <a class="btn btn-sm shop-navbtn <%= activeKey==='order_lookup' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
                             href="/shop/orders/guest">주문조회</a>
 
-                        <% if (user && user.is_admin) { %>
-                            <a class="btn btn-outline-dark btn-sm shop-navbtn" href="/admin/dashboard">관리자</a>
+                        <% if (user) { %>
+                            <a class="btn btn-outline-secondary btn-sm shop-navbtn <%= activeKey==='account' ? 'btn-secondary text-white' : '' %>"
+                                href="/shop/account">내 정보</a>
                             <% } %>
+
+                                <% if (user && user.is_admin) { %>
+                                    <a class="btn btn-outline-dark btn-sm shop-navbtn" href="/admin/dashboard">관리자</a>
+                                    <% } %>
 
                                 <div class="vr mx-2"></div>
 
@@ -126,9 +131,12 @@
                             </a>
                             <a class="btn btn-outline-secondary" href="/shop/inquiries">문의하기</a>
                             <a class="btn btn-outline-secondary" href="/shop/orders/guest">주문조회</a>
-                            <% if (user && user.is_admin) { %>
-                                <a class="btn btn-outline-dark" href="/admin/dashboard">관리자</a>
+                            <% if (user) { %>
+                                <a class="btn btn-outline-secondary" href="/shop/account">내 정보</a>
                                 <% } %>
+                                    <% if (user && user.is_admin) { %>
+                                        <a class="btn btn-outline-dark" href="/admin/dashboard">관리자</a>
+                                        <% } %>
                         </div>
                     </div>
 

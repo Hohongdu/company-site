@@ -1,7 +1,9 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
 const kakaoPayService = require('../services/kakaopay.service');
+const { requireLogin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -511,6 +513,107 @@ router.get('/orders/:orderNumber', async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('주문 상세 조회 오류');
+	}
+});
+
+router.get('/account', requireLogin, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+
+		if (!user) {
+			return res.status(404).render('404', { message: '사용자 정보를 찾을 수 없습니다.' });
+		}
+
+		return res.render('shop/account', {
+			user,
+			active: 'account',
+			message: req.query?.message || null,
+			error: req.query?.error || null,
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('내 정보 로딩 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/profile', requireLogin, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const name = String(req.body.name || '').trim();
+		const email = String(req.body.email || '').trim().toLowerCase();
+		const password = String(req.body.password || '').trim();
+		const passwordConfirm = String(req.body.passwordConfirm || '').trim();
+
+		if (!name || !email) {
+			return res.redirect('/shop/account?error=이름과 이메일을 입력해주세요.');
+		}
+
+		const [[existing]] = await db.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
+		if (existing && existing.id !== userId) {
+			return res.redirect('/shop/account?error=이미 사용 중인 이메일입니다.');
+		}
+
+		if (password && password !== passwordConfirm) {
+			return res.redirect('/shop/account?error=비밀번호가 일치하지 않습니다.');
+		}
+
+		if (password) {
+			const hashedPw = await bcrypt.hash(password, 10);
+			await db.execute('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, hashedPw, userId]);
+		} else {
+			await db.execute('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, userId]);
+		}
+
+		req.session.user.name = name;
+		req.session.user.email = email;
+
+		return res.redirect('/shop/account?message=내 정보가 업데이트되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('내 정보 수정 중 오류가 발생했습니다.');
+	}
+});
+
+router.get('/account/inquiries', requireLogin, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const [inquiries] = await db.execute(
+			`SELECT i.*
+       FROM inquiries i
+       WHERE i.user_id = ?
+       ORDER BY i.created_at DESC`,
+			[userId],
+		);
+
+		return res.render('shop/account-inquiries', {
+			inquiries,
+			active: 'account',
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('문의 내역 로딩 중 오류가 발생했습니다.');
+	}
+});
+
+router.get('/account/orders', requireLogin, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const [orders] = await db.execute(
+			`SELECT id, order_number, status, total_amount, created_at
+       FROM orders
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
+			[userId],
+		);
+
+		return res.render('shop/account-orders', {
+			orders,
+			active: 'account',
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 내역 로딩 중 오류가 발생했습니다.');
 	}
 });
 
