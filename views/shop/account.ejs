@@ -1,0 +1,81 @@
+<%- include('../layouts/shop-top', { title: '내 정보', active: 'account' }) %>
+
+<div class="row g-4">
+    <div class="col-lg-3">
+        <div class="list-group shadow-sm">
+            <a class="list-group-item list-group-item-action active" href="/shop/account">프로필 관리</a>
+            <a class="list-group-item list-group-item-action" href="/shop/account/orders">주문 내역</a>
+            <a class="list-group-item list-group-item-action" href="/shop/account/inquiries">문의 내역</a>
+        </div>
+    </div>
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h4 class="mb-3">내 프로필</h4>
+                <p class="text-muted mb-4">로그인 사용자 정보를 수정하거나 비밀번호를 변경할 수 있습니다.</p>
+
+                <% if (message) { %>
+                    <div class="alert alert-success"><%= message %></div>
+                <% } %>
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+
+                <form action="/shop/account/profile" method="post" class="row g-3">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="col-md-6">
+                        <label class="form-label">이름</label>
+                        <input class="form-control" name="name" value="<%= user.name %>" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">이메일</label>
+                        <input class="form-control" name="email" type="email" value="<%= user.email %>" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">새 비밀번호</label>
+                        <input class="form-control" name="password" type="password" placeholder="변경 시에만 입력">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">새 비밀번호 확인</label>
+                        <input class="form-control" name="passwordConfirm" type="password" placeholder="비밀번호 확인">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary">저장하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="mb-2 text-danger">회원 탈퇴</h5>
+                <p class="text-muted mb-3">탈퇴 시 계정 정보는 삭제되고, 주문/문의 내역은 비회원 정보로 보관됩니다.</p>
+                <form action="/shop/account/delete" method="post"
+                    onsubmit="return confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-outline-danger">회원 탈퇴 진행</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="mb-2">알림 설정</h5>
+                <p class="text-muted mb-3">문의 답변 관련 이메일 알림 수신 여부를 설정할 수 있습니다.</p>
+                <form action="/shop/account/notifications" method="post">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="emailNotifications" id="emailNotifications"
+                            <%= emailNotificationEnabled ? 'checked' : '' %>>
+                        <label class="form-check-label" for="emailNotifications">
+                            이메일 알림 수신
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-primary">설정 저장</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../layouts/shop-bottom') %>
