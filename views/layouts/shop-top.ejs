@@ -88,6 +88,7 @@
 
                         <a class="btn btn-sm shop-navbtn <%= activeKey==='inquiry' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
                             href="/shop/inquiries">문의하기</a>
+                        <a class="btn btn-sm shop-navbtn btn-outline-secondary" href="/shop/inquiries/guest">문의조회</a>
                         <a class="btn btn-sm shop-navbtn <%= activeKey==='order_lookup' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
                             href="/shop/orders/guest">주문조회</a>
 
@@ -130,6 +131,7 @@
                                     <% } %>
                             </a>
                             <a class="btn btn-outline-secondary" href="/shop/inquiries">문의하기</a>
+                            <a class="btn btn-outline-secondary" href="/shop/inquiries/guest">문의조회</a>
                             <a class="btn btn-outline-secondary" href="/shop/orders/guest">주문조회</a>
                             <% if (user) { %>
                                 <a class="btn btn-outline-secondary" href="/shop/account">내 정보</a>

@@ -1,11 +1,25 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const csurf = require('csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
 const kakaoPayService = require('../services/kakaopay.service');
 const { requireLogin } = require('../middleware/auth');
 
 const router = express.Router();
+const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
+const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
+
+async function ensureNotificationSettingsTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS user_notification_settings (
+      user_id INT PRIMARY KEY,
+      email_enabled TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
+	);
+}
 
 function generateOrderNumber() {
 	const rand = Math.floor(Math.random() * 1000)
@@ -516,10 +530,18 @@ router.get('/orders/:orderNumber', async (req, res) => {
 	}
 });
 
-router.get('/account', requireLogin, async (req, res) => {
+router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
+		await ensureNotificationSettingsTable();
 		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+		const [[notificationRow]] = await db.execute(
+			`SELECT email_enabled
+       FROM user_notification_settings
+       WHERE user_id = ?
+       LIMIT 1`,
+			[userId],
+		);
 
 		if (!user) {
 			return res.status(404).render('404', { message: '사용자 정보를 찾을 수 없습니다.' });
@@ -530,6 +552,8 @@ router.get('/account', requireLogin, async (req, res) => {
 			active: 'account',
 			message: req.query?.message || null,
 			error: req.query?.error || null,
+			csrfToken: req.csrfToken(),
+			emailNotificationEnabled: notificationRow ? Boolean(notificationRow.email_enabled) : true,
 		});
 	} catch (err) {
 		console.error(err);
@@ -537,7 +561,7 @@ router.get('/account', requireLogin, async (req, res) => {
 	}
 });
 
-router.post('/account/profile', requireLogin, async (req, res) => {
+router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
 		const name = String(req.body.name || '').trim();
@@ -575,7 +599,27 @@ router.post('/account/profile', requireLogin, async (req, res) => {
 	}
 });
 
-router.get('/account/inquiries', requireLogin, async (req, res) => {
+router.post('/account/notifications', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const emailEnabled = req.body.emailNotifications === 'on' ? 1 : 0;
+
+		await ensureNotificationSettingsTable();
+		await db.execute(
+			`INSERT INTO user_notification_settings (user_id, email_enabled)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE email_enabled = VALUES(email_enabled)`,
+			[userId, emailEnabled],
+		);
+
+		return res.redirect('/shop/account?message=알림 설정이 저장되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('알림 설정 저장 중 오류가 발생했습니다.');
+	}
+});
+
+router.get('/account/inquiries', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
 		const [inquiries] = await db.execute(
@@ -589,6 +633,7 @@ router.get('/account/inquiries', requireLogin, async (req, res) => {
 		return res.render('shop/account-inquiries', {
 			inquiries,
 			active: 'account',
+			csrfToken: req.csrfToken(),
 		});
 	} catch (err) {
 		console.error(err);
@@ -596,7 +641,7 @@ router.get('/account/inquiries', requireLogin, async (req, res) => {
 	}
 });
 
-router.get('/account/orders', requireLogin, async (req, res) => {
+router.get('/account/orders', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
 		const [orders] = await db.execute(
@@ -610,10 +655,90 @@ router.get('/account/orders', requireLogin, async (req, res) => {
 		return res.render('shop/account-orders', {
 			orders,
 			active: 'account',
+			csrfToken: req.csrfToken(),
 		});
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('주문 내역 로딩 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const orderId = Number(req.params.orderId);
+		const userId = req.session.user.id;
+
+		if (!orderId) {
+			return res.status(400).send('주문 정보가 올바르지 않습니다.');
+		}
+
+		const [[order]] = await db.execute(
+			`SELECT id, status
+       FROM orders
+       WHERE id = ? AND user_id = ?
+       LIMIT 1`,
+			[orderId, userId],
+		);
+
+		if (!order) {
+			return res.status(404).send('주문 정보를 찾을 수 없습니다.');
+		}
+
+		if (order.status !== 'PENDING') {
+			return res.redirect('/shop/account/orders');
+		}
+
+		await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
+		return res.redirect('/shop/account/orders');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 취소 요청 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
+	const userId = req.session.user.id;
+	const connection = await db.getConnection();
+	try {
+		const [[user]] = await connection.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+
+		if (!user) {
+			return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
+		}
+
+		await connection.beginTransaction();
+
+		await connection.execute(
+			`UPDATE orders
+       SET user_id = NULL,
+           guest_name = ?,
+           guest_email = ?
+       WHERE user_id = ?`,
+			[user.name, user.email, userId],
+		);
+
+		await connection.execute(
+			`UPDATE inquiries
+       SET user_id = NULL,
+           guest_name = ?,
+           guest_email = ?
+       WHERE user_id = ?`,
+			[user.name, user.email, userId],
+		);
+
+		await connection.execute('DELETE FROM user_notification_settings WHERE user_id = ?', [userId]);
+		await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
+		await connection.commit();
+
+		req.session.destroy(() => {
+			res.redirect('/?deleted=1');
+		});
+	} catch (err) {
+		await connection.rollback();
+		console.error(err);
+		return res.status(500).send('회원 탈퇴 처리 중 오류가 발생했습니다.');
+	} finally {
+		connection.release();
 	}
 });
 
@@ -630,6 +755,65 @@ router.get('/inquiries', (req, res) => {
 		success: req.query?.ok === '1',
 		error: null,
 	});
+});
+
+router.get('/inquiries/guest', inquiryLookupCsrf, (req, res) => {
+	res.render('shop/inquiry-lookup', {
+		form: {
+			inquiryId: '',
+			guestEmail: '',
+			guestPhone: '',
+		},
+		error: null,
+		result: null,
+		csrfToken: req.csrfToken(),
+	});
+});
+
+router.post('/inquiries/guest', inquiryLookupCsrf, async (req, res) => {
+	try {
+		const inquiryId = Number(req.body.inquiryId);
+		const guestEmail = String(req.body.guestEmail || '').trim();
+		const guestPhone = String(req.body.guestPhone || '').trim();
+
+		if (!inquiryId || (!guestEmail && !guestPhone)) {
+			return res.render('shop/inquiry-lookup', {
+				form: { inquiryId, guestEmail, guestPhone },
+				error: '문의 번호와 이메일 또는 연락처를 입력해주세요.',
+				result: null,
+				csrfToken: req.csrfToken(),
+			});
+		}
+
+		const [[inquiry]] = await db.execute(
+			`SELECT *
+       FROM inquiries
+       WHERE id = ?
+         AND user_id IS NULL
+         AND ((guest_email = ? AND guest_email IS NOT NULL) OR (guest_phone = ? AND guest_phone IS NOT NULL))
+       LIMIT 1`,
+			[inquiryId, guestEmail || null, guestPhone || null],
+		);
+
+		if (!inquiry) {
+			return res.render('shop/inquiry-lookup', {
+				form: { inquiryId, guestEmail, guestPhone },
+				error: '문의 내역을 찾을 수 없습니다.',
+				result: null,
+				csrfToken: req.csrfToken(),
+			});
+		}
+
+		return res.render('shop/inquiry-lookup', {
+			form: { inquiryId, guestEmail, guestPhone },
+			error: null,
+			result: inquiry,
+			csrfToken: req.csrfToken(),
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('문의 조회 중 오류가 발생했습니다.');
+	}
 });
 
 router.post('/inquiries', async (req, res) => {

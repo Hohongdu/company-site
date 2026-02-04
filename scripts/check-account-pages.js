@@ -17,5 +17,7 @@ const routesContents = fs.readFileSync(routesPath, 'utf8');
 assert.ok(routesContents.includes("router.get('/account'"), 'Account page route missing.');
 assert.ok(routesContents.includes("router.get('/account/inquiries'"), 'Account inquiries route missing.');
 assert.ok(routesContents.includes("router.get('/account/orders'"), 'Account orders route missing.');
+assert.ok(routesContents.includes("router.post('/account/delete'"), 'Account delete route missing.');
+assert.ok(routesContents.includes("router.post('/account/notifications'"), 'Account notifications route missing.');
 
 console.log('✅ Account pages and routes look present.');
