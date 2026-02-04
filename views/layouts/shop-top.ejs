@@ -71,10 +71,22 @@
 
                     <!-- 오른쪽: 버튼들 한 묶음(간격 일정) -->
                     <div class="d-none d-lg-flex align-items-center gap-2">
-                        <a class="btn btn-outline-secondary btn-sm shop-navbtn" href="/">회사</a>
-
-                        <a class="btn btn-sm shop-navbtn <%= activeKey==='products' ? 'btn-primary' : 'btn-outline-primary' %>"
-                            href="/shop/products">상품보기</a>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle shop-navbtn" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                메뉴
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/">회사</a></li>
+                                <li><a class="dropdown-item" href="/shop/products">상품보기</a></li>
+                                <li><a class="dropdown-item" href="/shop/inquiries">문의하기</a></li>
+                                <li><a class="dropdown-item" href="/shop/inquiries/guest">문의조회</a></li>
+                                <li><a class="dropdown-item" href="/shop/orders/guest">주문조회</a></li>
+                                <% if (user && user.is_admin) { %>
+                                    <li><a class="dropdown-item" href="/admin/dashboard">관리자</a></li>
+                                <% } %>
+                            </ul>
+                        </div>
 
                         <a class="btn btn-sm shop-navbtn <%= activeKey==='cart' ? 'btn-dark' : 'btn-outline-dark' %>"
                             href="/shop/cart">
@@ -86,13 +98,9 @@
                                 <% } %>
                         </a>
 
-                        <a class="btn btn-sm shop-navbtn <%= activeKey==='inquiry' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
-                            href="/shop/inquiries">문의하기</a>
-                        <a class="btn btn-sm shop-navbtn <%= activeKey==='order_lookup' ? 'btn-outline-secondary' : 'btn-outline-secondary' %>"
-                            href="/shop/orders/guest">주문조회</a>
-
-                        <% if (user && user.is_admin) { %>
-                            <a class="btn btn-outline-dark btn-sm shop-navbtn" href="/admin/dashboard">관리자</a>
+                        <% if (user) { %>
+                            <a class="btn btn-outline-secondary btn-sm shop-navbtn <%= activeKey==='account' ? 'btn-secondary text-white' : '' %>"
+                                href="/shop/account">내 정보</a>
                             <% } %>
 
                                 <div class="vr mx-2"></div>
@@ -114,9 +122,6 @@
                     <!-- 모바일 메뉴(햄버거 펼쳤을 때): 긴 버튼(d-grid) -->
                     <div class="d-lg-none mt-2">
                         <div class="d-grid gap-2">
-                            <a class="btn btn-outline-secondary" href="/">회사</a>
-                            <a class="btn <%= activeKey==='products' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                href="/shop/products">상품보기</a>
                             <a class="btn <%= activeKey==='cart' ? 'btn-dark' : 'btn-outline-dark' %>"
                                 href="/shop/cart">
                                 장바구니 <% if (cartCount> 0) { %><span class="badge bg-danger ms-1">
@@ -124,11 +129,22 @@
                                     </span>
                                     <% } %>
                             </a>
-                            <a class="btn btn-outline-secondary" href="/shop/inquiries">문의하기</a>
-                            <a class="btn btn-outline-secondary" href="/shop/orders/guest">주문조회</a>
-                            <% if (user && user.is_admin) { %>
-                                <a class="btn btn-outline-dark" href="/admin/dashboard">관리자</a>
+                            <% if (user) { %>
+                                <a class="btn btn-outline-secondary" href="/shop/account">내 정보</a>
                                 <% } %>
+                            <details class="mt-2">
+                                <summary class="btn btn-outline-secondary w-100">기타 메뉴</summary>
+                                <div class="d-grid gap-2 mt-2">
+                                    <a class="btn btn-outline-secondary" href="/">회사</a>
+                                    <a class="btn btn-outline-secondary" href="/shop/products">상품보기</a>
+                                    <a class="btn btn-outline-secondary" href="/shop/inquiries">문의하기</a>
+                                    <a class="btn btn-outline-secondary" href="/shop/inquiries/guest">문의조회</a>
+                                    <a class="btn btn-outline-secondary" href="/shop/orders/guest">주문조회</a>
+                                    <% if (user && user.is_admin) { %>
+                                        <a class="btn btn-outline-dark" href="/admin/dashboard">관리자</a>
+                                    <% } %>
+                                </div>
+                            </details>
                         </div>
                     </div>
 
