@@ -219,86 +219,95 @@
             </div>
         </div>
         <% if (typeof sys !=='undefined' && sys) { %>
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="text-muted small">서버 바쁨 정도</div>
-                        <span class="badge text-bg-<%= sys.cpuStatus.badge %>">
-                            <%= sys.cpuStatus.text %>
-                        </span>
-                    </div>
-                    <div class="fs-5 fw-bold mt-1">
-                        <%= sys.cpuRatioPct %>% (대략)
-                    </div>
-                    <div class="text-muted small">
-                        기준: CPU <%= sys.cpuCores %>코어 대비 · (1분/5분/15분: <%= sys.load1.toFixed(2) %>/<%=
-                                    sys.load5.toFixed(2) %>/<%= sys.load15.toFixed(2) %>)
-                    </div>
-                </div>
-            </div>
-
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="text-muted small">메모리 사용량</div>
-                        <span class="badge text-bg-<%= sys.memStatus.badge %>">
-                            <%= sys.memStatus.text %>
-                        </span>
-                    </div>
-                    <div class="fs-5 fw-bold mt-1">
-                        <%= sys.memUsedMB %>MB / <%= sys.memTotalMB %>MB (<%= sys.memUsedPct %>%)
-                    </div>
-                    <div class="text-muted small">여유: <%= sys.memFreeMB %>MB</div>
-                </div>
-            </div>
-
-
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="text-muted small">저장공간 사용량</div>
-                        <span class="badge text-bg-<%= sys.diskStatus.badge %>">
-                            <%= sys.diskStatus.text %>
-                        </span>
-                    </div>
-                    <div class="fs-5 fw-bold mt-1">
-                        <%= sys.diskUsedPct %>% 사용 중
-                    </div>
-                    <div class="text-muted small">
-                        총 <%= sys.diskTotal %> · 사용 <%= sys.diskUsed %> · 남음 <%= sys.diskAvail %>
+            <div class="row g-3">
+                <div class="col-12 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-muted small">서버 바쁨 정도</div>
+                                <span class="badge text-bg-<%= sys.cpuStatus.badge %>">
+                                    <%= sys.cpuStatus.text %>
+                                </span>
+                            </div>
+                            <div class="fs-5 fw-bold mt-1">
+                                <%= sys.cpuRatioPct %>% (대략)
+                            </div>
+                            <div class="text-muted small">
+                                기준: CPU <%= sys.cpuCores %>코어 대비 · (1분/5분/15분: <%= sys.load1.toFixed(2) %>/<%=
+                                        sys.load5.toFixed(2) %>/<%= sys.load15.toFixed(2) %>)
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="text-muted small">웹 서버 상태</div>
-                        <span class="badge text-bg-<%= sys.nginxStatus.badge %>">
-                            <%= sys.nginxStatus.text %>
-                        </span>
-                    </div>
-                    <div class="fw-bold mt-1">
-                        <%= sys.nginxHead %>
-                    </div>
-                    <div class="text-muted small">외부 접속(8080) 응답 확인</div>
-                </div>
-            </div>
-
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="text-muted small mb-2">트래픽(대략)</div>
-                    <div class="fw-semibold">오늘</div>
-                    <div class="text-muted small" style="word-break:break-word;">
-                        <%= sys.vnstatDaily || '데이터 없음' %>
-                    </div>
-                    <div class="fw-semibold mt-2">이번 달</div>
-                    <div class="text-muted small" style="word-break:break-word;">
-                        <%= sys.vnstatMonthly || '데이터 없음' %>
+                <div class="col-12 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-muted small">메모리 사용량</div>
+                                <span class="badge text-bg-<%= sys.memStatus.badge %>">
+                                    <%= sys.memStatus.text %>
+                                </span>
+                            </div>
+                            <div class="fs-5 fw-bold mt-1">
+                                <%= sys.memUsedMB %>MB / <%= sys.memTotalMB %>MB (<%= sys.memUsedPct %>%)
+                            </div>
+                            <div class="text-muted small">여유: <%= sys.memFreeMB %>MB</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <div class="col-12 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-muted small">저장공간 사용량</div>
+                                <span class="badge text-bg-<%= sys.diskStatus.badge %>">
+                                    <%= sys.diskStatus.text %>
+                                </span>
+                            </div>
+                            <div class="fs-5 fw-bold mt-1">
+                                <%= sys.diskUsedPct %>% 사용 중
+                            </div>
+                            <div class="text-muted small">
+                                총 <%= sys.diskTotal %> · 사용 <%= sys.diskUsed %> · 남음 <%= sys.diskAvail %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-muted small">웹 서버 상태</div>
+                                <span class="badge text-bg-<%= sys.nginxStatus.badge %>">
+                                    <%= sys.nginxStatus.text %>
+                                </span>
+                            </div>
+                            <div class="fw-bold mt-1">
+                                <%= sys.nginxHead %>
+                            </div>
+                            <div class="text-muted small">외부 접속(8080) 응답 확인</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="text-muted small mb-2">트래픽(대략)</div>
+                            <div class="fw-semibold">오늘</div>
+                            <div class="text-muted small" style="word-break:break-word;">
+                                <%= sys.vnstatDaily || '데이터 없음' %>
+                            </div>
+                            <div class="fw-semibold mt-2">이번 달</div>
+                            <div class="text-muted small" style="word-break:break-word;">
+                                <%= sys.vnstatMonthly || '데이터 없음' %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <% } %>
 
