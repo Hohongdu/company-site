@@ -64,7 +64,7 @@ router.post('/login', async (req, res) => {
 		await mergeGuestCartToUserCart(req);
 
 		const returnTo = sanitizeReturnTo(req.body.returnTo);
-		return res.redirect(returnTo || '/shop');
+		return res.redirect(returnTo || '/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('로그인 중 오류');
