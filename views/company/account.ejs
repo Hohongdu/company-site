@@ -1,0 +1,27 @@
+<%- include('../layouts/company-top', { title: '내 정보', active: 'account' }) %>
+
+<section class="section">
+    <div class="container-wide">
+        <h2 class="section-title">내 정보</h2>
+        <p class="section-sub">회사 페이지 스타일을 유지한 계정 요약 화면입니다.</p>
+
+        <div class="two-cards">
+            <div class="card-soft">
+                <h4>기본 정보</h4>
+                <p class="text-muted mb-2">로그인 사용자 정보</p>
+                <div class="fw-semibold"><%= user.name %></div>
+                <div class="text-muted small"><%= user.email %></div>
+            </div>
+            <div class="card-soft">
+                <h4>바로가기</h4>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn-outline2" href="/shop/account">쇼핑몰 내 정보</a>
+                    <a class="btn-outline2" href="/shop/account/orders">주문 내역</a>
+                    <a class="btn-outline2" href="/shop/account/inquiries">문의 내역</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<%- include('../layouts/company-bottom') %>
