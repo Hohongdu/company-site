@@ -1,0 +1,52 @@
+<%- include('../layouts/company-top', { title: '공지사항', active: 'notices' }) %>
+
+<section class="section notice-board">
+    <div class="container-wide">
+        <h2 class="section-title text-center">공지사항</h2>
+        <p class="section-sub text-center">회사 소식과 업데이트를 확인하세요.</p>
+
+        <div class="notice-tabs">
+            <button class="tab active" type="button">전체</button>
+            <button class="tab" type="button">일반공지</button>
+            <button class="tab" type="button">제품공지</button>
+            <button class="tab" type="button">이벤트</button>
+        </div>
+
+        <div class="notice-toolbar">
+            <div class="notice-count">총 <strong><%= notices ? notices.length : 0 %></strong>건</div>
+            <div class="notice-search">
+                <input type="text" placeholder="검색어를 입력하세요">
+                <button type="button">검색</button>
+            </div>
+        </div>
+
+        <% if (!notices || notices.length === 0) { %>
+            <div class="card-soft">
+                <p class="text-muted mb-0">등록된 공지가 없습니다.</p>
+            </div>
+        <% } else { %>
+            <div class="notice-table">
+                <div class="notice-row notice-head">
+                    <div>번호</div>
+                    <div>구분</div>
+                    <div>제목</div>
+                    <div>작성일</div>
+                    <div>조회</div>
+                </div>
+                <% notices.forEach((notice, idx) => { %>
+                    <div class="notice-row">
+                        <div><%= notices.length - idx %></div>
+                        <div><span class="notice-tag">일반</span></div>
+                        <div class="notice-title">
+                            <a href="/notices/<%= notice.id %>"><%= notice.title %></a>
+                        </div>
+                        <div><%= new Date(notice.created_at).toLocaleDateString() %></div>
+                        <div><%= notice.views || 0 %></div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</section>
+
+<%- include('../layouts/company-bottom') %>
