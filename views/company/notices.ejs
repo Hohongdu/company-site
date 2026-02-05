@@ -1,0 +1,28 @@
+<%- include('../layouts/company-top', { title: '공지사항', active: 'notices' }) %>
+
+<section class="section">
+    <div class="container-wide">
+        <h2 class="section-title">공지사항</h2>
+        <p class="section-sub">회사 소식과 업데이트를 확인하세요.</p>
+
+        <% if (!notices || notices.length === 0) { %>
+            <div class="card-soft">
+                <p class="text-muted mb-0">등록된 공지가 없습니다.</p>
+            </div>
+        <% } else { %>
+            <% notices.forEach(notice => { %>
+                <div class="card-soft">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>
+                            <a href="/notices/<%= notice.id %>"><%= notice.title %></a>
+                        </strong>
+                        <span class="text-muted small"><%= new Date(notice.created_at).toLocaleDateString() %></span>
+                    </div>
+                    <div class="text-muted small mt-2">조회수 <%= notice.views || 0 %></div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+</section>
+
+<%- include('../layouts/company-bottom') %>
