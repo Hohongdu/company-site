@@ -5,29 +5,23 @@
         <h2 class="section-title">공지사항</h2>
         <p class="section-sub">회사 소식과 업데이트를 확인하세요.</p>
 
-        <div class="card-soft">
-            <div class="d-flex justify-content-between flex-wrap gap-2">
-                <strong>2026년 상반기 배송 정책 안내</strong>
-                <span class="text-muted small">2026-02-01</span>
+        <% if (!notices || notices.length === 0) { %>
+            <div class="card-soft">
+                <p class="text-muted mb-0">등록된 공지가 없습니다.</p>
             </div>
-            <p class="text-muted mt-2">주문량 증가에 따라 배송 정책이 일부 변경됩니다.</p>
-        </div>
-
-        <div class="card-soft">
-            <div class="d-flex justify-content-between flex-wrap gap-2">
-                <strong>신제품 라인업 출시</strong>
-                <span class="text-muted small">2025-11-15</span>
-            </div>
-            <p class="text-muted mt-2">고내열 신소재 제품군을 공개했습니다.</p>
-        </div>
-
-        <div class="card-soft">
-            <div class="d-flex justify-content-between flex-wrap gap-2">
-                <strong>연말 배송 일정 안내</strong>
-                <span class="text-muted small">2025-12-20</span>
-            </div>
-            <p class="text-muted mt-2">연말 배송 일정 및 휴무일을 참고해주세요.</p>
-        </div>
+        <% } else { %>
+            <% notices.forEach(notice => { %>
+                <div class="card-soft">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>
+                            <a href="/notices/<%= notice.id %>"><%= notice.title %></a>
+                        </strong>
+                        <span class="text-muted small"><%= new Date(notice.created_at).toLocaleDateString() %></span>
+                    </div>
+                    <div class="text-muted small mt-2">조회수 <%= notice.views || 0 %></div>
+                </div>
+            <% }) %>
+        <% } %>
     </div>
 </section>
 
