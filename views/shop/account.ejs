@@ -75,6 +75,144 @@
                 </form>
             </div>
         </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="mb-2">배송지 관리</h5>
+                <p class="text-muted mb-3">자주 사용하는 배송지를 등록할 수 있습니다.</p>
+
+                <% if (addresses && addresses.length) { %>
+                    <div class="list-group mb-3">
+                        <% addresses.forEach(address => { %>
+                            <div class="list-group-item d-flex justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <div class="fw-semibold"><%= address.label || '기본 배송지' %></div>
+                                    <div class="text-muted small">
+                                        <%= address.recipient_name %> · <%= address.phone || '-' %>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <%= address.address_line1 %> <%= address.address_line2 || '' %> (<%= address.postal_code || '-' %>)
+                                    </div>
+                                </div>
+                                <form method="post" action="/shop/account/addresses/<%= address.id %>/delete">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button class="btn btn-sm btn-outline-danger">삭제</button>
+                                </form>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-light border text-muted">등록된 배송지가 없습니다.</div>
+                <% } %>
+
+                <form action="/shop/account/addresses" method="post" class="row g-2">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="col-md-3">
+                        <input class="form-control" name="label" placeholder="배송지 별칭">
+                    </div>
+                    <div class="col-md-3">
+                        <input class="form-control" name="recipientName" placeholder="수령인" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input class="form-control" name="phone" placeholder="연락처">
+                    </div>
+                    <div class="col-md-3">
+                        <input class="form-control" name="postalCode" placeholder="우편번호">
+                    </div>
+                    <div class="col-md-6">
+                        <input class="form-control" name="addressLine1" placeholder="주소" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input class="form-control" name="addressLine2" placeholder="상세주소">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary">배송지 추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="mb-2">결제수단 관리</h5>
+                <p class="text-muted mb-3">카드/계좌 정보를 간단히 관리합니다.</p>
+
+                <% if (paymentMethods && paymentMethods.length) { %>
+                    <div class="list-group mb-3">
+                        <% paymentMethods.forEach(method => { %>
+                            <div class="list-group-item d-flex justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <div class="fw-semibold"><%= method.label || method.provider %></div>
+                                    <div class="text-muted small"><%= method.provider %> · **** <%= method.last4 %></div>
+                                </div>
+                                <form method="post" action="/shop/account/payments/<%= method.id %>/delete">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button class="btn btn-sm btn-outline-danger">삭제</button>
+                                </form>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-light border text-muted">등록된 결제수단이 없습니다.</div>
+                <% } %>
+
+                <form action="/shop/account/payments" method="post" class="row g-2">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="col-md-4">
+                        <input class="form-control" name="label" placeholder="결제수단 별칭">
+                    </div>
+                    <div class="col-md-4">
+                        <input class="form-control" name="provider" placeholder="카드사/은행" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input class="form-control" name="last4" placeholder="마지막 4자리" required>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary">결제수단 추가</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body p-4">
+                <h5 class="mb-2">쿠폰/프로모션</h5>
+                <p class="text-muted mb-3">사용 가능한 쿠폰을 확인하거나 등록할 수 있습니다.</p>
+
+                <% if (coupons && coupons.length) { %>
+                    <div class="list-group mb-3">
+                        <% coupons.forEach(coupon => { %>
+                            <div class="list-group-item">
+                                <div class="fw-semibold"><%= coupon.code %> · <%= coupon.discount_pct %>%</div>
+                                <div class="text-muted small"><%= coupon.description || '설명 없음' %></div>
+                                <div class="text-muted small">만료: <%= coupon.expires_at ? coupon.expires_at : '-' %></div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-light border text-muted">등록된 쿠폰이 없습니다.</div>
+                <% } %>
+
+                <form action="/shop/account/coupons" method="post" class="row g-2">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="col-md-4">
+                        <input class="form-control" name="code" placeholder="쿠폰 코드" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input class="form-control" name="description" placeholder="쿠폰 설명">
+                    </div>
+                    <div class="col-md-2">
+                        <input class="form-control" name="discountPct" placeholder="할인율(%)">
+                    </div>
+                    <div class="col-md-2">
+                        <input class="form-control" name="expiresAt" placeholder="만료일(YYYY-MM-DD)">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary">쿠폰 등록</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 

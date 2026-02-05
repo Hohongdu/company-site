@@ -82,6 +82,9 @@
                                 <li><a class="dropdown-item" href="/shop/inquiries">문의하기</a></li>
                                 <li><a class="dropdown-item" href="/shop/inquiries/guest">문의조회</a></li>
                                 <li><a class="dropdown-item" href="/shop/orders/guest">주문조회</a></li>
+                                <% if (user) { %>
+                                    <li><a class="dropdown-item" href="/shop/wishlist">위시리스트</a></li>
+                                <% } %>
                                 <% if (user && user.is_admin) { %>
                                     <li><a class="dropdown-item" href="/admin/dashboard">관리자</a></li>
                                 <% } %>
@@ -144,6 +147,9 @@
                                     <a class="btn btn-outline-secondary" href="/shop/inquiries">문의하기</a>
                                     <a class="btn btn-outline-secondary" href="/shop/inquiries/guest">문의조회</a>
                                     <a class="btn btn-outline-secondary" href="/shop/orders/guest">주문조회</a>
+                                    <% if (user) { %>
+                                        <a class="btn btn-outline-secondary" href="/shop/wishlist">위시리스트</a>
+                                    <% } %>
                                     <% if (user && user.is_admin) { %>
                                         <a class="btn btn-outline-dark" href="/admin/dashboard">관리자</a>
                                     <% } %>

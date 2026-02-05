@@ -21,6 +21,73 @@ async function ensureNotificationSettingsTable() {
 	);
 }
 
+async function ensureWishlistTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS user_wishlist (
+      user_id INT NOT NULL,
+      product_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, product_id)
+    )`,
+	);
+}
+
+async function ensureReviewTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS product_reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      product_id INT NOT NULL,
+      user_id INT NOT NULL,
+      rating INT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
+async function ensureAddressTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS user_addresses (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      label VARCHAR(80),
+      recipient_name VARCHAR(80),
+      phone VARCHAR(30),
+      address_line1 VARCHAR(255),
+      address_line2 VARCHAR(255),
+      postal_code VARCHAR(20),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
+async function ensurePaymentMethodTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS user_payment_methods (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      label VARCHAR(80),
+      provider VARCHAR(50),
+      last4 VARCHAR(4),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
+async function ensureCouponTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS user_coupons (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      code VARCHAR(50) NOT NULL,
+      description VARCHAR(255),
+      discount_pct INT DEFAULT 0,
+      expires_at DATE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
 function generateOrderNumber() {
 	const rand = Math.floor(Math.random() * 1000)
 		.toString()
@@ -169,6 +236,9 @@ router.get('/products/:id', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
+		await ensureReviewTable();
+		await ensureWishlistTable();
+
 		const [rows] = await db.execute(
 			`
       SELECT p.*, c.name AS category_name, c.slug AS category_slug
@@ -180,10 +250,132 @@ router.get('/products/:id', async (req, res) => {
 		);
 
 		if (!rows.length) return res.status(404).render('404', { message: '상품을 찾을 수 없습니다.' });
-		res.render('shop/product-detail', { product: rows[0] });
+
+		const product = rows[0];
+		const [reviews] = await db.execute(
+			`SELECT r.*, u.name AS user_name
+       FROM product_reviews r
+       LEFT JOIN users u ON u.id = r.user_id
+       WHERE r.product_id = ?
+       ORDER BY r.created_at DESC`,
+			[productId],
+		);
+
+		const [[reviewStats]] = await db.execute(
+			`SELECT COUNT(*) AS review_count, AVG(rating) AS avg_rating
+       FROM product_reviews
+       WHERE product_id = ?`,
+			[productId],
+		);
+
+		let wished = false;
+		if (req.session.user) {
+			const [[wishRow]] = await db.execute(
+				`SELECT 1
+         FROM user_wishlist
+         WHERE user_id = ? AND product_id = ?
+         LIMIT 1`,
+				[req.session.user.id, productId],
+			);
+			wished = Boolean(wishRow);
+		}
+
+		const [related] = await db.execute(
+			`SELECT id, name, price, image
+       FROM products
+       WHERE category_id <=> ?
+         AND id <> ?
+       ORDER BY created_at DESC
+       LIMIT 4`,
+			[product.category_id, productId],
+		);
+
+		res.render('shop/product-detail', {
+			product,
+			reviews,
+			reviewStats,
+			wished,
+			related,
+		});
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 상세 오류');
+	}
+});
+
+router.post('/products/:id/reviews', requireLogin, async (req, res) => {
+	try {
+		const productId = Number(req.params.id);
+		const rating = Number(req.body.rating);
+		const content = String(req.body.content || '').trim();
+
+		if (!productId || !rating || rating < 1 || rating > 5 || !content) {
+			return res.redirect(`/shop/products/${productId}`);
+		}
+
+		await ensureReviewTable();
+		await db.execute(
+			`INSERT INTO product_reviews (product_id, user_id, rating, content)
+       VALUES (?, ?, ?, ?)`,
+			[productId, req.session.user.id, rating, content],
+		);
+
+		return res.redirect(`/shop/products/${productId}#reviews`);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('리뷰 등록 중 오류가 발생했습니다.');
+	}
+});
+
+router.get('/wishlist', requireLogin, async (req, res) => {
+	try {
+		await ensureWishlistTable();
+		const [items] = await db.execute(
+			`SELECT p.id, p.name, p.price, p.image
+       FROM user_wishlist w
+       JOIN products p ON p.id = w.product_id
+       WHERE w.user_id = ?
+       ORDER BY w.created_at DESC`,
+			[req.session.user.id],
+		);
+
+		return res.render('shop/wishlist', {
+			items,
+			active: 'wishlist',
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('위시리스트 로딩 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/wishlist/toggle', requireLogin, async (req, res) => {
+	try {
+		const productId = Number(req.body.productId);
+		if (!productId) return res.redirect('/shop/products');
+
+		await ensureWishlistTable();
+		const [[existing]] = await db.execute(
+			`SELECT 1 FROM user_wishlist WHERE user_id = ? AND product_id = ? LIMIT 1`,
+			[req.session.user.id, productId],
+		);
+
+		if (existing) {
+			await db.execute(`DELETE FROM user_wishlist WHERE user_id = ? AND product_id = ?`, [
+				req.session.user.id,
+				productId,
+			]);
+		} else {
+			await db.execute(`INSERT INTO user_wishlist (user_id, product_id) VALUES (?, ?)`, [
+				req.session.user.id,
+				productId,
+			]);
+		}
+
+		return res.redirect(`/shop/products/${productId}`);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('위시리스트 처리 중 오류가 발생했습니다.');
 	}
 });
 
@@ -534,12 +726,36 @@ router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
 		await ensureNotificationSettingsTable();
+		await ensureAddressTable();
+		await ensurePaymentMethodTable();
+		await ensureCouponTable();
 		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
 		const [[notificationRow]] = await db.execute(
 			`SELECT email_enabled
        FROM user_notification_settings
        WHERE user_id = ?
        LIMIT 1`,
+			[userId],
+		);
+		const [addresses] = await db.execute(
+			`SELECT id, label, recipient_name, phone, address_line1, address_line2, postal_code
+       FROM user_addresses
+       WHERE user_id = ?
+       ORDER BY id DESC`,
+			[userId],
+		);
+		const [paymentMethods] = await db.execute(
+			`SELECT id, label, provider, last4
+       FROM user_payment_methods
+       WHERE user_id = ?
+       ORDER BY id DESC`,
+			[userId],
+		);
+		const [coupons] = await db.execute(
+			`SELECT id, code, description, discount_pct, expires_at
+       FROM user_coupons
+       WHERE user_id = ?
+       ORDER BY id DESC`,
 			[userId],
 		);
 
@@ -554,6 +770,9 @@ router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 			error: req.query?.error || null,
 			csrfToken: req.csrfToken(),
 			emailNotificationEnabled: notificationRow ? Boolean(notificationRow.email_enabled) : true,
+			addresses,
+			paymentMethods,
+			coupons,
 		});
 	} catch (err) {
 		console.error(err);
@@ -616,6 +835,114 @@ router.post('/account/notifications', requireLogin, accountCsrf, async (req, res
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('알림 설정 저장 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/addresses', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const label = String(req.body.label || '').trim();
+		const recipientName = String(req.body.recipientName || '').trim();
+		const phone = String(req.body.phone || '').trim();
+		const addressLine1 = String(req.body.addressLine1 || '').trim();
+		const addressLine2 = String(req.body.addressLine2 || '').trim();
+		const postalCode = String(req.body.postalCode || '').trim();
+
+		if (!recipientName || !addressLine1) {
+			return res.redirect('/shop/account?error=배송지 정보를 입력해주세요.');
+		}
+
+		await ensureAddressTable();
+		await db.execute(
+			`INSERT INTO user_addresses
+       (user_id, label, recipient_name, phone, address_line1, address_line2, postal_code)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			[userId, label || null, recipientName, phone || null, addressLine1, addressLine2 || null, postalCode || null],
+		);
+
+		return res.redirect('/shop/account?message=배송지가 추가되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('배송지 저장 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/addresses/:id/delete', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const addressId = Number(req.params.id);
+		if (!addressId) return res.redirect('/shop/account');
+
+		await db.execute(`DELETE FROM user_addresses WHERE id = ? AND user_id = ?`, [addressId, userId]);
+		return res.redirect('/shop/account?message=배송지가 삭제되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('배송지 삭제 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/payments', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const label = String(req.body.label || '').trim();
+		const provider = String(req.body.provider || '').trim();
+		const last4 = String(req.body.last4 || '').trim();
+
+		if (!provider || !last4) {
+			return res.redirect('/shop/account?error=결제수단 정보를 입력해주세요.');
+		}
+
+		await ensurePaymentMethodTable();
+		await db.execute(
+			`INSERT INTO user_payment_methods (user_id, label, provider, last4)
+       VALUES (?, ?, ?, ?)`,
+			[userId, label || null, provider, last4],
+		);
+
+		return res.redirect('/shop/account?message=결제수단이 저장되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('결제수단 저장 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/payments/:id/delete', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const paymentId = Number(req.params.id);
+		if (!paymentId) return res.redirect('/shop/account');
+
+		await db.execute(`DELETE FROM user_payment_methods WHERE id = ? AND user_id = ?`, [paymentId, userId]);
+		return res.redirect('/shop/account?message=결제수단이 삭제되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('결제수단 삭제 중 오류가 발생했습니다.');
+	}
+});
+
+router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		const code = String(req.body.code || '').trim();
+		const description = String(req.body.description || '').trim();
+		const discountPct = Number(req.body.discountPct || 0);
+		const expiresAt = String(req.body.expiresAt || '').trim();
+
+		if (!code) {
+			return res.redirect('/shop/account?error=쿠폰 코드를 입력해주세요.');
+		}
+
+		await ensureCouponTable();
+		await db.execute(
+			`INSERT INTO user_coupons (user_id, code, description, discount_pct, expires_at)
+       VALUES (?, ?, ?, ?, ?)`,
+			[userId, code, description || null, discountPct || 0, expiresAt || null],
+		);
+
+		return res.redirect('/shop/account?message=쿠폰이 등록되었습니다.');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('쿠폰 등록 중 오류가 발생했습니다.');
 	}
 });
 
@@ -700,6 +1027,12 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 	const userId = req.session.user.id;
 	const connection = await db.getConnection();
 	try {
+		await ensureAddressTable();
+		await ensurePaymentMethodTable();
+		await ensureCouponTable();
+		await ensureWishlistTable();
+		await ensureReviewTable();
+		await ensureNotificationSettingsTable();
 		const [[user]] = await connection.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
 
 		if (!user) {
@@ -726,7 +1059,12 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 			[user.name, user.email, userId],
 		);
 
+		await connection.execute('DELETE FROM user_addresses WHERE user_id = ?', [userId]);
+		await connection.execute('DELETE FROM user_payment_methods WHERE user_id = ?', [userId]);
 		await connection.execute('DELETE FROM user_notification_settings WHERE user_id = ?', [userId]);
+		await connection.execute('DELETE FROM user_coupons WHERE user_id = ?', [userId]);
+		await connection.execute('DELETE FROM user_wishlist WHERE user_id = ?', [userId]);
+		await connection.execute('DELETE FROM product_reviews WHERE user_id = ?', [userId]);
 		await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
 		await connection.commit();
 
