@@ -101,18 +101,10 @@
 
             <!-- MAIN -->
             <main class="admin-main">
-                <div class="mb-3">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                        <div>
-                            <h4 class="mb-1">
-                                <%= typeof title !=='undefined' ? title : 'Admin' %>
-                            </h4>
-                        </div>
-
-                        <% if (typeof backHref !=='undefined' && backHref) { %>
-                            <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-arrow-left"></i> 이전으로
-                            </a>
-                            <% } %>
+                <% if (typeof backHref !=='undefined' && backHref) { %>
+                    <div class="mb-3 d-flex justify-content-end">
+                        <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> 이전으로
+                        </a>
                     </div>
-                </div>
+                <% } %>

@@ -4,7 +4,12 @@
     <div class="container-wide">
         <div class="card-soft">
             <div class="d-flex justify-content-between flex-wrap gap-2">
-                <h3 class="mb-0"><%= notice.title %></h3>
+                <div>
+                    <span class="notice-tag mb-2 d-inline-flex">
+                        <%= notice.category === 'product' ? '제품' : notice.category === 'event' ? '이벤트' : '일반' %>
+                    </span>
+                    <h3 class="mb-0"><%= notice.title %></h3>
+                </div>
                 <span class="text-muted small"><%= new Date(notice.created_at).toLocaleDateString() %></span>
             </div>
             <div class="text-muted small mt-2">조회수 <%= notice.views || 0 %></div>

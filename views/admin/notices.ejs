@@ -8,6 +8,14 @@
             <label class="form-label">제목</label>
             <input class="form-control" name="title" required>
         </div>
+        <div class="col-12 col-lg-3">
+            <label class="form-label">구분</label>
+            <select class="form-select" name="category" required>
+                <option value="general">일반공지</option>
+                <option value="product">제품공지</option>
+                <option value="event">이벤트</option>
+            </select>
+        </div>
         <div class="col-12">
             <label class="form-label">내용</label>
             <textarea class="form-control" name="content" rows="4" required></textarea>
@@ -31,6 +39,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>제목</th>
+                        <th>구분</th>
                         <th>등록일</th>
                         <th>조회수</th>
                         <th class="text-end">관리</th>
@@ -40,6 +49,11 @@
                     <% notices.forEach(notice => { %>
                         <tr>
                             <td class="fw-semibold"><%= notice.title %></td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <%= notice.category === 'product' ? '제품공지' : notice.category === 'event' ? '이벤트' : '일반공지' %>
+                                </span>
+                            </td>
                             <td><%= new Date(notice.created_at).toLocaleDateString() %></td>
                             <td><%= notice.views || 0 %></td>
                             <td class="text-end">

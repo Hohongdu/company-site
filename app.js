@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
-const csurf = require('csurf');
+const csurf = require('./lib/csurf');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');

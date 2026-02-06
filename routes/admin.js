@@ -11,7 +11,7 @@ const { sendInquiryReplyEmail } = require('../services/notification.service');
 const sharp = require('sharp');
 const os = require('os');
 const { exec } = require('child_process');
-const csurf = require('csurf');
+const csurf = require('../lib/csurf');
 
 const router = express.Router();
 const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
@@ -59,10 +59,19 @@ async function ensureNoticesTable() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(200) NOT NULL,
       content TEXT NOT NULL,
+      category VARCHAR(30) NOT NULL DEFAULT 'general',
       views INT NOT NULL DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 	);
+}
+
+async function ensureNoticeCategoryColumn() {
+	try {
+		await db.execute(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
 }
 
 async function ensureProductStockColumn() {
@@ -258,8 +267,9 @@ router.get('/dashboard', async (req, res) => {
 router.get('/notices', async (req, res) => {
 	try {
 		await ensureNoticesTable();
+		await ensureNoticeCategoryColumn();
 		const [notices] = await db.execute(
-			`SELECT id, title, created_at, views
+			`SELECT id, title, category, created_at, views
        FROM notices
        ORDER BY created_at DESC`,
 		);
@@ -275,13 +285,21 @@ router.post('/notices', csrfProtection, async (req, res) => {
 	try {
 		const title = String(req.body.title || '').trim();
 		const content = String(req.body.content || '').trim();
+		const category = String(req.body.category || 'general').trim();
+		const allowed = new Set(['general', 'product', 'event']);
+		const safeCategory = allowed.has(category) ? category : 'general';
 
 		if (!title || !content) {
 			return res.status(400).send('공지 제목과 내용을 입력해주세요.');
 		}
 
 		await ensureNoticesTable();
-		await db.execute(`INSERT INTO notices (title, content) VALUES (?, ?)`, [title, content]);
+		await ensureNoticeCategoryColumn();
+		await db.execute(`INSERT INTO notices (title, content, category) VALUES (?, ?, ?)`, [
+			title,
+			content,
+			safeCategory,
+		]);
 
 		return res.redirect('/admin/notices');
 	} catch (err) {

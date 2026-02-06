@@ -10,10 +10,19 @@ async function ensureNoticesTable() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(200) NOT NULL,
       content TEXT NOT NULL,
+      category VARCHAR(30) NOT NULL DEFAULT 'general',
       views INT NOT NULL DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 	);
+}
+
+async function ensureNoticeCategoryColumn() {
+	try {
+		await db.execute(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
 }
 
 router.get('/', (req, res) => res.render('company/index'));
@@ -24,15 +33,20 @@ router.get('/contact', (req, res) => res.render('company/contact'));
 router.get('/notices', async (req, res) => {
 	try {
 		const q = String(req.query.q || '').trim();
+		const typeParam = String(req.query.type || 'all');
+		const allowedTypes = new Set(['all', 'general', 'product', 'event']);
+		const type = allowedTypes.has(typeParam) ? typeParam : 'all';
 		await ensureNoticesTable();
+		await ensureNoticeCategoryColumn();
 		const [notices] = await db.execute(
-			`SELECT id, title, created_at, views
+			`SELECT id, title, category, created_at, views
        FROM notices
        WHERE (? = '' OR title LIKE ?)
+         AND (? = 'all' OR category = ?)
        ORDER BY created_at DESC`,
-			[q, `%${q}%`],
+			[q, `%${q}%`, type, type],
 		);
-		return res.render('company/notices', { notices, query: q });
+		return res.render('company/notices', { notices, query: q, type });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('공지 목록 로딩 오류');
@@ -45,9 +59,10 @@ router.get('/notices/:id', async (req, res) => {
 		if (!noticeId) return res.status(404).render('404', { message: '공지 없음' });
 
 		await ensureNoticesTable();
+		await ensureNoticeCategoryColumn();
 		await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
 		const [[notice]] = await db.execute(
-			`SELECT id, title, content, created_at, views
+			`SELECT id, title, content, category, created_at, views
        FROM notices
        WHERE id = ?
        LIMIT 1`,

@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const csurf = require('csurf');
+const csurf = require('../lib/csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
 const kakaoPayService = require('../services/kakaopay.service');
@@ -9,6 +9,12 @@ const { requireLogin } = require('../middleware/auth');
 const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
+
+const renderShopError = (res, message, status = 500, backHref = '/shop/account/orders') =>
+	res.status(status).render('shop/error', {
+		message,
+		backHref,
+	});
 
 async function ensureNotificationSettingsTable() {
 	await db.execute(
@@ -996,7 +1002,7 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 		const userId = req.session.user.id;
 
 		if (!orderId) {
-			return res.status(400).send('주문 정보가 올바르지 않습니다.');
+			return renderShopError(res, '주문 정보가 올바르지 않습니다.', 400);
 		}
 
 		const [[order]] = await db.execute(
@@ -1008,7 +1014,7 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 		);
 
 		if (!order) {
-			return res.status(404).send('주문 정보를 찾을 수 없습니다.');
+			return renderShopError(res, '주문 정보를 찾을 수 없습니다.', 404);
 		}
 
 		if (order.status !== 'PENDING') {
@@ -1019,7 +1025,7 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 		return res.redirect('/shop/account/orders');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('주문 취소 요청 중 오류가 발생했습니다.');
+		return renderShopError(res, '주문 취소 요청 중 오류가 발생했습니다.', 500);
 	}
 });
 
