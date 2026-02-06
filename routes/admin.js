@@ -65,6 +65,27 @@ async function ensureNoticesTable() {
 	);
 }
 
+async function ensureProductStockColumn() {
+	try {
+		await db.execute(`ALTER TABLE products ADD COLUMN stock_quantity INT DEFAULT 0`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+}
+
+async function ensureOrderShippingColumns() {
+	try {
+		await db.execute(`ALTER TABLE orders ADD COLUMN delivery_status VARCHAR(30) DEFAULT 'READY'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+	try {
+		await db.execute(`ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100)`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+}
+
 /* =========================
    업로드/이미지 설정
 ========================= */
@@ -305,6 +326,7 @@ router.get('/products', async (req, res) => {
 ========================= */
 router.get('/products/new', async (req, res) => {
 	try {
+		await ensureProductStockColumn();
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
 		res.render('admin/admin-product-new', {
 			categories,
@@ -318,7 +340,8 @@ router.get('/products/new', async (req, res) => {
 
 router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
-		const { code, name, description, price, spec, category_id, image } = req.body;
+		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
+		await ensureProductStockColumn();
 
 		let imagePath = image || null;
 		let thumbPath = null;
@@ -332,9 +355,19 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 		}
 
 		await db.execute(
-			`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, thumbPath, category_id || null],
+			`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id, stock_quantity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			[
+				code || null,
+				name,
+				description || null,
+				Number(price) || 0,
+				spec || null,
+				imagePath,
+				thumbPath,
+				category_id || null,
+				Number(stock_quantity) || 0,
+			],
 		);
 
 		return res.redirect('/admin/products');
@@ -350,6 +383,7 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 router.get('/products/:id/edit', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
+		await ensureProductStockColumn();
 
 		const [[product]] = await db.execute('SELECT * FROM products WHERE id = ?', [productId]);
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
@@ -370,7 +404,8 @@ router.get('/products/:id/edit', async (req, res) => {
 router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
-		const { code, name, description, price, spec, category_id, image } = req.body;
+		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
+		await ensureProductStockColumn();
 
 		// 기존 이미지 유지용 조회
 		const [rows] = await db.execute('SELECT image, image_thumb FROM products WHERE id = ? LIMIT 1', [productId]);
@@ -395,9 +430,20 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 
 		await db.execute(
 			`UPDATE products
-       SET code=?, name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?
+       SET code=?, name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?, stock_quantity=?
        WHERE id=?`,
-			[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, thumbPath, category_id || null, productId],
+			[
+				code || null,
+				name,
+				description || null,
+				Number(price) || 0,
+				spec || null,
+				imagePath,
+				thumbPath,
+				category_id || null,
+				Number(stock_quantity) || 0,
+				productId,
+			],
 		);
 
 		return res.redirect('/admin/products');
