@@ -12,7 +12,9 @@ function requireAdmin(req, res, next) {
 		const redirect = encodeURIComponent(req.originalUrl || '/');
 		return res.redirect(`/auth/login?redirect=${redirect}`);
 	}
-	if (Number(req.session.user.is_admin) !== 1) return res.status(403).send('관리자만 접근 가능합니다.');
+	if (Number(req.session.user.is_admin) !== 1) {
+		return res.status(403).render('403', { message: '관리자만 접근 가능합니다.' });
+	}
 	next();
 }
 
