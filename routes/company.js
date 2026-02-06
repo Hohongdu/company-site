@@ -23,13 +23,16 @@ router.get('/contact', (req, res) => res.render('company/contact'));
 
 router.get('/notices', async (req, res) => {
 	try {
+		const q = String(req.query.q || '').trim();
 		await ensureNoticesTable();
 		const [notices] = await db.execute(
 			`SELECT id, title, created_at, views
        FROM notices
+       WHERE (? = '' OR title LIKE ?)
        ORDER BY created_at DESC`,
+			[q, `%${q}%`],
 		);
-		return res.render('company/notices', { notices });
+		return res.render('company/notices', { notices, query: q });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('공지 목록 로딩 오류');

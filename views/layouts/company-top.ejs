@@ -40,32 +40,14 @@
                         <a href="/about" class="<%= activeKey==='about' ? 'active' : '' %>">회사 소개</a>
                         <a href="/history" class="<%= activeKey==='history' ? 'active' : '' %>">연혁</a>
                         <a href="/notices" class="<%= activeKey==='notices' ? 'active' : '' %>">공지</a>
-<<<<<<< codex/fix-csrf-error-on-reply-submission
-=======
-                        <a href="/shop" class="<%= activeKey==='products' ? 'active' : '' %>">제품</a>
->>>>>>> master
                         <a href="/contact" class="<%= activeKey==='contact' ? 'active' : '' %>">문의</a>
                     </nav>
 
                     <!-- Actions -->
                     <div class="header-actions">
-                        <!-- Mobile quick icon: cart -->
-                        <a class="icon-btn d-inline-flex d-lg-none position-relative" href="/shop/cart"
-                            aria-label="장바구니">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M6 7h15l-2 10H8L6 7Z" stroke="currentColor" stroke-width="2"
-                                    stroke-linejoin="round" />
-                                <path d="M6 7 5 4H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                                <circle cx="9" cy="20" r="1.5" fill="currentColor" />
-                                <circle cx="18" cy="20" r="1.5" fill="currentColor" />
-                            </svg>
-                            <% if (cartCount && cartCount> 0) { %><span class="badge-dot" aria-hidden="true"></span>
-                                <% } %>
-                        </a>
-
                         <!-- User -->
                         <a class="icon-btn" href="/shop/products" aria-label="제품">
-                            🧪
+                            🛒
                         </a>
                         <% if (isLoggedIn) { %>
                             <a class="icon-btn" href="/account" aria-label="내 계정">
@@ -121,11 +103,7 @@
                 <a class="drawer-item" href="/about">회사 소개</a>
                 <a class="drawer-item" href="/history">연혁</a>
                 <a class="drawer-item" href="/notices">공지</a>
-<<<<<<< codex/fix-csrf-error-on-reply-submission
                 <a class="drawer-item" href="/shop/products">제품</a>
-=======
-                <a class="drawer-item" href="/shop">제품</a>
->>>>>>> master
                 <a class="drawer-item" href="/contact">문의</a>
             </div>
         </aside>
