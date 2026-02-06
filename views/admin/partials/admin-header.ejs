@@ -29,28 +29,27 @@
 
             <div class="d-flex align-items-center gap-2">
                 <a href="/" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-building"></i> 회사로
+                    회사로
                 </a>
                 <a href="/shop" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-bag"></i> 상품몰로
+                    상품몰로
                 </a>
 
                 <div class="vr mx-2"></div>
 
                 <% if (user) { %>
                     <span class="small admin-muted d-none d-md-inline">
-                        <i class="bi bi-person-circle"></i>
                         <strong class="text-dark">
                             <%= user.name %>
                         </strong>
                     </span>
                     <a href="/auth/logout" class="btn btn-outline-warning btn-sm">
-                        <i class="bi bi-box-arrow-right"></i> 로그아웃
+                        로그아웃
                     </a>
                     <% } else { %>
                         <a href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>"
                             class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-box-arrow-in-right"></i> 로그인
+                            로그인
                         </a>
                         <% } %>
             </div>
@@ -94,28 +93,18 @@
                     <a class="nav-link <%= active === 'inquiries' ? 'active' : '' %>" href="/admin/inquiries">
                         문의 관리
                     </a>
+                    <a class="nav-link <%= active === 'notices' ? 'active' : '' %>" href="/admin/notices">
+                        공지 관리
+                    </a>
                 </nav>
             </aside>
 
             <!-- MAIN -->
             <main class="admin-main">
-                <div class="mb-3">
-                    <div class="d-flex align-items-start justify-content-between gap-3">
-                        <div>
-                            <h4 class="mb-1">
-                                <%= typeof title !=='undefined' ? title : 'Admin' %>
-                            </h4>
-                            <% if (typeof subtitle !=='undefined' && subtitle) { %>
-                                <div class="admin-muted">
-                                    <%= subtitle %>
-                                </div>
-                                <% } %>
-                        </div>
-
-                        <% if (typeof backHref !=='undefined' && backHref) { %>
-                            <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-arrow-left"></i> 이전으로
-                            </a>
-                            <% } %>
+                <% if (typeof backHref !=='undefined' && backHref) { %>
+                    <div class="mb-3 d-flex justify-content-end">
+                        <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> 이전으로
+                        </a>
                     </div>
-                </div>
+                <% } %>

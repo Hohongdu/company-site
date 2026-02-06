@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
-const csurf = require('csurf');
+const csurf = require('./lib/csurf');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
@@ -149,7 +149,9 @@ app.use((err, req, res, next) => {
 			hasCsrfField: Boolean(req.body && req.body._csrf),
 		});
 
-		return res.status(403).send('CSRF 토큰이 유효하지 않습니다. 새로고침 후 다시 시도해주세요.');
+		return res.status(403).render('403', {
+			message: 'CSRF 토큰이 유효하지 않습니다. 새로고침 후 다시 시도해주세요.',
+		});
 	}
 	next(err);
 });

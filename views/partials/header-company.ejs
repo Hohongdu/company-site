@@ -24,15 +24,12 @@
                     </li>
                 </ul>
 
-                <!-- 오른쪽: 상품몰/장바구니 + 로그인/회원가입 -->
+                <!-- 오른쪽: 제품 + 로그인/회원가입 -->
                 <div class="d-flex align-items-center gap-2">
-                    <a href="/shop/products"
-                        class="btn btn-outline-light btn-sm <%= currentPathSafe.startsWith('/shop') ? 'active' : '' %>">
-                        상품몰
-                    </a>
-                    <a href="/shop/cart"
-                        class="btn btn-outline-light btn-sm <%= currentPathSafe === '/shop/cart' ? 'active' : '' %>">
-                        장바구니
+                    <a href="/shop"
+                        class="btn btn-outline-light btn-sm <%= currentPathSafe.startsWith('/shop') ? 'active' : '' %>"
+                        aria-label="제품">
+                        🛒
                     </a>
 
                     <div class="vr bg-light opacity-50 mx-2"></div>
