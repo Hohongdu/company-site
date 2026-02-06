@@ -1,0 +1,60 @@
+<%- include('partials/admin-header', { title: '공지 관리' , subtitle: '회사 공지를 등록/관리합니다.' , active: 'notices' }) %>
+
+<div class="admin-card p-4 mb-4">
+    <h5 class="mb-3">새 공지 등록</h5>
+    <form action="/admin/notices" method="post" class="row g-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="col-12 col-lg-6">
+            <label class="form-label">제목</label>
+            <input class="form-control" name="title" required>
+        </div>
+        <div class="col-12">
+            <label class="form-label">내용</label>
+            <textarea class="form-control" name="content" rows="4" required></textarea>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-admin">등록하기</button>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card p-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0">공지 목록</h5>
+    </div>
+
+    <% if (!notices || notices.length === 0) { %>
+        <div class="alert alert-light border text-muted">등록된 공지가 없습니다.</div>
+    <% } else { %>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>제목</th>
+                        <th>등록일</th>
+                        <th>조회수</th>
+                        <th class="text-end">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% notices.forEach(notice => { %>
+                        <tr>
+                            <td class="fw-semibold"><%= notice.title %></td>
+                            <td><%= new Date(notice.created_at).toLocaleDateString() %></td>
+                            <td><%= notice.views || 0 %></td>
+                            <td class="text-end">
+                                <form method="post" action="/admin/notices/<%= notice.id %>/delete"
+                                    onsubmit="return confirm('이 공지를 삭제할까요?');">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button class="btn btn-sm btn-outline-danger">삭제</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../layouts/admin-bottom') %>
