@@ -106,6 +106,10 @@
                                 href="/shop/account">내 정보</a>
                             <% } %>
 
+                                <% if (user && user.is_admin) { %>
+                                    <a class="btn btn-outline-dark btn-sm shop-navbtn" href="/admin/dashboard">관리자</a>
+                                    <% } %>
+
                                 <div class="vr mx-2"></div>
 
                                 <% if (user) { %>

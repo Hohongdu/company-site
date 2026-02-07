@@ -572,30 +572,6 @@ router.post('/products/:id/delete', async (req, res) => {
 
 /* =========================
    상품 상태 변경
-========================= */
-router.post('/products/:id/status', csrfProtection, async (req, res) => {
-	try {
-		const productId = Number(req.params.id);
-		const status = String(req.body.visibility_status || 'ACTIVE').toUpperCase();
-		const allowed = new Set(['ACTIVE', 'HIDDEN']);
-		const safeStatus = allowed.has(status) ? status : 'ACTIVE';
-
-		if (!productId) {
-			return res.redirect('/admin/products');
-		}
-
-		await ensureProductVisibilityColumn();
-		await db.execute('UPDATE products SET visibility_status = ? WHERE id = ?', [safeStatus, productId]);
-		await logAdminAction(req.session?.user?.id, 'product_visibility_update', { productId, status: safeStatus });
-
-		return res.redirect('/admin/products');
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('상품 상태 변경 오류');
-	}
-});
-
-/* =========================
    상품 선택 삭제 (장바구니 정리 포함)
 ========================= */
 router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
