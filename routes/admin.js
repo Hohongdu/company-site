@@ -82,6 +82,39 @@ async function ensureProductStockColumn() {
 	}
 }
 
+async function ensureProductVisibilityColumn() {
+	try {
+		await db.execute(`ALTER TABLE products ADD COLUMN visibility_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+}
+
+async function ensureAdminActivityLogTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS admin_activity_logs (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      admin_id BIGINT NULL,
+      action VARCHAR(80) NOT NULL,
+      metadata JSON NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
+async function logAdminAction(adminId, action, metadata) {
+	try {
+		await ensureAdminActivityLogTable();
+		await db.execute(`INSERT INTO admin_activity_logs (admin_id, action, metadata) VALUES (?, ?, ?)`, [
+			adminId || null,
+			action,
+			metadata ? JSON.stringify(metadata) : null,
+		]);
+	} catch (err) {
+		console.error('[admin-log]', err);
+	}
+}
+
 async function ensureOrderShippingColumns() {
 	try {
 		await db.execute(`ALTER TABLE orders ADD COLUMN delivery_status VARCHAR(30) DEFAULT 'READY'`);
@@ -326,13 +359,61 @@ router.post('/notices/:id/delete', csrfProtection, async (req, res) => {
 ========================= */
 router.get('/products', async (req, res) => {
 	try {
-		const [products] = await db.execute(`
+		await ensureProductStockColumn();
+		await ensureProductVisibilityColumn();
+
+		const categoryId = Number(req.query.category || 0) || null;
+		const minPrice = Number(req.query.minPrice || 0) || null;
+		const maxPrice = Number(req.query.maxPrice || 0) || null;
+		const stockStatus = String(req.query.stockStatus || 'all');
+		const visibility = String(req.query.visibility || 'all');
+
+		const filters = [];
+		const params = [];
+
+		if (categoryId) {
+			filters.push('p.category_id = ?');
+			params.push(categoryId);
+		}
+		if (minPrice !== null) {
+			filters.push('p.price >= ?');
+			params.push(minPrice);
+		}
+		if (maxPrice !== null) {
+			filters.push('p.price <= ?');
+			params.push(maxPrice);
+		}
+		if (visibility !== 'all') {
+			filters.push('p.visibility_status = ?');
+			params.push(visibility);
+		}
+		if (stockStatus === 'out') {
+			filters.push('COALESCE(p.stock_quantity, 0) <= 0');
+		} else if (stockStatus === 'low') {
+			filters.push('COALESCE(p.stock_quantity, 0) BETWEEN 1 AND 5');
+		} else if (stockStatus === 'in') {
+			filters.push('COALESCE(p.stock_quantity, 0) > 5');
+		}
+
+		const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+		const [products] = await db.execute(
+			`
 			SELECT p.*, c.name AS category_name
 			FROM products p
 			LEFT JOIN categories c ON c.id = p.category_id
+			${whereClause}
 			ORDER BY p.id DESC
-		`);
-		res.render('admin/products', { products, csrfToken: req.csrfToken() });
+		`,
+			params,
+		);
+		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
+
+		res.render('admin/products', {
+			products,
+			categories,
+			csrfToken: req.csrfToken(),
+			filters: { categoryId, minPrice, maxPrice, stockStatus, visibility },
+		});
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 목록 로딩 오류');
@@ -480,6 +561,7 @@ router.post('/products/:id/delete', async (req, res) => {
 
 		await db.execute('DELETE FROM cart_items WHERE product_id = ?', [productId]);
 		await db.execute('DELETE FROM products WHERE id = ?', [productId]);
+		await logAdminAction(req.session?.user?.id, 'product_delete', { productId });
 
 		res.redirect('/admin/products');
 	} catch (err) {
@@ -489,6 +571,7 @@ router.post('/products/:id/delete', async (req, res) => {
 });
 
 /* =========================
+   상품 상태 변경
    상품 선택 삭제 (장바구니 정리 포함)
 ========================= */
 router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
@@ -505,6 +588,7 @@ router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
 		const placeholders = productIds.map(() => '?').join(',');
 		await db.execute(`DELETE FROM cart_items WHERE product_id IN (${placeholders})`, productIds);
 		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
+		await logAdminAction(req.session?.user?.id, 'product_bulk_delete', { productIds });
 
 		return res.redirect('/admin/products');
 	} catch (err) {

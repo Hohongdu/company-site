@@ -1,6 +1,10 @@
-<% const currentPathSafe=typeof currentPath !=='undefined' && currentPath ? currentPath : (typeof currentUrl
-    !=='undefined' ? currentUrl.split('?')[0] : '/' ); const userSafe=typeof user !=='undefined' && user ? user : null;
-    %> !=='undefined' ? (currentUrl.split('?')[0] || '/' ) : '/' ); %>
+<%
+    const currentUrlSafe = typeof currentUrl !== 'undefined' && currentUrl ? currentUrl : '/';
+    const currentPathSafe = typeof currentPath !== 'undefined' && currentPath
+        ? currentPath
+        : (currentUrlSafe.split('?')[0] || '/');
+    const userSafe = typeof user !== 'undefined' && user ? user : null;
+%>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -51,7 +55,7 @@
                                     로그아웃
                                 </a>
                                 <% } else { %>
-                                    <a href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>"
+                                    <a href="/auth/login?redirect=<%= encodeURIComponent(currentUrlSafe) %>"
                                         class="btn btn-outline-light btn-sm <%= currentPathSafe === '/auth/login' ? 'active' : '' %>">
                                         로그인
                                     </a>
