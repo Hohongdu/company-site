@@ -80,6 +80,19 @@ async function ensurePaymentMethodTable() {
 	);
 }
 
+async function ensureOrderStatusEnum() {
+	try {
+		await db.execute(
+			`ALTER TABLE orders MODIFY status ENUM('PENDING','PAID','CANCELED','FAILED','CANCEL_REQUESTED') NOT NULL DEFAULT 'PENDING'`,
+		);
+	} catch (err) {
+		const message = String(err?.message || '');
+		if (!message.includes('Duplicate') && !message.includes('Data truncated')) {
+			throw err;
+		}
+	}
+}
+
 async function ensureCouponTable() {
 	await db.execute(
 		`CREATE TABLE IF NOT EXISTS user_coupons (
@@ -1017,11 +1030,12 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 			return renderShopError(res, '주문 정보를 찾을 수 없습니다.', 404);
 		}
 
-		if (order.status !== 'PENDING') {
-			return res.redirect('/shop/account/orders');
-		}
+	if (order.status !== 'PENDING') {
+		return res.redirect('/shop/account/orders');
+	}
 
-		await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
+	await ensureOrderStatusEnum();
+	await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
 		return res.redirect('/shop/account/orders');
 	} catch (err) {
 		console.error(err);

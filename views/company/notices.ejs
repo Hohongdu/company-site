@@ -2,8 +2,8 @@
 
 <% const currentType = typeof type !== 'undefined' ? type : 'all'; %>
 <% const queryParam = query ? `&q=${encodeURIComponent(query)}` : ''; %>
-<% const typeLabels = { all: '전체', general: '일반공지', product: '제품공지', event: '이벤트' }; %>
-<% const typeBadge = { general: '일반', product: '제품', event: '이벤트' }; %>
+<% const typeLabels = { all: '전체', general: '일반공지', product: '제품공지' }; %>
+<% const typeBadge = { general: '일반', product: '제품' }; %>
 
 <section class="section notice-board">
     <div class="container-wide">
@@ -21,9 +21,6 @@
             <a class="tab <%= currentType === 'product' ? 'active' : '' %>"
                 href="/notices?type=product<%= queryParam %>">
                 <%= typeLabels.product %>
-            </a>
-            <a class="tab <%= currentType === 'event' ? 'active' : '' %>" href="/notices?type=event<%= queryParam %>">
-                <%= typeLabels.event %>
             </a>
         </div>
 

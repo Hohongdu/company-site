@@ -213,6 +213,13 @@ a:hover {
 }
 
 @media (max-width: 768px) {
+	.notice-tabs {
+		justify-content: center;
+	}
+	.notice-tabs .tab {
+		flex: 1 1 120px;
+		text-align: center;
+	}
 	.notice-row {
 		grid-template-columns: 60px 90px 1fr;
 		row-gap: 6px;
@@ -224,7 +231,11 @@ a:hover {
 		font-size: 12px;
 	}
 	.notice-search input {
-		min-width: 160px;
+		min-width: 0;
+		flex: 1;
+	}
+	.notice-search {
+		width: 100%;
 	}
 }
 

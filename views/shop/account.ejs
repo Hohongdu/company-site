@@ -174,45 +174,6 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-body p-4">
-                <h5 class="mb-2">쿠폰/프로모션</h5>
-                <p class="text-muted mb-3">사용 가능한 쿠폰을 확인하거나 등록할 수 있습니다.</p>
-
-                <% if (coupons && coupons.length) { %>
-                    <div class="list-group mb-3">
-                        <% coupons.forEach(coupon => { %>
-                            <div class="list-group-item">
-                                <div class="fw-semibold"><%= coupon.code %> · <%= coupon.discount_pct %>%</div>
-                                <div class="text-muted small"><%= coupon.description || '설명 없음' %></div>
-                                <div class="text-muted small">만료: <%= coupon.expires_at ? coupon.expires_at : '-' %></div>
-                            </div>
-                        <% }) %>
-                    </div>
-                <% } else { %>
-                    <div class="alert alert-light border text-muted">등록된 쿠폰이 없습니다.</div>
-                <% } %>
-
-                <form action="/shop/account/coupons" method="post" class="row g-2">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="col-md-4">
-                        <input class="form-control" name="code" placeholder="쿠폰 코드" required>
-                    </div>
-                    <div class="col-md-4">
-                        <input class="form-control" name="description" placeholder="쿠폰 설명">
-                    </div>
-                    <div class="col-md-2">
-                        <input class="form-control" name="discountPct" placeholder="할인율(%)">
-                    </div>
-                    <div class="col-md-2">
-                        <input class="form-control" name="expiresAt" placeholder="만료일(YYYY-MM-DD)">
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-outline-primary">쿠폰 등록</button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 </div>
 

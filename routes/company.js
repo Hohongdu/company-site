@@ -34,7 +34,7 @@ router.get('/notices', async (req, res) => {
 	try {
 		const q = String(req.query.q || '').trim();
 		const typeParam = String(req.query.type || 'all');
-		const allowedTypes = new Set(['all', 'general', 'product', 'event']);
+		const allowedTypes = new Set(['all', 'general', 'product']);
 		const type = allowedTypes.has(typeParam) ? typeParam : 'all';
 		await ensureNoticesTable();
 		await ensureNoticeCategoryColumn();
@@ -42,6 +42,7 @@ router.get('/notices', async (req, res) => {
 			`SELECT id, title, category, created_at, views
        FROM notices
        WHERE (? = '' OR title LIKE ?)
+         AND category IN ('general', 'product')
          AND (? = 'all' OR category = ?)
        ORDER BY created_at DESC`,
 			[q, `%${q}%`, type, type],
