@@ -489,6 +489,31 @@ router.post('/products/:id/delete', async (req, res) => {
 });
 
 /* =========================
+   상품 선택 삭제 (장바구니 정리 포함)
+========================= */
+router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
+	try {
+		const productIds = []
+			.concat(req.body.productIds || [])
+			.map((id) => Number(id))
+			.filter((id) => Number.isFinite(id) && id > 0);
+
+		if (!productIds.length) {
+			return res.redirect('/admin/products');
+		}
+
+		const placeholders = productIds.map(() => '?').join(',');
+		await db.execute(`DELETE FROM cart_items WHERE product_id IN (${placeholders})`, productIds);
+		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
+
+		return res.redirect('/admin/products');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('상품 선택 삭제 오류');
+	}
+});
+
+/* =========================
    엑셀 업로드
 ========================= */
 router.get('/products/import', csrfProtection, async (req, res) => {
