@@ -11,7 +11,7 @@ const { sendInquiryReplyEmail } = require('../services/notification.service');
 const sharp = require('sharp');
 const os = require('os');
 const { exec } = require('child_process');
-const csurf = require('csurf');
+const csurf = require('../lib/csurf');
 
 const router = express.Router();
 const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
@@ -51,6 +51,48 @@ function execAsync(cmd) {
 			resolve(String(stdout || '').trim());
 		});
 	});
+}
+
+async function ensureNoticesTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS notices (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(200) NOT NULL,
+      content TEXT NOT NULL,
+      category VARCHAR(30) NOT NULL DEFAULT 'general',
+      views INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
+async function ensureNoticeCategoryColumn() {
+	try {
+		await db.execute(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+}
+
+async function ensureProductStockColumn() {
+	try {
+		await db.execute(`ALTER TABLE products ADD COLUMN stock_quantity INT DEFAULT 0`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+}
+
+async function ensureOrderShippingColumns() {
+	try {
+		await db.execute(`ALTER TABLE orders ADD COLUMN delivery_status VARCHAR(30) DEFAULT 'READY'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+	try {
+		await db.execute(`ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100)`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
 }
 
 /* =========================
@@ -220,6 +262,66 @@ router.get('/dashboard', async (req, res) => {
 });
 
 /* =========================
+   공지 관리
+========================= */
+router.get('/notices', async (req, res) => {
+	try {
+		await ensureNoticesTable();
+		await ensureNoticeCategoryColumn();
+		const [notices] = await db.execute(
+			`SELECT id, title, category, created_at, views
+       FROM notices
+       ORDER BY created_at DESC`,
+		);
+
+		return res.render('admin/notices', { notices, csrfToken: req.csrfToken() });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('공지 목록 로딩 오류');
+	}
+});
+
+router.post('/notices', csrfProtection, async (req, res) => {
+	try {
+		const title = String(req.body.title || '').trim();
+		const content = String(req.body.content || '').trim();
+		const category = String(req.body.category || 'general').trim();
+		const allowed = new Set(['general', 'product', 'event']);
+		const safeCategory = allowed.has(category) ? category : 'general';
+
+		if (!title || !content) {
+			return res.status(400).send('공지 제목과 내용을 입력해주세요.');
+		}
+
+		await ensureNoticesTable();
+		await ensureNoticeCategoryColumn();
+		await db.execute(`INSERT INTO notices (title, content, category) VALUES (?, ?, ?)`, [
+			title,
+			content,
+			safeCategory,
+		]);
+
+		return res.redirect('/admin/notices');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('공지 등록 오류');
+	}
+});
+
+router.post('/notices/:id/delete', csrfProtection, async (req, res) => {
+	try {
+		const noticeId = Number(req.params.id);
+		if (!noticeId) return res.redirect('/admin/notices');
+
+		await db.execute('DELETE FROM notices WHERE id = ?', [noticeId]);
+		return res.redirect('/admin/notices');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('공지 삭제 오류');
+	}
+});
+
+/* =========================
    상품 목록
 ========================= */
 router.get('/products', async (req, res) => {
@@ -242,6 +344,7 @@ router.get('/products', async (req, res) => {
 ========================= */
 router.get('/products/new', async (req, res) => {
 	try {
+		await ensureProductStockColumn();
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
 		res.render('admin/admin-product-new', {
 			categories,
@@ -255,7 +358,8 @@ router.get('/products/new', async (req, res) => {
 
 router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
-		const { code, name, description, price, spec, category_id, image } = req.body;
+		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
+		await ensureProductStockColumn();
 
 		let imagePath = image || null;
 		let thumbPath = null;
@@ -269,9 +373,19 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 		}
 
 		await db.execute(
-			`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, thumbPath, category_id || null],
+			`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id, stock_quantity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			[
+				code || null,
+				name,
+				description || null,
+				Number(price) || 0,
+				spec || null,
+				imagePath,
+				thumbPath,
+				category_id || null,
+				Number(stock_quantity) || 0,
+			],
 		);
 
 		return res.redirect('/admin/products');
@@ -287,6 +401,7 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 router.get('/products/:id/edit', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
+		await ensureProductStockColumn();
 
 		const [[product]] = await db.execute('SELECT * FROM products WHERE id = ?', [productId]);
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
@@ -307,7 +422,8 @@ router.get('/products/:id/edit', async (req, res) => {
 router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
-		const { code, name, description, price, spec, category_id, image } = req.body;
+		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
+		await ensureProductStockColumn();
 
 		// 기존 이미지 유지용 조회
 		const [rows] = await db.execute('SELECT image, image_thumb FROM products WHERE id = ? LIMIT 1', [productId]);
@@ -332,9 +448,20 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 
 		await db.execute(
 			`UPDATE products
-       SET code=?, name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?
+       SET code=?, name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?, stock_quantity=?
        WHERE id=?`,
-			[code || null, name, description || null, Number(price) || 0, spec || null, imagePath, thumbPath, category_id || null, productId],
+			[
+				code || null,
+				name,
+				description || null,
+				Number(price) || 0,
+				spec || null,
+				imagePath,
+				thumbPath,
+				category_id || null,
+				Number(stock_quantity) || 0,
+				productId,
+			],
 		);
 
 		return res.redirect('/admin/products');
@@ -358,6 +485,31 @@ router.post('/products/:id/delete', async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 삭제 오류');
+	}
+});
+
+/* =========================
+   상품 선택 삭제 (장바구니 정리 포함)
+========================= */
+router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
+	try {
+		const productIds = []
+			.concat(req.body.productIds || [])
+			.map((id) => Number(id))
+			.filter((id) => Number.isFinite(id) && id > 0);
+
+		if (!productIds.length) {
+			return res.redirect('/admin/products');
+		}
+
+		const placeholders = productIds.map(() => '?').join(',');
+		await db.execute(`DELETE FROM cart_items WHERE product_id IN (${placeholders})`, productIds);
+		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
+
+		return res.redirect('/admin/products');
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('상품 선택 삭제 오류');
 	}
 });
 

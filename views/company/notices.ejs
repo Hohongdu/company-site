@@ -1,0 +1,67 @@
+<%- include('../layouts/company-top', { title: '공지사항', active: 'notices' }) %>
+
+<% const currentType = typeof type !== 'undefined' ? type : 'all'; %>
+<% const queryParam = query ? `&q=${encodeURIComponent(query)}` : ''; %>
+<% const typeLabels = { all: '전체', general: '일반공지', product: '제품공지' }; %>
+<% const typeBadge = { general: '일반', product: '제품' }; %>
+
+<section class="section notice-board">
+    <div class="container-wide">
+        <h2 class="section-title text-center">공지사항</h2>
+        <p class="section-sub text-center">회사 소식과 업데이트를 확인하세요.</p>
+
+        <div class="notice-tabs">
+            <a class="tab <%= currentType === 'all' ? 'active' : '' %>" href="/notices?type=all<%= queryParam %>">
+                <%= typeLabels.all %>
+            </a>
+            <a class="tab <%= currentType === 'general' ? 'active' : '' %>"
+                href="/notices?type=general<%= queryParam %>">
+                <%= typeLabels.general %>
+            </a>
+            <a class="tab <%= currentType === 'product' ? 'active' : '' %>"
+                href="/notices?type=product<%= queryParam %>">
+                <%= typeLabels.product %>
+            </a>
+        </div>
+
+        <div class="notice-toolbar">
+            <div class="notice-count">총 <strong><%= notices ? notices.length : 0 %></strong>건</div>
+            <form class="notice-search" method="get" action="/notices">
+                <input type="hidden" name="type" value="<%= currentType %>">
+                <input type="text" name="q" placeholder="검색어를 입력하세요" value="<%= query || '' %>">
+                <button type="submit">검색</button>
+            </form>
+        </div>
+
+        <% if (!notices || notices.length === 0) { %>
+            <div class="card-soft">
+                <p class="text-muted mb-0">등록된 공지가 없습니다.</p>
+            </div>
+        <% } else { %>
+            <div class="notice-table">
+                <div class="notice-row notice-head">
+                    <div>번호</div>
+                    <div>구분</div>
+                    <div>제목</div>
+                    <div>작성일</div>
+                    <div>조회</div>
+                </div>
+                <% notices.forEach((notice, idx) => { %>
+                    <div class="notice-row">
+                        <div><%= notices.length - idx %></div>
+                        <div>
+                            <span class="notice-tag"><%= typeBadge[notice.category] || '일반' %></span>
+                        </div>
+                        <div class="notice-title">
+                            <a href="/notices/<%= notice.id %>"><%= notice.title %></a>
+                        </div>
+                        <div><%= new Date(notice.created_at).toLocaleDateString() %></div>
+                        <div><%= notice.views || 0 %></div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</section>
+
+<%- include('../layouts/company-bottom') %>
