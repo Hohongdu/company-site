@@ -116,6 +116,7 @@
             </div>
             <div class="bd">
                 <form class="form2" method="post" action="/auth/login">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken || '' %>">
                     <input type="hidden" name="returnTo" value="<%= returnTo %>" />
                     <div class="stack">
                         <input type="email" name="email" placeholder="이메일" autocomplete="email" required />
