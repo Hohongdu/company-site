@@ -3,7 +3,6 @@
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div>
             <h3 class="mb-1">상품 목록</h3>
-            <div class="text-muted small">상품 등록/수정/삭제</div>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
@@ -13,68 +12,251 @@
     </div>
 
     <% const list=(typeof products !=='undefined' && products) ? products : []; %>
+    <% const categoryList=(typeof categories !=='undefined' && categories) ? categories : []; %>
+    <% const filtersSafe=(typeof filters !=='undefined' && filters) ? filters : {}; %>
+    <% const stockFilter=filtersSafe.stockStatus || 'all'; %>
+    <% const visibilityFilter=filtersSafe.visibility || 'all'; %>
+    <% const lowStockThreshold = 5; %>
+
+    <form class="card shadow-sm mb-3" method="get" action="/admin/products">
+        <div class="card-body d-flex flex-wrap gap-2 align-items-end">
+            <div>
+                <label class="form-label small text-muted mb-1">카테고리</label>
+                <select class="form-select form-select-sm" name="category">
+                    <option value="">전체</option>
+                    <% categoryList.forEach((c)=> { %>
+                        <option value="<%= c.id %>" <%= String(filtersSafe.categoryId || '')===String(c.id) ? 'selected' : '' %>>
+                            <%= c.name %>
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small text-muted mb-1">가격(최소)</label>
+                <input class="form-control form-control-sm" type="number" name="minPrice" min="0"
+                    value="<%= filtersSafe.minPrice || '' %>">
+            </div>
+            <div>
+                <label class="form-label small text-muted mb-1">가격(최대)</label>
+                <input class="form-control form-control-sm" type="number" name="maxPrice" min="0"
+                    value="<%= filtersSafe.maxPrice || '' %>">
+            </div>
+            <div>
+                <label class="form-label small text-muted mb-1">재고 상태</label>
+                <select class="form-select form-select-sm" name="stockStatus">
+                    <option value="all" <%= stockFilter === 'all' ? 'selected' : '' %>>전체</option>
+                    <option value="in" <%= stockFilter === 'in' ? 'selected' : '' %>>재고 있음</option>
+                    <option value="low" <%= stockFilter === 'low' ? 'selected' : '' %>>재고 부족</option>
+                    <option value="out" <%= stockFilter === 'out' ? 'selected' : '' %>>품절</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small text-muted mb-1">노출 상태</label>
+                <select class="form-select form-select-sm" name="visibility">
+                    <option value="all" <%= visibilityFilter === 'all' ? 'selected' : '' %>>전체</option>
+                    <option value="ACTIVE" <%= visibilityFilter === 'ACTIVE' ? 'selected' : '' %>>판매중</option>
+                    <option value="HIDDEN" <%= visibilityFilter === 'HIDDEN' ? 'selected' : '' %>>숨김</option>
+                </select>
+            </div>
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" type="submit">필터 적용</button>
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/products">초기화</a>
+            </div>
+        </div>
+    </form>
 
         <div class="card shadow-sm">
             <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <div class="text-muted small">선택 삭제 기능</div>
+                    <button class="btn btn-sm btn-outline-danger" type="button" id="bulkDeleteBtn" disabled>
+                        선택 삭제
+                    </button>
+                </div>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead>
                             <tr class="text-muted small">
-                                <th style="min-width:80px;">ID</th>
-                                <th style="min-width:140px;">코드</th>
+                                <th style="width:44px;">
+                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                </th>
+                                    <th style="min-width:80px;">ID</th>
+                                    <th style="min-width:140px;">코드</th>
                                 <th style="min-width:220px;">상품명</th>
                                 <th style="min-width:160px;">카테고리</th>
                                 <th style="min-width:120px;" class="text-end">가격</th>
-                                <th style="min-width:160px;">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (list.length===0) { %>
+                                <th style="min-width:120px;">재고</th>
+                                <th style="min-width:140px;">상태</th>
+                                <th style="min-width:220px;">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (list.length===0) { %>
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">등록된 상품이 없습니다.</td>
+                                    <td colspan="9" class="text-center text-muted py-4">등록된 상품이 없습니다.</td>
                                 </tr>
                                 <% } %>
 
                                     <% list.forEach((p)=> { %>
                                         <tr>
                                             <td>
-                                                <%= p.id %>
+                                                <input class="form-check-input js-row-check" type="checkbox"
+                                                    data-id="<%= p.id %>">
                                             </td>
-                                            <td class="text-muted">
-                                                <%= p.code || '-' %>
-                                            </td>
-                                            <td class="fw-semibold">
-                                                <%= p.name %>
-                                            </td>
-                                            <td class="text-muted">
-                                                <%= p.category_name || '-' %>
-                                            </td>
-                                            <td class="text-end">
-                                                <%= Number(p.price || 0).toLocaleString() %>원
-                                            </td>
-                                            <td>
-                                                <div class="d-flex gap-2 flex-wrap">
-                                                    <a class="btn btn-sm btn-outline-primary"
-                                                        href="/admin/products/<%= p.id %>/edit">수정</a>
-
-                                                    <!-- ✅ 삭제 폼 (중첩 아님) + CSRF 포함 -->
-                                                    <form action="/admin/products/<%= p.id %>/delete" method="post"
-                                                        onsubmit="return confirm('삭제할까요?');">
+                                                <td>
+                                                    <%= p.id %>
+                                                </td>
+                                                <td class="text-muted">
+                                                    <%= p.code || '-' %>
+                                                </td>
+                                                <td class="fw-semibold">
+                                                    <%= p.name %>
+                                                </td>
+                                                <td class="text-muted">
+                                                    <%= p.category_name || '-' %>
+                                                </td>
+                                                <td class="text-end">
+                                                    <%= Number(p.price || 0).toLocaleString() %>원
+                                                </td>
+                                                <td>
+                                                    <% const stockQty = Number(p.stock_quantity || 0); %>
+                                                    <% if (stockQty <= 0) { %>
+                                                        <span class="badge text-bg-danger">품절</span>
+                                                    <% } else if (stockQty <= lowStockThreshold) { %>
+                                                        <span class="badge text-bg-warning">재고 부족</span>
+                                                    <% } else { %>
+                                                        <span class="badge text-bg-success">재고 있음</span>
+                                                    <% } %>
+                                                    <div class="small text-muted mt-1"><%= stockQty %>개</div>
+                                                </td>
+                                                <td>
+                                                    <form class="d-flex gap-2 align-items-center"
+                                                        action="/admin/products/<%= p.id %>/status" method="post">
                                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                        <button class="btn btn-sm btn-outline-danger"
-                                                            type="submit">삭제</button>
+                                                        <select class="form-select form-select-sm" name="visibility_status">
+                                                            <option value="ACTIVE" <%= p.visibility_status !== 'HIDDEN' ? 'selected' : '' %>>
+                                                                판매중
+                                                            </option>
+                                                            <option value="HIDDEN" <%= p.visibility_status === 'HIDDEN' ? 'selected' : '' %>>
+                                                                숨김
+                                                            </option>
+                                                        </select>
+                                                        <button class="btn btn-sm btn-outline-secondary" type="submit">변경</button>
                                                     </form>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <a class="btn btn-sm btn-outline-primary"
+                                                            href="/admin/products/<%= p.id %>/edit">수정</a>
 
-                                                    <a class="btn btn-sm btn-outline-secondary"
-                                                        href="/shop/products/<%= p.id %>" target="_blank">샵에서 보기</a>
-                                                </div>
-                                            </td>
+                                                        <!-- ✅ 삭제 폼 (중첩 아님) + CSRF 포함 -->
+                                                        <form action="/admin/products/<%= p.id %>/delete" method="post"
+                                                            onsubmit="return confirm('삭제할까요?');">
+                                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                            <button class="btn btn-sm btn-outline-danger"
+                                                                type="submit">삭제</button>
+                                                        </form>
+
+                                                        <a class="btn btn-sm btn-outline-secondary"
+                                                            href="/shop/products/<%= p.id %>" target="_blank">샵에서 보기</a>
+                                                    </div>
+                                                </td>
                                         </tr>
                                         <% }) %>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
                 </div>
             </div>
         </div>
+
+        <form id="bulkDeleteForm" action="/admin/products/bulk-delete" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        </form>
+
+        <div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bulkDeleteLabel">선택 삭제 확인</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">
+                            선택된 상품 <strong id="bulkDeleteCount">0</strong>개를 삭제합니다.
+                        </p>
+                        <ul class="small text-muted mb-0">
+                            <li>해당 상품이 포함된 장바구니 항목도 함께 삭제됩니다.</li>
+                            <li>기존 주문 데이터는 유지됩니다.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" id="bulkDeleteConfirm">삭제 진행</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+            const checkAll = document.getElementById('checkAll');
+            const rowChecks = Array.from(document.querySelectorAll('.js-row-check'));
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            const bulkDeleteCount = document.getElementById('bulkDeleteCount');
+            const bulkDeleteConfirm = document.getElementById('bulkDeleteConfirm');
+            const bulkDeleteModalEl = document.getElementById('bulkDeleteModal');
+            const bulkDeleteModal = bulkDeleteModalEl ? new bootstrap.Modal(bulkDeleteModalEl) : null;
+
+            const syncBulkState = () => {
+                const checkedCount = rowChecks.filter((el) => el.checked).length;
+                bulkDeleteBtn.disabled = checkedCount === 0;
+                if (checkAll) {
+                    checkAll.checked = checkedCount > 0 && checkedCount === rowChecks.length;
+                    checkAll.indeterminate = checkedCount > 0 && checkedCount < rowChecks.length;
+                }
+                if (bulkDeleteCount) {
+                    bulkDeleteCount.textContent = String(checkedCount);
+                }
+            };
+
+            checkAll?.addEventListener('change', (e) => {
+                rowChecks.forEach((el) => {
+                    el.checked = e.target.checked;
+                });
+                syncBulkState();
+            });
+
+            rowChecks.forEach((el) => el.addEventListener('change', syncBulkState));
+            syncBulkState();
+
+            bulkDeleteBtn?.addEventListener('click', () => {
+                syncBulkState();
+                if (!bulkDeleteModal) {
+                    submitBulkDelete();
+                    return;
+                }
+                bulkDeleteModal.show();
+            });
+
+            const submitBulkDelete = () => {
+                if (!bulkDeleteForm) return;
+                const existing = bulkDeleteForm.querySelectorAll('input[name="productIds"]');
+                existing.forEach((el) => el.remove());
+                rowChecks
+                    .filter((el) => el.checked)
+                    .forEach((el) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'productIds';
+                        input.value = el.dataset.id;
+                        bulkDeleteForm.appendChild(input);
+                    });
+                bulkDeleteForm.submit();
+            };
+
+            bulkDeleteConfirm?.addEventListener('click', () => {
+                submitBulkDelete();
+            });
+        </script>
 
         <%- include('partials/admin-footer') %>
