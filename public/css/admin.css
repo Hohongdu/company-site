@@ -187,6 +187,35 @@
 	background: #fff;
 }
 
+.bulk-actions-sticky {
+	position: sticky;
+	top: 78px;
+	z-index: 4;
+	background: var(--admin-panel);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table thead th {
+	background: #f8fafc;
+	font-weight: 600;
+	border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table tbody tr:hover {
+	background: rgba(37, 99, 235, 0.04);
+}
+
+.admin-inline .form-control,
+.admin-inline .form-select {
+	min-width: 90px;
+}
+
+.admin-actions .btn {
+	padding: 0.3rem 0.6rem;
+}
+
 @media (max-width: 992px) {
 	.admin-shell {
 		flex-direction: column;

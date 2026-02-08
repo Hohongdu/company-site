@@ -7,6 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
+const crypto = require('crypto');
 const csurf = require('./lib/csurf');
 
 const db = require('./db');
@@ -67,6 +68,17 @@ app.use(
 // =====================
 const csrfProtection = csurf({
 	ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+});
+
+// 공통 CSRF 토큰 생성 (공개 페이지의 로그인 모달에서도 사용)
+app.use((req, res, next) => {
+	if (req.session && !req.session.csrfToken) {
+		req.session.csrfToken = crypto.randomBytes(16).toString('hex');
+	}
+	if (req.session?.csrfToken) {
+		res.locals.csrfToken = req.session.csrfToken;
+	}
+	next();
 });
 
 app.use('/auth', csrfProtection);

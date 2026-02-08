@@ -3,25 +3,37 @@
     <div class="row g-3 mb-4">
         <div class="col-12 col-lg-7">
             <div class="shop-card p-4">
-                <div class="small text-muted mb-1">Welcome</div>
-                <h2 class="fw-bold mb-2">특수 소재 / 가공 상품 쇼핑몰</h2>
-                <p class="text-muted mb-3">
+                <div class="small text-muted mb-1" data-i18n data-i18n-ko="환영합니다" data-i18n-en="Welcome"
+                    data-i18n-zh="欢迎" data-i18n-ja="ようこそ">Welcome</div>
+                <h2 class="fw-bold mb-2" data-i18n data-i18n-ko="특수 소재 / 가공 상품 쇼핑몰"
+                    data-i18n-en="Special Materials & Processing Store"
+                    data-i18n-zh="特殊材料/加工商品商城"
+                    data-i18n-ja="特殊素材・加工商品のショップ">특수 소재 / 가공 상품 쇼핑몰</h2>
+                <p class="text-muted mb-3" data-i18n
+                    data-i18n-ko="카테고리별로 상품을 찾고 장바구니에 담아보세요. 비회원도 장바구니 사용 가능(세션 종료 시 초기화)."
+                    data-i18n-en="Browse by category and add items to your cart. Guests can use the cart (cleared on session end)."
+                    data-i18n-zh="按分类查找商品并加入购物车。访客也可使用购物车（会话结束清空）。"
+                    data-i18n-ja="カテゴリで商品を探し、カートに追加できます。ゲストも利用可能（セッション終了でリセット）。">
                     카테고리별로 상품을 찾고 장바구니에 담아보세요.
                     비회원도 장바구니 사용 가능(세션 종료 시 초기화).
                 </p>
 
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href="/shop/products" class="btn btn-primary">상품 보러가기</a>
-                    <a href="/shop/cart" class="btn btn-outline-dark">장바구니</a>
+                    <a href="/shop/products" class="btn btn-primary" data-i18n data-i18n-ko="상품 보러가기"
+                        data-i18n-en="Browse Products" data-i18n-zh="查看商品" data-i18n-ja="商品を見る">상품 보러가기</a>
+                    <a href="/shop/cart" class="btn btn-outline-dark" data-i18n data-i18n-ko="장바구니"
+                        data-i18n-en="Cart" data-i18n-zh="购物车" data-i18n-ja="カート">장바구니</a>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-lg-5">
             <div class="shop-card p-4">
-                <div class="fw-semibold mb-2">빠른 카테고리</div>
+                <div class="fw-semibold mb-2" data-i18n data-i18n-ko="빠른 카테고리" data-i18n-en="Quick Categories"
+                    data-i18n-zh="快速分类" data-i18n-ja="クイックカテゴリ">빠른 카테고리</div>
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-sm btn-outline-primary" href="/shop/products?category=all">전체</a>
+                    <a class="btn btn-sm btn-outline-primary" href="/shop/products?category=all" data-i18n
+                        data-i18n-ko="전체" data-i18n-en="All" data-i18n-zh="全部" data-i18n-ja="すべて">전체</a>
                     <% (categories || []).slice(0, 10).forEach(c=> { %>
                         <a class="btn btn-sm btn-outline-primary" href="/shop/products?category=<%= c.slug %>">
                             <%= c.name %>
@@ -29,21 +41,27 @@
                         <% }) %>
                 </div>
                 <% if (!categories || categories.length===0) { %>
-                    <div class="text-muted small mt-2">카테고리가 아직 없습니다.</div>
+                    <div class="text-muted small mt-2" data-i18n data-i18n-ko="카테고리가 아직 없습니다."
+                        data-i18n-en="No categories yet." data-i18n-zh="暂无分类。"
+                        data-i18n-ja="カテゴリがありません。">카테고리가 아직 없습니다.</div>
                     <% } %>
             </div>
         </div>
     </div>
 
     <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-2">
-        <h4 class="fw-bold mb-0">최근 등록 상품</h4>
-        <a href="/shop/products" class="btn btn-sm btn-outline-secondary">전체 보기</a>
+        <h4 class="fw-bold mb-0" data-i18n data-i18n-ko="최근 등록 상품" data-i18n-en="New Arrivals"
+            data-i18n-zh="最新商品" data-i18n-ja="新着商品">최근 등록 상품</h4>
+        <a href="/shop/products" class="btn btn-sm btn-outline-secondary" data-i18n data-i18n-ko="전체 보기"
+            data-i18n-en="View All" data-i18n-zh="查看全部" data-i18n-ja="すべて表示">전체 보기</a>
     </div>
 
     <div class="row g-3">
         <% if (!latest || latest.length===0) { %>
             <div class="col-12">
-                <div class="alert alert-light border">최근 등록된 상품이 없습니다.</div>
+                <div class="alert alert-light border" data-i18n data-i18n-ko="최근 등록된 상품이 없습니다."
+                    data-i18n-en="No new products." data-i18n-zh="暂无新商品。"
+                    data-i18n-ja="新着商品がありません。">최근 등록된 상품이 없습니다.</div>
             </div>
             <% } %>
 
@@ -65,7 +83,9 @@
                                 <div class="price">
                                     <%= Number(p.price || 0).toLocaleString() %>원
                                 </div>
-                                <a class="btn btn-sm btn-outline-primary" href="/shop/products/<%= p.id %>">보기</a>
+                                <a class="btn btn-sm btn-outline-primary" href="/shop/products/<%= p.id %>" data-i18n
+                                    data-i18n-ko="보기" data-i18n-en="View" data-i18n-zh="查看"
+                                    data-i18n-ja="見る">보기</a>
                             </div>
                         </div>
                     </div>
