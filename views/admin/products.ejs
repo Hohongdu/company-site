@@ -16,7 +16,22 @@
     <% const filtersSafe=(typeof filters !=='undefined' && filters) ? filters : {}; %>
     <% const stockFilter=filtersSafe.stockStatus || 'all'; %>
     <% const visibilityFilter=filtersSafe.visibility || 'all'; %>
+    <% const noticeMessage=(typeof notice !=='undefined' && notice) ? notice : ''; %>
+    <% const errorMessage=(typeof error !=='undefined' && error) ? error : ''; %>
     <% const lowStockThreshold = 5; %>
+
+    <% if (noticeMessage) { %>
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            <span><%= noticeMessage %></span>
+        </div>
+    <% } %>
+    <% if (errorMessage) { %>
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span><%= errorMessage %></span>
+        </div>
+    <% } %>
 
     <form class="card shadow-sm mb-3" method="get" action="/admin/products">
         <div class="card-body d-flex flex-wrap gap-2 align-items-end">
@@ -220,7 +235,10 @@
             const bulkDeleteCount = document.getElementById('bulkDeleteCount');
             const bulkDeleteConfirm = document.getElementById('bulkDeleteConfirm');
             const bulkDeleteModalEl = document.getElementById('bulkDeleteModal');
-            const bulkDeleteModal = bulkDeleteModalEl ? new bootstrap.Modal(bulkDeleteModalEl) : null;
+            const getBulkDeleteModal = () => {
+                if (!bulkDeleteModalEl || !window.bootstrap?.Modal) return null;
+                return bootstrap.Modal.getOrCreateInstance(bulkDeleteModalEl);
+            };
 
             const syncBulkState = () => {
                 const checkedCount = rowChecks.filter((el) => el.checked).length;
@@ -246,11 +264,12 @@
 
             bulkDeleteBtn?.addEventListener('click', () => {
                 syncBulkState();
-                if (!bulkDeleteModal) {
+                const modal = getBulkDeleteModal();
+                if (!modal) {
                     submitBulkDelete();
                     return;
                 }
-                bulkDeleteModal.show();
+                modal.show();
             });
 
             const submitBulkDelete = () => {
