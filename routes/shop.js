@@ -51,6 +51,14 @@ async function ensureReviewTable() {
 	);
 }
 
+async function ensureProductVisibilityColumn() {
+	try {
+		await db.execute(`ALTER TABLE products ADD COLUMN visibility_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'`);
+	} catch (err) {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	}
+}
+
 async function ensureAddressTable() {
 	await db.execute(
 		`CREATE TABLE IF NOT EXISTS user_addresses (
@@ -193,11 +201,13 @@ async function fetchOrderDetailByNumber(orderNumber) {
 
 router.get('/', async (req, res) => {
 	try {
+		await ensureProductVisibilityColumn();
 		const [categories] = await db.execute('SELECT * FROM categories ORDER BY name ASC');
 		const [latest] = await db.execute(`
       SELECT p.*, c.name AS category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.visibility_status <> 'HIDDEN'
       ORDER BY p.created_at DESC
       LIMIT 8
     `);
@@ -211,6 +221,7 @@ router.get('/', async (req, res) => {
 
 router.get('/products', async (req, res) => {
 	try {
+		await ensureProductVisibilityColumn();
 		const categorySlug = req.query.category || 'all';
 		const q = (req.query.q || '').trim();
 
@@ -223,6 +234,8 @@ router.get('/products', async (req, res) => {
     `;
 		const params = [];
 		const where = [];
+
+		where.push("p.visibility_status <> 'HIDDEN'");
 
 		if (categorySlug !== 'all') {
 			where.push('c.slug = ?');
@@ -255,6 +268,7 @@ router.get('/products/:id', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
+		await ensureProductVisibilityColumn();
 		await ensureReviewTable();
 		await ensureWishlistTable();
 
@@ -263,7 +277,7 @@ router.get('/products/:id', async (req, res) => {
       SELECT p.*, c.name AS category_name, c.slug AS category_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ? LIMIT 1
+      WHERE p.id = ? AND p.visibility_status <> 'HIDDEN' LIMIT 1
       `,
 			[productId]
 		);
