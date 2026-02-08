@@ -3,7 +3,6 @@
     <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
         <div>
             <h3 class="fw-bold mb-1">상품 등록</h3>
-            <div class="text-muted small">새 상품을 추가합니다. (spec 사용 가능)</div>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
@@ -39,6 +38,11 @@
                 <div class="col-12 col-lg-4">
                     <label class="form-label small text-muted">가격(price) *</label>
                     <input class="form-control" name="price" type="number" min="1" placeholder="예) 12000" required>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <label class="form-label small text-muted">재고 수량(stock)</label>
+                    <input class="form-control" name="stock_quantity" type="number" min="0" placeholder="예) 100">
                 </div>
 
                 <div class="col-12 col-lg-6">
