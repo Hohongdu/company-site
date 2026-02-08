@@ -22,6 +22,11 @@ router.get('/login', (req, res) => {
 		csrfToken: req.csrfToken(),
 	});
 });
+router.get('/forgot', (req, res) => {
+	return res.render('auth/forgot', {
+		csrfToken: req.csrfToken(),
+	});
+});
 router.get('/register', (req, res) => res.render('auth/register'));
 
 router.post('/register', async (req, res) => {
