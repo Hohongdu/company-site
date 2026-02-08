@@ -572,59 +572,6 @@ router.post('/products/:id/delete', async (req, res) => {
 
 /* =========================
    상품 상태 변경
-========================= */
-router.post('/products/:id/status', csrfProtection, async (req, res) => {
-	try {
-		const productId = Number(req.params.id);
-		const status = String(req.body.visibility_status || 'ACTIVE').toUpperCase();
-		const allowed = new Set(['ACTIVE', 'HIDDEN']);
-		const safeStatus = allowed.has(status) ? status : 'ACTIVE';
-
-		if (!productId) {
-			return res.redirect('/admin/products');
-		}
-
-		await ensureProductVisibilityColumn();
-		await db.execute('UPDATE products SET visibility_status = ? WHERE id = ?', [safeStatus, productId]);
-		await logAdminAction(req.session?.user?.id, 'product_visibility_update', { productId, status: safeStatus });
-
-		return res.redirect('/admin/products');
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('상품 상태 변경 오류');
-	}
-});
-
-/* =========================
-   상품 재고 변경
-========================= */
-router.post('/products/:id/stock', csrfProtection, async (req, res) => {
-	try {
-		const productId = Number(req.params.id);
-		const stockQuantity = Number(req.body.stock_quantity || 0);
-
-		if (!productId) {
-			return res.redirect('/admin/products');
-		}
-
-		await ensureProductStockColumn();
-		await db.execute('UPDATE products SET stock_quantity = ? WHERE id = ?', [
-			Number.isFinite(stockQuantity) && stockQuantity >= 0 ? stockQuantity : 0,
-			productId,
-		]);
-		await logAdminAction(req.session?.user?.id, 'product_stock_update', {
-			productId,
-			stockQuantity,
-		});
-
-		return res.redirect('/admin/products');
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('상품 재고 변경 오류');
-	}
-});
-
-/* =========================
    상품 선택 삭제 (장바구니 정리 포함)
 ========================= */
 router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
