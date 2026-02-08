@@ -187,6 +187,16 @@
 	background: #fff;
 }
 
+.bulk-actions-sticky {
+	position: sticky;
+	top: 78px;
+	z-index: 4;
+	background: var(--admin-panel);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--admin-border);
+}
+
 @media (max-width: 992px) {
 	.admin-shell {
 		flex-direction: column;
