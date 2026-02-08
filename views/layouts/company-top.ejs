@@ -1,6 +1,7 @@
 <% const pageTitle=(typeof title !=='undefined' && title) ? title : 'CERAMIC PRO' ; const activeKey=(typeof active
     !=='undefined' && active) ? active : '' ; const returnTo=(typeof currentUrl !=='undefined' && currentUrl) ?
-    currentUrl : (typeof currentPath !=='undefined' ? currentPath : '/' ); const isLoggedIn=!!user; %>
+    currentUrl : (typeof currentPath !=='undefined' ? currentPath : '/' ); const csrfTokenValue=(typeof csrfToken
+    !=='undefined' && csrfToken) ? csrfToken : '' ; const isLoggedIn=!!user; %>
     <!doctype html>
     <html lang="ko">
 
@@ -116,7 +117,7 @@
             </div>
             <div class="bd">
                 <form class="form2" method="post" action="/auth/login">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken || '' %>">
+                    <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
                     <input type="hidden" name="returnTo" value="<%= returnTo %>" />
                     <div class="stack">
                         <input type="email" name="email" placeholder="이메일" autocomplete="email" required />
