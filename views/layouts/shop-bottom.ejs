@@ -8,60 +8,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    const LANG_STORAGE_KEY = 'shop_lang';
-    const toDatasetKey = (prefix, lang) => {
-        const normalized = lang.charAt(0).toUpperCase() + lang.slice(1);
-        return `${prefix}${normalized}`;
-    };
-
-    const applyLanguage = (lang) => {
-        const textNodes = document.querySelectorAll('[data-i18n]');
-        textNodes.forEach((el) => {
-            const key = toDatasetKey('i18n', lang);
-            const fallback = el.dataset.i18nKo;
-            const value = el.dataset[key] || fallback;
-            if (value) el.textContent = value;
-        });
-
-        const placeholderNodes = document.querySelectorAll('[data-i18n-placeholder]');
-        placeholderNodes.forEach((el) => {
-            const key = toDatasetKey('i18nPlaceholder', lang);
-            const fallback = el.dataset.i18nPlaceholderKo;
-            const value = el.dataset[key] || fallback;
-            if (value) el.setAttribute('placeholder', value);
-        });
-
-        document.querySelectorAll('[data-lang-switch]').forEach((btn) => {
-            const active = btn.getAttribute('data-lang-switch') === lang;
-            btn.classList.toggle('btn-primary', active);
-            btn.classList.toggle('btn-outline-secondary', !active);
-            btn.setAttribute('aria-pressed', String(active));
-        });
-
-        document.documentElement.lang = lang === 'ko' ? 'ko' : 'en';
-    };
-
-    const initLanguageSwitch = () => {
-        const stored = localStorage.getItem(LANG_STORAGE_KEY);
-        const initial = stored || 'ko';
-        applyLanguage(initial);
-
-        document.querySelectorAll('[data-lang-switch]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const lang = btn.getAttribute('data-lang-switch') || 'ko';
-                localStorage.setItem(LANG_STORAGE_KEY, lang);
-                applyLanguage(lang);
-            });
-        });
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initLanguageSwitch);
-    } else {
-        initLanguageSwitch();
-    }
-</script>
+<script src="/js/i18n.js"></script>
 </body>
 
 </html>
