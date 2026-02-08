@@ -89,7 +89,7 @@
                     </button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 admin-table">
                         <thead>
                             <tr class="text-muted small">
                                 <th style="width:44px;">
@@ -142,7 +142,7 @@
                                                     <% } else { %>
                                                         <span class="badge text-bg-success">재고 있음</span>
                                                     <% } %>
-                                                    <div class="d-flex gap-2 align-items-center mt-1 flex-wrap">
+                                                    <div class="d-flex gap-2 align-items-center mt-1 flex-wrap admin-inline">
                                                         <input class="form-control form-control-sm js-stock-input" type="number" min="0"
                                                             value="<%= stockQty %>" data-id="<%= p.id %>" style="width:90px;">
                                                         <button class="btn btn-sm btn-outline-secondary js-stock-save"
@@ -150,7 +150,7 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex gap-2 align-items-center">
+                                                    <div class="d-flex gap-2 align-items-center admin-inline">
                                                         <select class="form-select form-select-sm js-visibility-select"
                                                             data-id="<%= p.id %>">
                                                             <option value="ACTIVE" <%= p.visibility_status !== 'HIDDEN' ? 'selected' : '' %>>
@@ -165,7 +165,7 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex gap-2 flex-wrap">
+                                                    <div class="d-flex gap-2 flex-wrap admin-actions">
                                                         <a class="btn btn-sm btn-outline-primary"
                                                             href="/admin/products/<%= p.id %>/edit">수정</a>
 

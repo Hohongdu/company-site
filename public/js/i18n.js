@@ -13,6 +13,13 @@
             if (value) el.textContent = value;
         });
 
+        document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+            const key = toDatasetKey('i18nHtml', lang);
+            const fallback = el.dataset.i18nHtmlKo;
+            const value = el.dataset[key] || fallback;
+            if (value) el.innerHTML = value;
+        });
+
         document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
             const key = toDatasetKey('i18nPlaceholder', lang);
             const fallback = el.dataset.i18nPlaceholderKo;
