@@ -114,10 +114,13 @@ const elements = [
 
 const document = new FakeDocument(elements);
 const localStorage = new FakeStorage();
-const fetch = () =>
-    Promise.resolve({
+let lastFetchUrl = null;
+const fetch = (url) => {
+    lastFetchUrl = url;
+    return Promise.resolve({
         json: () => Promise.resolve({ translatedText: 'Hello\nWorld' }),
     });
+};
 
 const context = {
     window: {},
@@ -129,8 +132,6 @@ const context = {
 };
 
 context.window.AUTO_TRANSLATE_ENABLED = true;
-context.window.TRANSLATE_API_ENDPOINT = 'https://example.com/translate';
-
 const scriptPath = path.join(__dirname, '..', 'public', 'js', 'i18n.js');
 const scriptContents = fs.readFileSync(scriptPath, 'utf-8');
 
@@ -146,6 +147,7 @@ setTimeout(() => {
         assert.strictEqual(textEl.textContent, 'Hello\nWorld');
         assert.strictEqual(htmlEl.innerHTML, 'Hello<br />World');
         assert.strictEqual(placeholderEl.getAttribute('placeholder'), 'Hello\nWorld');
+        assert.strictEqual(lastFetchUrl, '/api/translate');
         console.log('i18n auto-translation tests passed.');
     } catch (error) {
         console.error(error);

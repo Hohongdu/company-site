@@ -7,7 +7,7 @@
     const TRANSLATE_API_ENDPOINT =
         typeof window !== 'undefined' && window.TRANSLATE_API_ENDPOINT
             ? window.TRANSLATE_API_ENDPOINT
-            : 'https://libretranslate.com/translate';
+            : '/api/translate';
     const AUTO_TRANSLATE_CACHE_PREFIX = 'i18n_auto';
     const pendingTranslations = new Map();
     const toDatasetKey = (prefix, lang) => {
