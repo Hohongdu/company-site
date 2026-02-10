@@ -1,12 +1,12 @@
 <%- include('../layouts/shop-top', { title: '비회원 문의 조회', active: 'inquiry' }) %>
 
 <div class="shop-card p-4">
-    <h3 class="fw-bold mb-2" data-i18n data-i18n-ko="비회원 문의 조회" data-i18n-en="Guest Inquiry Lookup"
-        data-i18n-zh="访客咨询查询" data-i18n-ja="ゲストお問い合わせ確認">비회원 문의 조회</h3>
+    <h3 class="fw-bold mb-2" data-i18n data-i18n-ko="비회원 문의 조회"
+       >비회원 문의 조회</h3>
     <p class="text-muted mb-4" data-i18n data-i18n-ko="문의 번호와 이메일 또는 연락처로 답변을 조회할 수 있습니다."
-        data-i18n-en="Check responses with your inquiry number and email or phone."
-        data-i18n-zh="可通过咨询编号与邮箱或联系方式查询回复。"
-        data-i18n-ja="問い合わせ番号とメールまたは連絡先で回答を確認できます。">
+       
+       
+       >
         문의 번호와 이메일 또는 연락처로 답변을 조회할 수 있습니다.
     </p>
 
@@ -17,23 +17,23 @@
     <form action="/shop/inquiries/guest" method="post" class="row g-3">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="col-12 col-md-4">
-            <label class="form-label" data-i18n data-i18n-ko="문의 번호" data-i18n-en="Inquiry Number"
-                data-i18n-zh="咨询编号" data-i18n-ja="問い合わせ番号">문의 번호</label>
+            <label class="form-label" data-i18n data-i18n-ko="문의 번호"
+               >문의 번호</label>
             <input class="form-control" name="inquiryId" value="<%= form.inquiryId %>" required>
         </div>
         <div class="col-12 col-md-4">
-            <label class="form-label" data-i18n data-i18n-ko="이메일" data-i18n-en="Email"
-                data-i18n-zh="邮箱" data-i18n-ja="メール">이메일</label>
+            <label class="form-label" data-i18n data-i18n-ko="이메일"
+               >이메일</label>
             <input class="form-control" type="email" name="guestEmail" value="<%= form.guestEmail %>">
         </div>
         <div class="col-12 col-md-4">
-            <label class="form-label" data-i18n data-i18n-ko="연락처" data-i18n-en="Phone"
-                data-i18n-zh="联系方式" data-i18n-ja="連絡先">연락처</label>
+            <label class="form-label" data-i18n data-i18n-ko="연락처"
+               >연락처</label>
             <input class="form-control" name="guestPhone" value="<%= form.guestPhone %>">
         </div>
         <div class="col-12">
-            <button class="btn btn-primary" data-i18n data-i18n-ko="조회하기" data-i18n-en="Search"
-                data-i18n-zh="查询" data-i18n-ja="検索">조회하기</button>
+            <button class="btn btn-primary" data-i18n data-i18n-ko="조회하기"
+               >조회하기</button>
         </div>
     </form>
 
@@ -42,28 +42,28 @@
             <div class="d-flex justify-content-between flex-wrap gap-2">
                 <div>
                     <div class="fw-semibold"><%= result.title %></div>
-                    <div class="text-muted small" data-i18n data-i18n-ko="접수일:" data-i18n-en="Submitted:"
-                        data-i18n-zh="提交时间:" data-i18n-ja="受付日:">접수일:</div>
+                    <div class="text-muted small" data-i18n data-i18n-ko="접수일:"
+                       >접수일:</div>
                     <div class="text-muted small"><%= new Date(result.created_at).toLocaleString() %></div>
                 </div>
                 <span class="badge <%= result.answer_content ? 'bg-success' : 'bg-secondary' %>"
                     data-i18n
                     data-i18n-ko="<%= result.answer_content ? '답변 완료' : '답변 대기' %>"
-                    data-i18n-en="<%= result.answer_content ? 'Answered' : 'Pending' %>"
-                    data-i18n-zh="<%= result.answer_content ? '已回复' : '待回复' %>"
-                    data-i18n-ja="<%= result.answer_content ? '回答済み' : '回答待ち' %>">
+                   
+                   
+                   >
                     <%= result.answer_content ? '답변 완료' : '답변 대기' %>
                 </span>
             </div>
             <div class="mt-3">
-                <div class="text-muted small mb-1" data-i18n data-i18n-ko="문의 내용" data-i18n-en="Inquiry Content"
-                    data-i18n-zh="咨询内容" data-i18n-ja="問い合わせ内容">문의 내용</div>
+                <div class="text-muted small mb-1" data-i18n data-i18n-ko="문의 내용"
+                   >문의 내용</div>
                 <div class="border rounded p-2 bg-light" style="white-space:pre-wrap;"><%= result.content %></div>
             </div>
             <% if (result.answer_content) { %>
                 <div class="mt-3">
-                    <div class="text-muted small mb-1" data-i18n data-i18n-ko="답변" data-i18n-en="Answer"
-                        data-i18n-zh="回复" data-i18n-ja="回答">답변</div>
+                    <div class="text-muted small mb-1" data-i18n data-i18n-ko="답변"
+                       >답변</div>
                     <div class="border rounded p-2" style="white-space:pre-wrap;"><%= result.answer_content %></div>
                 </div>
             <% } %>

@@ -650,7 +650,7 @@ a:hover {
 	width: min(520px, 92vw);
 	background: #fff;
 	border-radius: 18px;
-	box-shadow: 0 40px 100px rgba(0, 0, 0, 0.28);
+	box-shadow: 0 40px 80px rgba(15, 23, 42, 0.2);
 	opacity: 0;
 	pointer-events: none;
 	transition:
@@ -668,18 +668,20 @@ a:hover {
 	transform: translate(-50%, -50%) scale(1);
 }
 .modal2 .hd {
-	padding: 18px 22px;
+	padding: 20px 24px;
 	border-bottom: 1px solid #eef2f7;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	background: linear-gradient(90deg, #f8fafc 0%, #ffffff 60%);
 }
 .modal2 .hd .title {
 	font-weight: 900;
 	color: #0f172a;
+	letter-spacing: -0.01em;
 }
 .modal2 .bd {
-	padding: 18px 22px 22px;
+	padding: 18px 24px 24px;
 }
 .modal2 .x {
 	border: none;
@@ -688,33 +690,58 @@ a:hover {
 	color: #94a3b8;
 	cursor: pointer;
 }
+.modal2 .subtitle {
+	margin: 0 0 14px;
+	color: #64748b;
+	font-size: 14px;
+	line-height: 1.5;
+}
 .form2 input {
 	width: 100%;
 	padding: 14px 14px;
 	border-radius: 10px;
 	border: 1px solid #e5e7eb;
 	outline: none;
+	background: #f8fafc;
 }
 .form2 input:focus {
 	border-color: #94a3b8;
+	background: #fff;
 }
 .form2 .stack {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 }
-.form2 .row {
+.form2 .meta {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
 	margin-top: 10px;
+	flex-wrap: wrap;
+}
+.form2 .row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 14px;
 	color: #64748b;
 	font-size: 14px;
 }
 .form2 .row a {
 	color: #0b1f3b;
 	font-weight: 800;
+}
+.form2 .row .note {
+	color: #64748b;
+	font-weight: 600;
+}
+.form2 .forgot {
+	color: #0f172a;
+	font-weight: 700;
+	font-size: 13px;
 }
 .form2 .actions {
 	margin-top: 14px;
@@ -730,21 +757,21 @@ a:hover {
 	background: #111827;
 	color: #fff;
 	font-weight: 900;
+	letter-spacing: -0.01em;
 }
 .form2 .btn-secondary {
 	width: 100%;
 	padding: 13px 14px;
 	border-radius: 12px;
 	border: 1px solid #cbd5e1;
-	background: #94a3b8;
-	color: #fff;
+	background: #f1f5f9;
+	color: #0f172a;
 	font-weight: 900;
 }
 .keep {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin-top: 10px;
 	color: #111827;
 	font-size: 14px;
 }
