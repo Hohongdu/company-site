@@ -141,7 +141,12 @@
                 <button class="x" id="btnLoginClose" aria-label="닫기">×</button>
             </div>
             <div class="bd">
-                <form class="form2" method="post" action="/auth/login">
+                <p class="subtitle" data-i18n data-i18n-ko="계정으로 로그인하고 맞춤 서비스를 이용하세요."
+                    data-i18n-en="Sign in to access personalized services."
+                    data-i18n-zh="登录以使用个性化服务。" data-i18n-ja="ログインしてパーソナライズされたサービスをご利用ください。">
+                    계정으로 로그인하고 맞춤 서비스를 이용하세요.
+                </p>
+                <form class="form2 login-form" method="post" action="/auth/login">
                     <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
                     <input type="hidden" name="returnTo" value="<%= returnTo %>" />
                     <div class="stack">
@@ -155,11 +160,16 @@
                             data-i18n-placeholder-ja="パスワード" required />
                     </div>
 
-                    <label class="keep">
-                        <input type="checkbox" checked />
-                        <span data-i18n data-i18n-ko="로그인상태유지" data-i18n-en="Keep me logged in"
-                            data-i18n-zh="保持登录" data-i18n-ja="ログイン状態を保持">로그인상태유지</span>
-                    </label>
+                    <div class="meta">
+                        <label class="keep">
+                            <input type="checkbox" checked />
+                            <span data-i18n data-i18n-ko="로그인상태유지" data-i18n-en="Keep me logged in"
+                                data-i18n-zh="保持登录" data-i18n-ja="ログイン状態を保持">로그인상태유지</span>
+                        </label>
+                        <a class="forgot" href="/auth/forgot" data-i18n data-i18n-ko="아이디 · 비밀번호 찾기"
+                            data-i18n-en="Find ID/Password" data-i18n-zh="找回账号/密码"
+                            data-i18n-ja="ID・パスワード検索">아이디 · 비밀번호 찾기</a>
+                    </div>
 
                     <div class="actions">
                         <button class="btn-login" type="submit" data-i18n data-i18n-ko="로그인" data-i18n-en="Login"
@@ -170,11 +180,11 @@
                     </div>
 
                     <div class="row">
+                        <span class="note" data-i18n data-i18n-ko="아직 계정이 없으신가요?"
+                            data-i18n-en="New here?" data-i18n-zh="还没有账号？"
+                            data-i18n-ja="アカウントをお持ちでない方">아직 계정이 없으신가요?</span>
                         <a href="/auth/register" data-i18n data-i18n-ko="회원가입" data-i18n-en="Sign Up"
                             data-i18n-zh="注册" data-i18n-ja="会員登録">회원가입</a>
-                        <a href="/auth/forgot" data-i18n data-i18n-ko="아이디 · 비밀번호 찾기"
-                            data-i18n-en="Find ID/Password" data-i18n-zh="找回账号/密码"
-                            data-i18n-ja="ID・パスワード検索">아이디 · 비밀번호 찾기</a>
                     </div>
                 </form>
             </div>
