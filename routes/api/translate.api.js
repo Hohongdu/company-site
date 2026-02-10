@@ -6,6 +6,7 @@ const router = express.Router();
 const TRANSLATE_PROVIDER = process.env.TRANSLATE_PROVIDER || 'libre';
 const TRANSLATE_API_KEY = process.env.TRANSLATE_API_KEY;
 const DEFAULT_LIBRE_URLS = [
+    'http://127.0.0.1:5000/translate',
     'http://libretranslate:5000/translate',
     'http://host.docker.internal:5000/translate',
     'http://localhost:5000/translate',
