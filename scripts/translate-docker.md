@@ -18,7 +18,10 @@ curl -s -X POST http://localhost:5000/translate \
 
 ```env
 # optional: comma-separated fallback order
-TRANSLATE_API_URL=http://libretranslate:5000/translate,http://host.docker.internal:5000/translate,http://localhost:5000/translate
+TRANSLATE_API_URL=http://127.0.0.1:5000/translate,http://libretranslate:5000/translate,http://localhost:5000/translate
+
+# enable only if your environment can resolve host.docker.internal
+# ENABLE_HOST_DOCKER_INTERNAL=true
 ```
 
 ## 4) Check app proxy endpoint

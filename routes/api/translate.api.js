@@ -5,6 +5,7 @@ const router = express.Router();
 
 const TRANSLATE_PROVIDER = process.env.TRANSLATE_PROVIDER || 'libre';
 const TRANSLATE_API_KEY = process.env.TRANSLATE_API_KEY;
+const ENABLE_HOST_DOCKER_INTERNAL = process.env.ENABLE_HOST_DOCKER_INTERNAL === 'true';
 const DEFAULT_LIBRE_URLS = [
     'http://127.0.0.1:5000/translate',
     'http://libretranslate:5000/translate',
@@ -15,12 +16,25 @@ const DEFAULT_LIBRE_URLS = [
 
 const getLibreTranslateUrls = () => {
     const raw = process.env.TRANSLATE_API_URL;
-    if (!raw || !raw.trim()) return DEFAULT_LIBRE_URLS;
+    const configured = !raw || !raw.trim()
+        ? []
+        : raw
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
 
-    return raw
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
+    const merged = [...configured, ...DEFAULT_LIBRE_URLS];
+    const deduped = [...new Set(merged)];
+
+    return deduped.filter((url) => {
+        try {
+            const host = new URL(url).hostname;
+            if (host !== 'host.docker.internal') return true;
+            return ENABLE_HOST_DOCKER_INTERNAL;
+        } catch {
+            return true;
+        }
+    });
 };
 
 const requestLibreTranslate = async (payload) => {
@@ -35,6 +49,10 @@ const requestLibreTranslate = async (payload) => {
             const response = await axios.post(url, requestPayload, { timeout: 8000 });
             return response?.data?.translatedText || payload.q;
         } catch (error) {
+            const errorMessage = error?.message || '';
+            if (!errorMessage.includes('ENOTFOUND host.docker.internal')) {
+                console.warn(`[translate] failed ${url}: ${errorMessage}`);
+            }
             lastError = error;
         }
     }
