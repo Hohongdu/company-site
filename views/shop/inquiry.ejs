@@ -1,19 +1,19 @@
 <%- include('../layouts/shop-top', { title: '문의하기' , active: 'inquiry' }) %>
 
 <div class="shop-card p-4">
-    <h3 class="fw-bold mb-2" data-i18n data-i18n-ko="문의하기" data-i18n-en="Inquiry"
-        data-i18n-zh="咨询" data-i18n-ja="お問い合わせ">문의하기</h3>
+    <h3 class="fw-bold mb-2" data-i18n data-i18n-ko="문의하기"
+       >문의하기</h3>
     <p class="text-muted mb-4" data-i18n data-i18n-ko="주문/배송/제품 문의 내용을 남겨주시면 확인 후 답변드리겠습니다."
-        data-i18n-en="Leave your question about orders, delivery, or products and we will respond."
-        data-i18n-zh="留下订单/配送/产品咨询，我们会尽快回复。"
-        data-i18n-ja="注文・配送・商品に関する内容を送信いただければ確認後に回答します。">
+       
+       
+       >
         주문/배송/제품 문의 내용을 남겨주시면 확인 후 답변드리겠습니다.
     </p>
 
     <% if (success) { %>
         <div class="alert alert-success" data-i18n data-i18n-ko="문의가 등록되었습니다. 빠르게 확인 후 연락드리겠습니다."
-            data-i18n-en="Your inquiry has been submitted. We'll get back to you soon."
-            data-i18n-zh="咨询已提交，我们会尽快联系您。" data-i18n-ja="お問い合わせを受け付けました。順次ご連絡します。">
+           
+           >
             문의가 등록되었습니다. 빠르게 확인 후 연락드리겠습니다.
         </div>
         <% } %>
@@ -24,62 +24,62 @@
                     <form action="/shop/inquiries" method="post" class="row g-3">
                         <div class="col-12 col-md-6">
                             <label class="form-label" data-i18n data-i18n-ko="주문번호 (선택)"
-                                data-i18n-en="Order Number (optional)" data-i18n-zh="订单号（可选）"
-                                data-i18n-ja="注文番号（任意）">주문번호 (선택)</label>
+                               
+                               >주문번호 (선택)</label>
                             <input class="form-control" name="orderNumber" value="<%= form.orderNumber %>">
                         </div>
 
                         <% if (!user) { %>
                             <div class="col-12 col-md-4">
-                                <label class="form-label" data-i18n data-i18n-ko="이름" data-i18n-en="Name"
-                                    data-i18n-zh="姓名" data-i18n-ja="お名前">이름</label>
+                                <label class="form-label" data-i18n data-i18n-ko="이름"
+                                   >이름</label>
                                 <input class="form-control" name="guestName" required value="<%= form.guestName %>">
                             </div>
                             <div class="col-12 col-md-4">
-                                <label class="form-label" data-i18n data-i18n-ko="이메일" data-i18n-en="Email"
-                                    data-i18n-zh="邮箱" data-i18n-ja="メール">이메일</label>
+                                <label class="form-label" data-i18n data-i18n-ko="이메일"
+                                   >이메일</label>
                                 <input class="form-control" type="email" name="guestEmail"
                                     value="<%= form.guestEmail %>">
                             </div>
                             <div class="col-12 col-md-4">
-                                <label class="form-label" data-i18n data-i18n-ko="연락처" data-i18n-en="Phone"
-                                    data-i18n-zh="联系方式" data-i18n-ja="連絡先">연락처</label>
+                                <label class="form-label" data-i18n data-i18n-ko="연락처"
+                                   >연락처</label>
                                 <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
                                     data-i18n-placeholder data-i18n-placeholder-ko="010-0000-0000"
-                                    data-i18n-placeholder-en="010-0000-0000"
-                                    data-i18n-placeholder-zh="010-0000-0000"
-                                    data-i18n-placeholder-ja="010-0000-0000"
+                                   
+                                   
+                                   
                                     value="<%= form.guestPhone %>">
                             </div>
                             <% } %>
 
                                 <div class="col-12">
-                                    <label class="form-label" data-i18n data-i18n-ko="문의 제목" data-i18n-en="Subject"
-                                        data-i18n-zh="标题" data-i18n-ja="件名">문의 제목</label>
+                                    <label class="form-label" data-i18n data-i18n-ko="문의 제목"
+                                       >문의 제목</label>
                                     <input class="form-control" name="title" required value="<%= form.title %>">
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label" data-i18n data-i18n-ko="문의 내용" data-i18n-en="Message"
-                                        data-i18n-zh="内容" data-i18n-ja="内容">문의 내용</label>
+                                    <label class="form-label" data-i18n data-i18n-ko="문의 내용"
+                                       >문의 내용</label>
                                     <textarea class="form-control" rows="6" name="content"
                                         required><%= form.content %></textarea>
                                 </div>
                                 <div class="col-12">
-                                    <button class="btn btn-primary" data-i18n data-i18n-ko="문의 등록" data-i18n-en="Submit"
-                                        data-i18n-zh="提交" data-i18n-ja="送信">문의 등록</button>
+                                    <button class="btn btn-primary" data-i18n data-i18n-ko="문의 등록"
+                                       >문의 등록</button>
                                 </div>
                     </form>
 
                     <div class="mt-4 text-muted small">
                         <span data-i18n data-i18n-ko="비회원 문의 답변 조회가 필요하신가요?"
-                            data-i18n-en="Need to check a guest inquiry response?"
-                            data-i18n-zh="需要查询访客咨询回复吗？"
-                            data-i18n-ja="ゲストお問い合わせの確認が必要ですか？">
+                           
+                           
+                           >
                             비회원 문의 답변 조회가 필요하신가요?
                         </span>
                         <a href="/shop/inquiries/guest" data-i18n data-i18n-ko="비회원 문의 조회"
-                            data-i18n-en="Guest Inquiry Lookup" data-i18n-zh="访客咨询查询"
-                            data-i18n-ja="ゲストお問い合わせ確認">비회원 문의 조회</a>
+                           
+                           >비회원 문의 조회</a>
                     </div>
 </div>
 
