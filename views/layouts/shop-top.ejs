@@ -48,13 +48,13 @@
                 <div class="ms-auto d-flex align-items-center gap-2 d-lg-none">
                     <% if (user) { %>
                         <a class="btn btn-outline-secondary btn-sm shop-navbtn" href="/auth/logout" data-i18n
-                            data-i18n-ko="로그아웃" data-i18n-en="Logout" data-i18n-zh="退出" data-i18n-ja="ログアウト">로그아웃</a>
+                            data-i18n-ko="로그아웃">로그아웃</a>
                         <% } else { %>
                             <a class="btn btn-outline-secondary btn-sm shop-navbtn" href="/auth/login" data-i18n
-                                data-i18n-ko="로그인" data-i18n-en="Login" data-i18n-zh="登录" data-i18n-ja="ログイン">로그인</a>
+                                data-i18n-ko="로그인">로그인</a>
                             <a class="btn btn-primary btn-sm shop-navbtn" href="/auth/register" data-i18n
-                                data-i18n-ko="회원가입" data-i18n-en="Sign Up" data-i18n-zh="注册"
-                                data-i18n-ja="会員登録">회원가입</a>
+                                data-i18n-ko="회원가입"
+                               >회원가입</a>
                             <% } %>
 
                                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -71,10 +71,10 @@
                         method="get">
                         <input class="form-control" name="q" placeholder="상품 검색 (코드/이름/규격)" value="<%= q %>"
                             data-i18n-placeholder data-i18n-placeholder-ko="상품 검색 (코드/이름/규격)"
-                            data-i18n-placeholder-en="Search products (code/name/spec)"
-                            data-i18n-placeholder-zh="搜索商品（编码/名称/规格）" data-i18n-placeholder-ja="商品検索（コード/名称/仕様）">
+                           
+                           >
                         <button class="btn btn-outline-primary shop-navbtn" type="submit" data-i18n data-i18n-ko="검색"
-                            data-i18n-en="Search" data-i18n-zh="搜索" data-i18n-ja="検索">검색</button>
+                           >검색</button>
                     </form>
 
                     <!-- 오른쪽: 버튼들 한 묶음(간격 일정) -->
@@ -95,38 +95,38 @@
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle shop-navbtn" type="button"
                                 data-bs-toggle="dropdown" aria-expanded="false" data-i18n data-i18n-ko="메뉴"
-                                data-i18n-en="Menu" data-i18n-zh="菜单" data-i18n-ja="メニュー">
+                               >
                                 메뉴
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/" data-i18n data-i18n-ko="회사" data-i18n-en="Company"
-                                        data-i18n-zh="公司" data-i18n-ja="会社">회사</a></li>
+                                <li><a class="dropdown-item" href="/" data-i18n data-i18n-ko="회사"
+                                       >회사</a></li>
                                 <li><a class="dropdown-item" href="/shop/products" data-i18n data-i18n-ko="상품보기"
-                                        data-i18n-en="Products" data-i18n-zh="商品" data-i18n-ja="商品を見る">상품보기</a></li>
+                                       >상품보기</a></li>
                                 <li><a class="dropdown-item" href="/shop/inquiries" data-i18n data-i18n-ko="문의하기"
-                                        data-i18n-en="Inquiry" data-i18n-zh="咨询" data-i18n-ja="お問い合わせ">문의하기</a></li>
+                                       >문의하기</a></li>
                                 <li><a class="dropdown-item" href="/shop/inquiries/guest" data-i18n data-i18n-ko="문의조회"
-                                        data-i18n-en="Inquiry Status" data-i18n-zh="咨询查询"
-                                        data-i18n-ja="問い合わせ確認">문의조회</a></li>
+                                       
+                                       >문의조회</a></li>
                                 <li><a class="dropdown-item" href="/shop/orders/guest" data-i18n data-i18n-ko="주문조회"
-                                        data-i18n-en="Order Status" data-i18n-zh="订单查询" data-i18n-ja="注文確認">주문조회</a>
+                                       >주문조회</a>
                                 </li>
                                 <% if (user) { %>
                                     <li><a class="dropdown-item" href="/shop/wishlist" data-i18n data-i18n-ko="위시리스트"
-                                            data-i18n-en="Wishlist" data-i18n-zh="心愿单" data-i18n-ja="ウィッシュリスト">위시리스트</a>
+                                           >위시리스트</a>
                                     </li>
                                     <% } %>
                                         <% if (user && user.is_admin) { %>
                                             <li><a class="dropdown-item" href="/admin/dashboard" data-i18n
-                                                    data-i18n-ko="관리자" data-i18n-en="Admin" data-i18n-zh="管理员"
-                                                    data-i18n-ja="管理者">관리자</a></li>
+                                                    data-i18n-ko="관리자"
+                                                   >관리자</a></li>
                                             <% } %>
                             </ul>
                         </div>
 
                         <a class="btn btn-sm shop-navbtn <%= activeKey==='cart' ? 'btn-dark' : 'btn-outline-dark' %>"
-                            href="/shop/cart" data-i18n data-i18n-ko="장바구니" data-i18n-en="Cart" data-i18n-zh="购物车"
-                            data-i18n-ja="カート">
+                            href="/shop/cart" data-i18n data-i18n-ko="장바구니"
+                           >
                             장바구니
                             <% if (cartCount> 0) { %>
                                 <span class="badge bg-danger ms-1">
@@ -137,14 +137,14 @@
 
                         <% if (user) { %>
                             <a class="btn btn-outline-secondary btn-sm shop-navbtn <%= activeKey==='account' ? 'btn-secondary text-white' : '' %>"
-                                href="/shop/account" data-i18n data-i18n-ko="내 정보" data-i18n-en="Account"
-                                data-i18n-zh="我的资料" data-i18n-ja="マイページ">내 정보</a>
+                                href="/shop/account" data-i18n data-i18n-ko="내 정보"
+                               >내 정보</a>
                             <% } %>
 
                                 <% if (user && user.is_admin) { %>
                                     <a class="btn btn-outline-dark btn-sm shop-navbtn" href="/admin/dashboard" data-i18n
-                                        data-i18n-ko="관리자" data-i18n-en="Admin" data-i18n-zh="管理员"
-                                        data-i18n-ja="管理者">관리자</a>
+                                        data-i18n-ko="관리자"
+                                       >관리자</a>
                                     <% } %>
 
                                         <div class="vr mx-2"></div>
@@ -156,15 +156,15 @@
                                                 </strong>
                                             </span>
                                             <a class="btn btn-outline-secondary btn-sm shop-navbtn" href="/auth/logout"
-                                                data-i18n data-i18n-ko="로그아웃" data-i18n-en="Logout" data-i18n-zh="退出"
-                                                data-i18n-ja="ログアウト">로그아웃</a>
+                                                data-i18n data-i18n-ko="로그아웃"
+                                               >로그아웃</a>
                                             <% } else { %>
                                                 <a class="btn btn-outline-secondary btn-sm shop-navbtn"
-                                                    href="/auth/login" data-i18n data-i18n-ko="로그인" data-i18n-en="Login"
-                                                    data-i18n-zh="登录" data-i18n-ja="ログイン">로그인</a>
+                                                    href="/auth/login" data-i18n data-i18n-ko="로그인"
+                                                   >로그인</a>
                                                 <a class="btn btn-primary btn-sm shop-navbtn" href="/auth/register"
-                                                    data-i18n data-i18n-ko="회원가입" data-i18n-en="Sign Up"
-                                                    data-i18n-zh="注册" data-i18n-ja="会員登録">회원가입</a>
+                                                    data-i18n data-i18n-ko="회원가입"
+                                                   >회원가입</a>
                                                 <% } %>
                     </div>
 
@@ -188,7 +188,7 @@
                                 </ul>
                             </div>
                             <a class="btn <%= activeKey==='cart' ? 'btn-dark' : 'btn-outline-dark' %>" href="/shop/cart"
-                                data-i18n data-i18n-ko="장바구니" data-i18n-en="Cart" data-i18n-zh="购物车" data-i18n-ja="カート">
+                                data-i18n data-i18n-ko="장바구니">
                                 장바구니 <% if (cartCount> 0) { %><span class="badge bg-danger ms-1">
                                         <%= cartCount %>
                                     </span>
@@ -196,36 +196,36 @@
                             </a>
                             <% if (user) { %>
                                 <a class="btn btn-outline-secondary" href="/shop/account" data-i18n data-i18n-ko="내 정보"
-                                    data-i18n-en="Account" data-i18n-zh="我的资料" data-i18n-ja="マイページ">내 정보</a>
+                                   >내 정보</a>
                                 <% } %>
                                     <details class="mt-2">
                                         <summary class="btn btn-outline-secondary w-100" data-i18n data-i18n-ko="기타 메뉴"
-                                            data-i18n-en="More Menu" data-i18n-zh="更多菜单" data-i18n-ja="その他メニュー">기타 메뉴
+                                           >기타 메뉴
                                         </summary>
                                         <div class="d-grid gap-2 mt-2">
                                             <a class="btn btn-outline-secondary" href="/" data-i18n data-i18n-ko="회사"
-                                                data-i18n-en="Company" data-i18n-zh="公司" data-i18n-ja="会社">회사</a>
+                                               >회사</a>
                                             <a class="btn btn-outline-secondary" href="/shop/products" data-i18n
-                                                data-i18n-ko="상품보기" data-i18n-en="Products" data-i18n-zh="商品"
-                                                data-i18n-ja="商品を見る">상품보기</a>
+                                                data-i18n-ko="상품보기"
+                                               >상품보기</a>
                                             <a class="btn btn-outline-secondary" href="/shop/inquiries" data-i18n
-                                                data-i18n-ko="문의하기" data-i18n-en="Inquiry" data-i18n-zh="咨询"
-                                                data-i18n-ja="お問い合わせ">문의하기</a>
+                                                data-i18n-ko="문의하기"
+                                               >문의하기</a>
                                             <a class="btn btn-outline-secondary" href="/shop/inquiries/guest" data-i18n
-                                                data-i18n-ko="문의조회" data-i18n-en="Inquiry Status" data-i18n-zh="咨询查询"
-                                                data-i18n-ja="問い合わせ確認">문의조회</a>
+                                                data-i18n-ko="문의조회"
+                                               >문의조회</a>
                                             <a class="btn btn-outline-secondary" href="/shop/orders/guest" data-i18n
-                                                data-i18n-ko="주문조회" data-i18n-en="Order Status" data-i18n-zh="订单查询"
-                                                data-i18n-ja="注文確認">주문조회</a>
+                                                data-i18n-ko="주문조회"
+                                               >주문조회</a>
                                             <% if (user) { %>
                                                 <a class="btn btn-outline-secondary" href="/shop/wishlist" data-i18n
-                                                    data-i18n-ko="위시리스트" data-i18n-en="Wishlist" data-i18n-zh="心愿单"
-                                                    data-i18n-ja="ウィッシュリスト">위시리스트</a>
+                                                    data-i18n-ko="위시리스트"
+                                                   >위시리스트</a>
                                                 <% } %>
                                                     <% if (user && user.is_admin) { %>
                                                         <a class="btn btn-outline-dark" href="/admin/dashboard"
-                                                            data-i18n data-i18n-ko="관리자" data-i18n-en="Admin"
-                                                            data-i18n-zh="管理员" data-i18n-ja="管理者">관리자</a>
+                                                            data-i18n data-i18n-ko="관리자"
+                                                           >관리자</a>
                                                         <% } %>
                                         </div>
                                     </details>

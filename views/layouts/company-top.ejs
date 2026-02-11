@@ -38,15 +38,15 @@
                     <!-- Desktop center nav -->
                     <nav class="nav-center" aria-label="주요 메뉴">
                         <a href="/" class="<%= activeKey==='home' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="홈" data-i18n-en="Home" data-i18n-zh="首页" data-i18n-ja="ホーム">홈</a>
+                            data-i18n-ko="홈">홈</a>
                         <a href="/about" class="<%= activeKey==='about' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="회사 소개" data-i18n-en="About" data-i18n-zh="公司介绍" data-i18n-ja="会社紹介">회사 소개</a>
+                            data-i18n-ko="회사 소개">회사 소개</a>
                         <a href="/history" class="<%= activeKey==='history' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="연혁" data-i18n-en="History" data-i18n-zh="沿革" data-i18n-ja="沿革">연혁</a>
+                            data-i18n-ko="연혁">연혁</a>
                         <a href="/notices" class="<%= activeKey==='notices' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="공지" data-i18n-en="Notices" data-i18n-zh="公告" data-i18n-ja="お知らせ">공지</a>
+                            data-i18n-ko="공지">공지</a>
                         <a href="/contact" class="<%= activeKey==='contact' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="문의" data-i18n-en="Contact" data-i18n-zh="咨询" data-i18n-ja="お問い合わせ">문의</a>
+                            data-i18n-ko="문의">문의</a>
                     </nav>
 
                     <!-- Actions -->
@@ -103,10 +103,10 @@
             <div class="drawer-top">
                 <% if (!isLoggedIn) { %>
                     <div class="msg">
-                        <span data-i18n data-i18n-ko="로그인이 필요합니다." data-i18n-en="Login is required."
-                            data-i18n-zh="需要登录。" data-i18n-ja="ログインが必要です。">로그인이 필요합니다.</span>
-                        <a href="#" class="js-open-login" data-i18n data-i18n-ko="로그인" data-i18n-en="Login"
-                            data-i18n-zh="登录" data-i18n-ja="ログイン">로그인</a>
+                        <span data-i18n data-i18n-ko="로그인이 필요합니다."
+                           >로그인이 필요합니다.</span>
+                        <a href="#" class="js-open-login" data-i18n data-i18n-ko="로그인"
+                           >로그인</a>
                     </div>
                     <% } else { %>
                         <div class="msg">
@@ -119,16 +119,16 @@
                             <button class="drawer-close" id="btnDrawerClose" aria-label="메뉴 닫기">×</button>
             </div>
             <div class="drawer-list">
-                <a class="drawer-item" href="/" data-i18n data-i18n-ko="홈" data-i18n-en="Home" data-i18n-zh="首页"
-                    data-i18n-ja="ホーム">홈</a>
-                <a class="drawer-item" href="/about" data-i18n data-i18n-ko="회사 소개" data-i18n-en="About"
-                    data-i18n-zh="公司介绍" data-i18n-ja="会社紹介">회사 소개</a>
-                <a class="drawer-item" href="/history" data-i18n data-i18n-ko="연혁" data-i18n-en="History"
-                    data-i18n-zh="沿革" data-i18n-ja="沿革">연혁</a>
-                <a class="drawer-item" href="/notices" data-i18n data-i18n-ko="공지" data-i18n-en="Notices"
-                    data-i18n-zh="公告" data-i18n-ja="お知らせ">공지</a>
-                <a class="drawer-item" href="/contact" data-i18n data-i18n-ko="문의" data-i18n-en="Contact"
-                    data-i18n-zh="咨询" data-i18n-ja="お問い合わせ">문의</a>
+                <a class="drawer-item" href="/" data-i18n data-i18n-ko="홈"
+                   >홈</a>
+                <a class="drawer-item" href="/about" data-i18n data-i18n-ko="회사 소개"
+                   >회사 소개</a>
+                <a class="drawer-item" href="/history" data-i18n data-i18n-ko="연혁"
+                   >연혁</a>
+                <a class="drawer-item" href="/notices" data-i18n data-i18n-ko="공지"
+                   >공지</a>
+                <a class="drawer-item" href="/contact" data-i18n data-i18n-ko="문의"
+                   >문의</a>
             </div>
         </aside>
 
@@ -136,45 +136,55 @@
         <div class="modal-backdrop2" id="loginBackdrop"></div>
         <div class="modal2" id="loginModal" role="dialog" aria-modal="true" aria-label="로그인">
             <div class="hd">
-                <div class="title" data-i18n data-i18n-ko="로그인" data-i18n-en="Login" data-i18n-zh="登录"
-                    data-i18n-ja="ログイン">로그인</div>
+                <div class="title" data-i18n data-i18n-ko="로그인"
+                   >로그인</div>
                 <button class="x" id="btnLoginClose" aria-label="닫기">×</button>
             </div>
             <div class="bd">
-                <form class="form2" method="post" action="/auth/login">
+                <p class="subtitle" data-i18n data-i18n-ko="계정으로 로그인하고 맞춤 서비스를 이용하세요."
+                   
+                   >
+                    계정으로 로그인하고 맞춤 서비스를 이용하세요.
+                </p>
+                <form class="form2 login-form" method="post" action="/auth/login">
                     <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
                     <input type="hidden" name="returnTo" value="<%= returnTo %>" />
                     <div class="stack">
                         <input type="email" name="email" placeholder="이메일" autocomplete="email" required
                             data-i18n-placeholder data-i18n-placeholder-ko="이메일"
-                            data-i18n-placeholder-en="Email" data-i18n-placeholder-zh="邮箱"
-                            data-i18n-placeholder-ja="メール" />
+                           
+                            />
                         <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password"
                             data-i18n-placeholder data-i18n-placeholder-ko="비밀번호"
-                            data-i18n-placeholder-en="Password" data-i18n-placeholder-zh="密码"
-                            data-i18n-placeholder-ja="パスワード" required />
+                           
+                            required />
                     </div>
 
-                    <label class="keep">
-                        <input type="checkbox" checked />
-                        <span data-i18n data-i18n-ko="로그인상태유지" data-i18n-en="Keep me logged in"
-                            data-i18n-zh="保持登录" data-i18n-ja="ログイン状態を保持">로그인상태유지</span>
-                    </label>
+                    <div class="meta">
+                        <label class="keep">
+                            <input type="checkbox" checked />
+                            <span data-i18n data-i18n-ko="로그인상태유지"
+                               >로그인상태유지</span>
+                        </label>
+                        <a class="forgot" href="/auth/forgot" data-i18n data-i18n-ko="아이디 · 비밀번호 찾기"
+                           
+                           >아이디 · 비밀번호 찾기</a>
+                    </div>
 
                     <div class="actions">
-                        <button class="btn-login" type="submit" data-i18n data-i18n-ko="로그인" data-i18n-en="Login"
-                            data-i18n-zh="登录" data-i18n-ja="ログイン">로그인</button>
+                        <button class="btn-login" type="submit" data-i18n data-i18n-ko="로그인"
+                           >로그인</button>
                         <a class="btn-secondary text-center" href="/shop/orders/guest" data-i18n
-                            data-i18n-ko="비회원 주문배송 조회" data-i18n-en="Guest Order Lookup"
-                            data-i18n-zh="访客订单查询" data-i18n-ja="ゲスト注文確認">비회원 주문배송 조회</a>
+                            data-i18n-ko="비회원 주문배송 조회"
+                           >비회원 주문배송 조회</a>
                     </div>
 
                     <div class="row">
-                        <a href="/auth/register" data-i18n data-i18n-ko="회원가입" data-i18n-en="Sign Up"
-                            data-i18n-zh="注册" data-i18n-ja="会員登録">회원가입</a>
-                        <a href="/auth/forgot" data-i18n data-i18n-ko="아이디 · 비밀번호 찾기"
-                            data-i18n-en="Find ID/Password" data-i18n-zh="找回账号/密码"
-                            data-i18n-ja="ID・パスワード検索">아이디 · 비밀번호 찾기</a>
+                        <span class="note" data-i18n data-i18n-ko="아직 계정이 없으신가요?"
+                           
+                           >아직 계정이 없으신가요?</span>
+                        <a href="/auth/register" data-i18n data-i18n-ko="회원가입"
+                           >회원가입</a>
                     </div>
                 </form>
             </div>
