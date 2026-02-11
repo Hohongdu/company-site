@@ -10,6 +10,7 @@
             : '/api/translate';
     const AUTO_TRANSLATE_CACHE_PREFIX = 'i18n_auto';
     const pendingTranslations = new Map();
+    const autoNodeOriginalText = new WeakMap();
     const toDatasetKey = (prefix, lang) => {
         const normalized = lang.charAt(0).toUpperCase() + lang.slice(1);
         return `${prefix}${normalized}`;
@@ -49,6 +50,63 @@
         html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
 
     const normalizeTextToHtml = (text) => text.replace(/\n/g, '<br />');
+
+    const shouldSkipAutoNode = (node) => {
+        if (!node || !node.parentElement) return true;
+        const parent = node.parentElement;
+        const tag = parent.tagName;
+        if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA'].includes(tag)) return true;
+        if (parent.closest('[data-i18n], [data-i18n-html], [data-i18n-placeholder]')) return true;
+        const text = node.textContent || '';
+        if (!text.trim()) return true;
+        if (text.trim().length <= 1) return true;
+        return false;
+    };
+
+    const applyAutoBlockTranslation = (lang) => {
+        if (
+            typeof document.createTreeWalker !== 'function' ||
+            typeof NodeFilter === 'undefined' ||
+            !document.body
+        ) {
+            return;
+        }
+
+        const sourceLang = getSourceLang();
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        const work = [];
+
+        while (walker.nextNode()) {
+            const textNode = walker.currentNode;
+            if (shouldSkipAutoNode(textNode)) continue;
+
+            const parent = textNode.parentElement;
+            const inAutoScope = Boolean(parent.closest('[data-auto-i18n]'));
+            if (!inAutoScope) continue;
+
+            if (!autoNodeOriginalText.has(textNode)) {
+                autoNodeOriginalText.set(textNode, textNode.textContent);
+            }
+
+            const original = autoNodeOriginalText.get(textNode) || '';
+            if (!original.trim()) continue;
+
+            if (lang === sourceLang) {
+                textNode.textContent = original;
+                continue;
+            }
+
+            work.push({ textNode, original });
+        }
+
+        work.forEach(({ textNode, original }) => {
+            translateText(original, lang).then((translated) => {
+                const latestLang = document.documentElement.getAttribute('data-i18n-active');
+                if (latestLang !== lang) return;
+                textNode.textContent = translated || original;
+            });
+        });
+    };
 
     const translateText = async (text, targetLang) => {
         if (!AUTO_TRANSLATE_ENABLED) return text;
@@ -143,6 +201,8 @@
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', String(active));
         });
+
+        applyAutoBlockTranslation(lang);
 
         document.documentElement.lang = lang || 'ko';
     };

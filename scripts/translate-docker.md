@@ -35,3 +35,24 @@ TRANSLATE_FAIL_COOLDOWN_MS=120000
 ```bash
 npm run check:translate
 ```
+
+## 5) Run production guard script (docker + health check + pm2 restart)
+
+```bash
+bash scripts/translate-ops-guard.sh
+```
+
+Optional env vars:
+
+```bash
+PM2_APP_NAME=company-site \
+TRANSLATE_HEALTH_URL=http://127.0.0.1:5000/translate \
+APP_TRANSLATE_URL=http://127.0.0.1:3000/api/translate \
+bash scripts/translate-ops-guard.sh
+```
+
+## 6) Cron example (every 5 minutes)
+
+```bash
+*/5 * * * * cd /home/ubuntu/apps/company-site && /bin/bash scripts/translate-ops-guard.sh >> /var/log/company-site-translate-guard.log 2>&1
+```
