@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
-    "check:translate": "node scripts/check-translate.js",
-    "ops:translate:guard": "bash scripts/translate-ops-guard.sh"
+    "dev": "nodemon app.js"
   },
   "repository": {
     "type": "git",
