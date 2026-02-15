@@ -191,6 +191,23 @@
 		appendLog('apply done', { lang, count: jobs.length });
 	}
 
+
+	async function runStatusProbe() {
+		appendLog('status probe request', {});
+		try {
+			const response = await fetch('/api/translate/status?probe=1');
+			const data = await response.json().catch(() => null);
+			appendLog('status probe result', {
+				status: response.status,
+				ok: Boolean(data?.ok),
+				provider: data?.provider,
+				message: data?.message,
+			});
+		} catch (err) {
+			appendLog('status probe failed', { error: err.message });
+		}
+	}
+
 	function createI18nLogPanel() {
 		const panel = document.createElement('div');
 		panel.className = 'i18n-log-panel';
@@ -199,6 +216,7 @@
 			<div class="i18n-log-header">
 				<strong>I18N LOG</strong>
 				<div>
+					<button type="button" class="i18n-log-probe">probe</button>
 					<button type="button" class="i18n-log-clear">clear</button>
 					<button type="button" class="i18n-log-close">×</button>
 				</div>
@@ -211,6 +229,7 @@
 		panel.querySelector('.i18n-log-close').addEventListener('click', () => {
 			panel.hidden = true;
 		});
+		panel.querySelector('.i18n-log-probe').addEventListener('click', runStatusProbe);
 		panel.querySelector('.i18n-log-clear').addEventListener('click', () => {
 			i18nLogs.length = 0;
 			window.__I18N_LOGS = i18nLogs;
