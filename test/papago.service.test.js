@@ -61,10 +61,12 @@ test('NAVER_* 키는 OpenAPI 엔드포인트/헤더로 호출한다', async () =
 	assert.equal(result.providerUsed, 'naver-openapi');
 });
 
-test('primary 403이면 fallback provider로 재시도한다', async () => {
+test('양쪽 키세트가 있으면 primary 403 시 fallback provider로 재시도한다', async () => {
 	resetPapagoEnv();
 	process.env.PAPAGO_CLIENT_ID = 'key-id';
 	process.env.PAPAGO_CLIENT_SECRET = 'key-secret';
+	process.env.NAVER_CLIENT_ID = 'naver-id';
+	process.env.NAVER_CLIENT_SECRET = 'naver-secret';
 
 	const calls = [];
 	const service = createPapagoService({
@@ -91,10 +93,12 @@ test('primary 403이면 fallback provider로 재시도한다', async () => {
 	assert.equal(calls.length, 2);
 });
 
-test('primary 404이면 fallback provider로 재시도한다', async () => {
+test('양쪽 키세트가 있으면 primary 404 시 fallback provider로 재시도한다', async () => {
 	resetPapagoEnv();
 	process.env.PAPAGO_CLIENT_ID = 'key-id';
 	process.env.PAPAGO_CLIENT_SECRET = 'key-secret';
+	process.env.NAVER_CLIENT_ID = 'naver-id';
+	process.env.NAVER_CLIENT_SECRET = 'naver-secret';
 
 	const calls = [];
 	const service = createPapagoService({
@@ -119,6 +123,30 @@ test('primary 404이면 fallback provider로 재시도한다', async () => {
 	assert.equal(result.providerUsed, 'naver-openapi');
 	assert.equal(result.translatedText, 'Home');
 	assert.equal(calls.length, 2);
+});
+
+test('단일 키세트일 때 403이면 cross-provider 재시도를 생략한다', async () => {
+	resetPapagoEnv();
+	process.env.NAVER_CLIENT_ID = 'naver-id';
+	process.env.NAVER_CLIENT_SECRET = 'naver-secret';
+
+	let callCount = 0;
+	const service = createPapagoService({
+		post: async () => {
+			callCount += 1;
+			const err = new Error('Request failed with status code 403');
+			err.response = { status: 403, data: { errorMessage: 'Forbidden' } };
+			throw err;
+		},
+	});
+
+	await assert.rejects(() => service.translateText({ text: '홈', target: 'en' }), (err) => {
+		assert.equal(err.status, 502);
+		assert.match(err.message, /cross-provider 재시도를 생략/);
+		return true;
+	});
+
+	assert.equal(callCount, 1);
 });
 
 test('양쪽 모두 403이면 502로 변환한다', async () => {

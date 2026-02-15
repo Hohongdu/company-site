@@ -18,25 +18,39 @@ function cleanEnvValue(value) {
 function getPapagoCredentials() {
 	const papagoId = cleanEnvValue(process.env.PAPAGO_CLIENT_ID);
 	const papagoSecret = cleanEnvValue(process.env.PAPAGO_CLIENT_SECRET);
+	const naverId = cleanEnvValue(process.env.NAVER_CLIENT_ID);
+	const naverSecret = cleanEnvValue(process.env.NAVER_CLIENT_SECRET);
+
+	const hasPapagoPair = Boolean(papagoId && papagoSecret);
+	const hasNaverPair = Boolean(naverId && naverSecret);
+
 	if (papagoId && papagoSecret) {
 		return {
 			clientId: papagoId,
 			clientSecret: papagoSecret,
 			provider: 'ncp',
+			hasPapagoPair,
+			hasNaverPair,
 		};
 	}
 
-	const naverId = cleanEnvValue(process.env.NAVER_CLIENT_ID);
-	const naverSecret = cleanEnvValue(process.env.NAVER_CLIENT_SECRET);
 	if (naverId && naverSecret) {
 		return {
 			clientId: naverId,
 			clientSecret: naverSecret,
 			provider: 'naver-openapi',
+			hasPapagoPair,
+			hasNaverPair,
 		};
 	}
 
-	return { clientId: null, clientSecret: null, provider: null };
+	return {
+		clientId: null,
+		clientSecret: null,
+		provider: null,
+		hasPapagoPair,
+		hasNaverPair,
+	};
 }
 
 function buildRequestConfig({ clientId, clientSecret, provider, params }) {
@@ -87,7 +101,7 @@ async function requestTranslation(httpClient, requestConfig) {
 
 function createPapagoService(httpClient = axios) {
 	async function translateText({ text, source = 'auto', target }) {
-		const { clientId, clientSecret, provider } = getPapagoCredentials();
+		const { clientId, clientSecret, provider, hasPapagoPair, hasNaverPair } = getPapagoCredentials();
 
 		if (!clientId || !clientSecret) {
 			const err = new Error(
@@ -111,8 +125,19 @@ function createPapagoService(httpClient = axios) {
 
 		const params = new URLSearchParams({ source, target, text });
 		const primaryReq = buildRequestConfig({ clientId, clientSecret, provider, params });
+		const shouldRetryCrossProvider = hasPapagoPair && hasNaverPair;
 		const fallbackProvider = primaryReq.provider === 'ncp' ? 'naver-openapi' : 'ncp';
-		const fallbackReq = buildRequestConfig({ clientId, clientSecret, provider: fallbackProvider, params });
+		const fallbackReq = shouldRetryCrossProvider
+			? buildRequestConfig({
+					clientId: fallbackProvider === 'ncp' ? cleanEnvValue(process.env.PAPAGO_CLIENT_ID) : cleanEnvValue(process.env.NAVER_CLIENT_ID),
+					clientSecret:
+						fallbackProvider === 'ncp'
+							? cleanEnvValue(process.env.PAPAGO_CLIENT_SECRET)
+							: cleanEnvValue(process.env.NAVER_CLIENT_SECRET),
+					provider: fallbackProvider,
+					params,
+			  })
+			: null;
 
 		try {
 			return await requestTranslation(httpClient, primaryReq);
@@ -121,6 +146,15 @@ function createPapagoService(httpClient = axios) {
 			const retryableStatus = new Set([401, 403, 404]);
 			if (!retryableStatus.has(status)) {
 				throw err;
+			}
+
+			if (!shouldRetryCrossProvider) {
+				const authErr = new Error(
+					`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}). 현재 .env는 단일 키 세트만 감지되어 cross-provider 재시도를 생략했습니다. App 등록 API 선택(Papago) 및 권한/활성화를 확인하세요.`,
+				);
+				authErr.status = 502;
+				authErr.response = err.response;
+				throw authErr;
 			}
 
 			try {
