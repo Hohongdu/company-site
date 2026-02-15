@@ -118,7 +118,8 @@ function createPapagoService(httpClient = axios) {
 			return await requestTranslation(httpClient, primaryReq);
 		} catch (err) {
 			const status = err?.response?.status;
-			if (status !== 401 && status !== 403) {
+			const retryableStatus = new Set([401, 403, 404]);
+			if (!retryableStatus.has(status)) {
 				throw err;
 			}
 
@@ -126,9 +127,9 @@ function createPapagoService(httpClient = axios) {
 				return await requestTranslation(httpClient, fallbackReq);
 			} catch (fallbackErr) {
 				const fallbackStatus = fallbackErr?.response?.status;
-				if (fallbackStatus === 401 || fallbackStatus === 403 || status === 401 || status === 403) {
+				if (retryableStatus.has(fallbackStatus) || retryableStatus.has(status)) {
 					const authErr = new Error(
-						`Papago 인증 실패(${fallbackStatus || status}). primary=${primaryReq.provider}, fallback=${fallbackReq.provider}. provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한을 확인하세요.`,
+						`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}, fallback=${fallbackReq.provider}:${fallbackStatus || 'n/a'}). provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한/서비스 활성화를 확인하세요.`,
 					);
 					authErr.status = 502;
 					authErr.response = fallbackErr.response || err.response;

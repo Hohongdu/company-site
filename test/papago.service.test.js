@@ -91,6 +91,36 @@ test('primary 403이면 fallback provider로 재시도한다', async () => {
 	assert.equal(calls.length, 2);
 });
 
+test('primary 404이면 fallback provider로 재시도한다', async () => {
+	resetPapagoEnv();
+	process.env.PAPAGO_CLIENT_ID = 'key-id';
+	process.env.PAPAGO_CLIENT_SECRET = 'key-secret';
+
+	const calls = [];
+	const service = createPapagoService({
+		post: async (url) => {
+			calls.push(url);
+			if (url.includes('apigw')) {
+				const err = new Error('404');
+				err.response = { status: 404, data: { errorMessage: 'not found primary' } };
+				throw err;
+			}
+			return {
+				data: {
+					message: {
+						result: { translatedText: 'Home', srcLangType: 'ko', tarLangType: 'en' },
+					},
+				},
+			};
+		},
+	});
+
+	const result = await service.translateText({ text: '홈', target: 'en' });
+	assert.equal(result.providerUsed, 'naver-openapi');
+	assert.equal(result.translatedText, 'Home');
+	assert.equal(calls.length, 2);
+});
+
 test('양쪽 모두 403이면 502로 변환한다', async () => {
 	resetPapagoEnv();
 	process.env.NAVER_CLIENT_ID = 'id';
@@ -106,7 +136,7 @@ test('양쪽 모두 403이면 502로 변환한다', async () => {
 
 	await assert.rejects(() => service.translateText({ text: '홈', target: 'en' }), (err) => {
 		assert.equal(err.status, 502);
-		assert.match(err.message, /primary=/);
+		assert.match(err.message, /인증\/엔드포인트 실패/);
 		return true;
 	});
 });
