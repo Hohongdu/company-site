@@ -32,6 +32,7 @@ test('status: 인증정보 없으면 안내 메시지를 반환한다', async ()
 	assert.equal(res.statusCode, 200);
 	assert.equal(res.payload.ok, false);
 	assert.equal(res.payload.hasCredentials, false);
+	assert.match(res.payload.providerNote, /자동 선택/);
 });
 
 test('status: 인증정보가 있으면 provider 정보를 반환한다', async () => {
@@ -47,4 +48,5 @@ test('status: 인증정보가 있으면 provider 정보를 반환한다', async 
 	assert.equal(res.statusCode, 200);
 	assert.equal(res.payload.ok, true);
 	assert.equal(res.payload.provider, 'ncp');
+	assert.equal(res.payload.envState.hasPapagoPair, true);
 });

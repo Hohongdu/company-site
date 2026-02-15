@@ -10,6 +10,14 @@ function detectProvider() {
 	return 'none';
 }
 
+
+function detectEnvState() {
+	return {
+		hasPapagoPair: Boolean(process.env.PAPAGO_CLIENT_ID && process.env.PAPAGO_CLIENT_SECRET),
+		hasNaverPair: Boolean(process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET),
+	};
+}
+
 exports.status = async (req, res) => {
 	const provider = detectProvider();
 	const hasCredentials = provider !== 'none';
@@ -20,22 +28,40 @@ exports.status = async (req, res) => {
 			ok: false,
 			hasCredentials: false,
 			provider,
+			envState: detectEnvState(),
+			providerNote: 'provider는 .env에 입력한 키 조합(PAPAGO_* 또는 NAVER_*)으로 자동 선택됩니다.',
 			message: 'Papago 인증 정보가 없습니다. .env를 확인하세요.',
 		});
 	}
 
 	if (!shouldProbe) {
-		return res.json({ ok: true, hasCredentials: true, provider, message: 'credential detected' });
+		return res.json({
+			ok: true,
+			hasCredentials: true,
+			provider,
+			envState: detectEnvState(),
+			providerNote: 'provider는 .env에 입력한 키 조합(PAPAGO_* 또는 NAVER_*)으로 자동 선택됩니다.',
+			message: 'credential detected',
+		});
 	}
 
 	try {
 		await papagoService.translateText({ text: '테스트', source: 'ko', target: 'en' });
-		return res.json({ ok: true, hasCredentials: true, provider, message: 'live probe success' });
+		return res.json({
+			ok: true,
+			hasCredentials: true,
+			provider,
+			envState: detectEnvState(),
+			providerNote: 'provider는 .env에 입력한 키 조합(PAPAGO_* 또는 NAVER_*)으로 자동 선택됩니다.',
+			message: 'live probe success',
+		});
 	} catch (err) {
 		return res.status(err.status || err.response?.status || 500).json({
 			ok: false,
 			hasCredentials: true,
 			provider,
+			envState: detectEnvState(),
+			providerNote: 'provider는 .env에 입력한 키 조합(PAPAGO_* 또는 NAVER_*)으로 자동 선택됩니다.',
 			message: err.message || 'live probe failed',
 			detail: err.response?.data || null,
 		});
