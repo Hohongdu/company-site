@@ -14,6 +14,7 @@
 	const storageDebugKey = 'i18n_debug';
 	const i18nLogs = [];
 	let logListEl = null;
+	let translationTemporarilyBlocked = false;
 
 	function debugEnabled() {
 		return localStorage.getItem(storageDebugKey) === '1' || new URLSearchParams(window.location.search).get('i18nDebug') === '1';
@@ -76,6 +77,9 @@
 
 		const data = await response.json().catch(() => null);
 		if (!response.ok || !data?.ok) {
+			if (response.status >= 500 || response.status === 403 || response.status === 502) {
+				translationTemporarilyBlocked = true;
+			}
 			appendLog('translate failed', {
 				requestId,
 				status: response.status,
@@ -155,6 +159,10 @@
 		});
 
 		for (const job of jobs) {
+			if (translationTemporarilyBlocked) {
+				appendLog('translation paused', { reason: 'auth or provider error', lang });
+				break;
+			}
 			try {
 				const cached = getCachedValue(lang, job.src);
 				const translated = cached || (await translateByPapago(job.src, lang));
