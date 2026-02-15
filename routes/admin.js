@@ -8,7 +8,12 @@ const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { sendInquiryReplyEmail } = require('../services/notification.service');
-const sharp = require('sharp');
+let sharp = null;
+try {
+	sharp = require('sharp');
+} catch (err) {
+	console.warn('[admin] sharp 모듈이 없어 이미지 최적화 기능이 비활성화됩니다.');
+}
 const os = require('os');
 const { exec } = require('child_process');
 const csurf = require('../lib/csurf');
@@ -159,7 +164,19 @@ const uploadImage = multer({
 });
 
 async function processImageToWebp(reqFilePath) {
+	const ext = path.extname(reqFilePath).toLowerCase() || '.jpg';
 	const base = `p_${Date.now()}`;
+
+	if (!sharp) {
+		const fallbackName = `${base}${ext}`;
+		const fallbackPath = path.join(publicUploadsDir, fallbackName);
+		await fs.copyFile(reqFilePath, fallbackPath);
+		return {
+			image: `/uploads/${fallbackName}`,
+			image_thumb: `/uploads/${fallbackName}`,
+		};
+	}
+
 	const fileName = `${base}.webp`;
 	const thumbName = `${base}_thumb.webp`;
 
