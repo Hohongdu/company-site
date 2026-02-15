@@ -63,14 +63,14 @@
                                 </div>
                             </a>
                             <div class="product-body">
-                                <div class="product-title"><%= p.name %></div>
+                                <div class="product-title" data-i18n-auto><%= p.name %></div>
                                 <% if (p.spec) { %>
-                                    <div class="product-spec"><%= p.spec %></div>
+                                    <div class="product-spec" data-i18n-auto><%= p.spec %></div>
                                 <% } %>
                                 <div class="product-meta">
                                     <div class="price"><%= Number(p.price || 0).toLocaleString() %>원</div>
                                     <% if (p.category_name) { %>
-                                        <span class="badge text-bg-light border"><%= p.category_name %></span>
+                                        <span class="badge text-bg-light border" data-i18n-auto><%= p.category_name %></span>
                                     <% } else { %>
                                         <span class="badge text-bg-light border" data-i18n data-i18n-ko="미분류"
                                            >
