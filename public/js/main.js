@@ -15,6 +15,7 @@
 	const i18nLogs = [];
 	let logListEl = null;
 	let translationTemporarilyBlocked = false;
+	let lastBlockingError = null;
 
 	function debugEnabled() {
 		return localStorage.getItem(storageDebugKey) === '1' || new URLSearchParams(window.location.search).get('i18nDebug') === '1';
@@ -79,6 +80,10 @@
 		if (!response.ok || !data?.ok) {
 			if (response.status >= 500 || response.status === 403 || response.status === 502) {
 				translationTemporarilyBlocked = true;
+				lastBlockingError = {
+					status: response.status,
+					message: data?.message || 'response not ok',
+				};
 			}
 			appendLog('translate failed', {
 				requestId,
@@ -114,6 +119,8 @@
 	async function applyLanguage(lang) {
 		document.documentElement.setAttribute('lang', lang);
 		localStorage.setItem(storageLangKey, lang);
+		translationTemporarilyBlocked = false;
+		lastBlockingError = null;
 		appendLog('apply language', { lang, path: location.pathname });
 
 		const textEls = Array.from(document.querySelectorAll('[data-i18n]'));
@@ -160,7 +167,11 @@
 
 		for (const job of jobs) {
 			if (translationTemporarilyBlocked) {
-				appendLog('translation paused', { reason: 'auth or provider error', lang });
+				appendLog('translation paused', {
+					reason: 'auth or provider error',
+					lang,
+					lastError: lastBlockingError,
+				});
 				break;
 			}
 			try {

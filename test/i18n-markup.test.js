@@ -19,3 +19,10 @@ test('admin/company/shop 레이아웃에서 main.js가 로드된다', () => {
 	assert.match(read('views/layouts/shop-bottom.ejs'), /\/js\/main\.js/);
 	assert.match(read('views/layouts/admin-bottom.ejs'), /\/js\/main\.js/);
 });
+
+
+test('언어 변경 시 번역 중단 상태가 초기화된다', () => {
+	const main = read('public/js/main.js');
+	assert.match(main, /translationTemporarilyBlocked = false;/);
+	assert.match(main, /lastBlockingError = null;/);
+});
