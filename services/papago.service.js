@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const NCP_ENDPOINT = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
+const DEFAULT_NCP_ENDPOINT = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
+const NCP_ENDPOINT = process.env.PAPAGO_NCP_ENDPOINT || DEFAULT_NCP_ENDPOINT;
 const NAVER_OPENAPI_ENDPOINT = 'https://openapi.naver.com/v1/papago/n2mt';
 
 function cleanEnvValue(value) {
@@ -99,6 +100,21 @@ async function requestTranslation(httpClient, requestConfig) {
 	};
 }
 
+
+function buildFailureHint({ provider, status, detail }) {
+	const errorCode = detail?.errorCode;
+	if (provider === 'ncp' && (status === 401 || status === 403)) {
+		return 'NCP Papago는 PAPAGO_CLIENT_ID=API Key ID, PAPAGO_CLIENT_SECRET=API Key 값이어야 합니다(Access Key/Secret Key 아님).';
+	}
+	if (provider === 'naver-openapi' && status === 404 && errorCode === '051') {
+		return '네이버 개발자센터 앱에서 Papago 번역 API가 활성화되지 않았거나 앱 권한이 누락되었습니다.';
+	}
+	if (status === 404) {
+		return '엔드포인트/상품 연결이 올바른지 확인하세요. 필요 시 PAPAGO_NCP_ENDPOINT 환경변수로 엔드포인트를 명시할 수 있습니다.';
+	}
+	return null;
+}
+
 function createPapagoService(httpClient = axios) {
 	async function translateText({ text, source = 'auto', target }) {
 		const { clientId, clientSecret, provider, hasPapagoPair, hasNaverPair } = getPapagoCredentials();
@@ -150,7 +166,7 @@ function createPapagoService(httpClient = axios) {
 
 			if (!shouldRetryCrossProvider) {
 				const authErr = new Error(
-					`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}). 현재 .env는 단일 키 세트만 감지되어 cross-provider 재시도를 생략했습니다. App 등록 API 선택(Papago) 및 권한/활성화를 확인하세요.`,
+					`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}). 현재 .env는 단일 키 세트만 감지되어 cross-provider 재시도를 생략했습니다. App 등록 API 선택(Papago) 및 권한/활성화를 확인하세요. PAPAGO_*는 API Gateway Key ID/Key 쌍이어야 합니다.`,
 				);
 				authErr.status = 502;
 				authErr.response = err.response;
@@ -162,11 +178,24 @@ function createPapagoService(httpClient = axios) {
 			} catch (fallbackErr) {
 				const fallbackStatus = fallbackErr?.response?.status;
 				if (retryableStatus.has(fallbackStatus) || retryableStatus.has(status)) {
+					const detail = fallbackErr.response?.data || err.response?.data || null;
+					const hint = buildFailureHint({
+						provider: primaryReq.provider,
+						status: fallbackStatus || status,
+						detail,
+					});
 					const authErr = new Error(
-						`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}, fallback=${fallbackReq.provider}:${fallbackStatus || 'n/a'}). provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한/서비스 활성화를 확인하세요.`,
+						`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}, fallback=${fallbackReq.provider}:${fallbackStatus || 'n/a'}). provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한/서비스 활성화를 확인하세요.${hint ? ` 힌트: ${hint}` : ''}`,
 					);
 					authErr.status = 502;
 					authErr.response = fallbackErr.response || err.response;
+					authErr.hint = hint;
+					authErr.diagnostics = {
+						primaryProvider: primaryReq.provider,
+						fallbackProvider: fallbackReq.provider,
+						primaryEndpoint: primaryReq.endpoint,
+						fallbackEndpoint: fallbackReq.endpoint,
+					};
 					throw authErr;
 				}
 				throw fallbackErr;
