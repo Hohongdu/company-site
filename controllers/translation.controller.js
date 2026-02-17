@@ -96,12 +96,16 @@ exports.translate = async (req, res) => {
 				requestId,
 				status: err.response.status,
 				detail: err.response.data,
+				hint: err.hint || null,
+				diagnostics: err.diagnostics || null,
 				durationMs: Date.now() - startedAt,
 			});
 			return res.status(err.response.status || 502).json({
 				ok: false,
 				requestId,
 				message: err.message || 'Papago API 호출 중 오류가 발생했습니다.',
+				hint: err.hint || null,
+				diagnostics: err.diagnostics || null,
 				detail: err.response.data,
 			});
 		}
@@ -116,6 +120,8 @@ exports.translate = async (req, res) => {
 			ok: false,
 			requestId,
 			message: err.message || '번역 처리 중 오류가 발생했습니다.',
+			hint: err.hint || null,
+			diagnostics: err.diagnostics || null,
 		});
 	}
 };

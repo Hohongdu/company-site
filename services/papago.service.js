@@ -15,25 +15,39 @@ function cleanEnvValue(value) {
 function getPapagoCredentials() {
 	const papagoId = cleanEnvValue(process.env.PAPAGO_CLIENT_ID);
 	const papagoSecret = cleanEnvValue(process.env.PAPAGO_CLIENT_SECRET);
+	const naverId = cleanEnvValue(process.env.NAVER_CLIENT_ID);
+	const naverSecret = cleanEnvValue(process.env.NAVER_CLIENT_SECRET);
+
+	const hasPapagoPair = Boolean(papagoId && papagoSecret);
+	const hasNaverPair = Boolean(naverId && naverSecret);
+
 	if (papagoId && papagoSecret) {
 		return {
 			clientId: papagoId,
 			clientSecret: papagoSecret,
 			provider: 'ncp',
+			hasPapagoPair,
+			hasNaverPair,
 		};
 	}
 
-	const naverId = cleanEnvValue(process.env.NAVER_CLIENT_ID);
-	const naverSecret = cleanEnvValue(process.env.NAVER_CLIENT_SECRET);
 	if (naverId && naverSecret) {
 		return {
 			clientId: naverId,
 			clientSecret: naverSecret,
 			provider: 'naver-openapi',
+			hasPapagoPair,
+			hasNaverPair,
 		};
 	}
 
-	return { clientId: null, clientSecret: null, provider: null };
+	return {
+		clientId: null,
+		clientSecret: null,
+		provider: null,
+		hasPapagoPair,
+		hasNaverPair,
+	};
 }
 
 function buildRequestConfig({ clientId, clientSecret, provider, params }) {
@@ -83,9 +97,23 @@ async function requestTranslation(httpClient, requestConfig) {
 	};
 }
 
+function buildFailureHint({ provider, status, detail }) {
+	const errorCode = detail?.errorCode;
+	if (provider === 'ncp' && (status === 401 || status === 403)) {
+		return 'NCP Papago는 PAPAGO_CLIENT_ID=API Key ID, PAPAGO_CLIENT_SECRET=API Key 값이어야 합니다(Access Key/Secret Key 아님).';
+	}
+	if (provider === 'naver-openapi' && status === 404 && errorCode === '051') {
+		return '네이버 개발자센터 앱에서 Papago 번역 API가 활성화되지 않았거나 앱 권한이 누락되었습니다.';
+	}
+	if (status === 404) {
+		return '엔드포인트/상품 연결이 올바른지 확인하세요. 필요 시 PAPAGO_NCP_ENDPOINT 환경변수로 엔드포인트를 명시할 수 있습니다.';
+	}
+	return null;
+}
+
 function createPapagoService(httpClient = axios) {
 	async function translateText({ text, source = 'auto', target }) {
-		const { clientId, clientSecret, provider } = getPapagoCredentials();
+		const { clientId, clientSecret, provider, hasPapagoPair, hasNaverPair } = getPapagoCredentials();
 
 		if (!clientId || !clientSecret) {
 			const err = new Error('Papago API 인증 정보가 없습니다. .env에 PAPAGO_CLIENT_ID/PAPAGO_CLIENT_SECRET 또는 NAVER_CLIENT_ID/NAVER_CLIENT_SECRET를 설정하세요.');
@@ -107,8 +135,16 @@ function createPapagoService(httpClient = axios) {
 
 		const params = new URLSearchParams({ source, target, text });
 		const primaryReq = buildRequestConfig({ clientId, clientSecret, provider, params });
+		const shouldRetryCrossProvider = hasPapagoPair && hasNaverPair;
 		const fallbackProvider = primaryReq.provider === 'ncp' ? 'naver-openapi' : 'ncp';
-		const fallbackReq = buildRequestConfig({ clientId, clientSecret, provider: fallbackProvider, params });
+		const fallbackReq = shouldRetryCrossProvider
+			? buildRequestConfig({
+					clientId: fallbackProvider === 'ncp' ? cleanEnvValue(process.env.PAPAGO_CLIENT_ID) : cleanEnvValue(process.env.NAVER_CLIENT_ID),
+					clientSecret: fallbackProvider === 'ncp' ? cleanEnvValue(process.env.PAPAGO_CLIENT_SECRET) : cleanEnvValue(process.env.NAVER_CLIENT_SECRET),
+					provider: fallbackProvider,
+					params,
+				})
+			: null;
 
 		try {
 			return await requestTranslation(httpClient, primaryReq);
@@ -119,16 +155,38 @@ function createPapagoService(httpClient = axios) {
 				throw err;
 			}
 
+			if (!shouldRetryCrossProvider) {
+				const authErr = new Error(
+					`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}). 현재 .env는 단일 키 세트만 감지되어 cross-provider 재시도를 생략했습니다. App 등록 API 선택(Papago) 및 권한/활성화를 확인하세요. PAPAGO_*는 API Gateway Key ID/Key 쌍이어야 합니다.`,
+				);
+				authErr.status = 502;
+				authErr.response = err.response;
+				throw authErr;
+			}
+
 			try {
 				return await requestTranslation(httpClient, fallbackReq);
 			} catch (fallbackErr) {
 				const fallbackStatus = fallbackErr?.response?.status;
 				if (retryableStatus.has(fallbackStatus) || retryableStatus.has(status)) {
+					const detail = fallbackErr.response?.data || err.response?.data || null;
+					const hint = buildFailureHint({
+						provider: primaryReq.provider,
+						status: fallbackStatus || status,
+						detail,
+					});
 					const authErr = new Error(
-						`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}, fallback=${fallbackReq.provider}:${fallbackStatus || 'n/a'}). provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한/서비스 활성화를 확인하세요.`,
+						`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}, fallback=${fallbackReq.provider}:${fallbackStatus || 'n/a'}). provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한/서비스 활성화를 확인하세요.${hint ? ` 힌트: ${hint}` : ''}`,
 					);
 					authErr.status = 502;
 					authErr.response = fallbackErr.response || err.response;
+					authErr.hint = hint;
+					authErr.diagnostics = {
+						primaryProvider: primaryReq.provider,
+						fallbackProvider: fallbackReq.provider,
+						primaryEndpoint: primaryReq.endpoint,
+						fallbackEndpoint: fallbackReq.endpoint,
+					};
 					throw authErr;
 				}
 				throw fallbackErr;
