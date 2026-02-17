@@ -1,7 +1,9 @@
+// services/papago.service.js
 const axios = require('axios');
 
 const NCP_ENDPOINT_PRIMARY = 'https://papago.apigw.ntruss.com/nmt/v1/translation';
 const NCP_ENDPOINT_FALLBACK = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
+const DEFAULT_TIMEOUT_MS = 12_000;
 
 function cleanEnvValue(value) {
 	if (typeof value !== 'string') return value;
@@ -21,7 +23,8 @@ function getPapagoCredentials() {
 	const hasPapagoPair = Boolean(papagoId && papagoSecret);
 	const hasNaverPair = Boolean(naverId && naverSecret);
 
-	if (papagoId && papagoSecret) {
+	// 우선순위: PAPAGO_* (NCP) -> NAVER_* (구 OpenAPI)
+	if (hasPapagoPair) {
 		return {
 			clientId: papagoId,
 			clientSecret: papagoSecret,
@@ -31,7 +34,7 @@ function getPapagoCredentials() {
 		};
 	}
 
-	if (naverId && naverSecret) {
+	if (hasNaverPair) {
 		return {
 			clientId: naverId,
 			clientSecret: naverSecret,
@@ -50,156 +53,230 @@ function getPapagoCredentials() {
 	};
 }
 
-function buildRequestConfig({ clientId, clientSecret, provider, params }) {
-	if (provider === 'naver-openapi') {
+/**
+ * provider별 요청 구성 생성
+ */
+function buildRequestConfig({ provider, clientId, clientSecret, source, target, text }) {
+	if (!provider) {
+		throw new Error('Papago credentials not found');
+	}
+
+	if (provider === 'ncp') {
+		// NCP Papago Translation
+		const params = new URLSearchParams();
+		params.set('source', source);
+		params.set('target', target);
+		params.set('text', text);
+
 		return {
 			provider: 'ncp',
 			endpoint: NCP_ENDPOINT_PRIMARY,
-			fallbackEndpoint: NCP_ENDPOINT_FALLBACK,
 			headers: {
+				// NCP 문서 기준 헤더
 				'X-NCP-APIGW-API-KEY-ID': clientId,
 				'X-NCP-APIGW-API-KEY': clientSecret,
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 			},
-			body: params.toString(),
+			data: params.toString(),
+			timeout: DEFAULT_TIMEOUT_MS,
 		};
 	}
 
-	return {
-		provider: 'ncp',
-		endpoint: NCP_ENDPOINT,
-		headers: {
-			'X-NCP-APIGW-API-KEY-ID': clientId,
-			'X-NCP-APIGW-API-KEY': clientSecret,
-			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-		},
-		body: params.toString(),
-	};
+	if (provider === 'naver-openapi') {
+		// (참고) 네이버 개발자센터 Open API - 보통 종료 상태라 실제로는 실패할 수 있음
+		const params = new URLSearchParams();
+		params.set('source', source);
+		params.set('target', target);
+		params.set('text', text);
+
+		return {
+			provider: 'naver-openapi',
+			endpoint: NAVER_OPENAPI_ENDPOINT,
+			headers: {
+				'X-Naver-Client-Id': clientId,
+				'X-Naver-Client-Secret': clientSecret,
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+			},
+			data: params.toString(),
+			timeout: DEFAULT_TIMEOUT_MS,
+		};
+	}
+
+	throw new Error(`Unknown provider: ${provider}`);
 }
 
-async function requestTranslation(httpClient, requestConfig) {
-	const response = await httpClient.post(requestConfig.endpoint, requestConfig.body, {
-		headers: requestConfig.headers,
+/**
+ * provider별 응답 파싱
+ */
+function parseTranslationResponse(provider, axiosResp) {
+	const data = axiosResp?.data;
+
+	if (provider === 'ncp') {
+		// NCP Papago: { message: { result: { translatedText, ... } } }
+		const translatedText = data?.message?.result?.translatedText;
+		if (!translatedText) {
+			throw new Error('NCP response parse failed');
+		}
+		return translatedText;
+	}
+
+	if (provider === 'naver-openapi') {
+		// OpenAPI Papago: { message: { result: { translatedText } } } (형식 유사)
+		const translatedText = data?.message?.result?.translatedText;
+		if (!translatedText) {
+			throw new Error('NAVER OpenAPI response parse failed');
+		}
+		return translatedText;
+	}
+
+	throw new Error(`Unknown provider: ${provider}`);
+}
+
+/**
+ * 실제 번역 요청 1회 수행
+ */
+async function requestTranslationOnce(req) {
+	const resp = await axios.post(req.endpoint, req.data, {
+		headers: req.headers,
+		timeout: req.timeout ?? DEFAULT_TIMEOUT_MS,
+		// NCP 쪽이 HTTP/2 + gzip 등으로 내려올 수 있어서 기본 설정 그대로 둠
+		validateStatus: (status) => status >= 200 && status < 300, // 2xx만 성공
 	});
 
-	const translatedText = response?.data?.message?.result?.translatedText;
-	if (!translatedText) {
-		const err = new Error('Papago 응답 형식이 예상과 다릅니다.');
-		err.status = 502;
-		throw err;
-	}
-
-	return {
-		translatedText,
-		sourceLang: response.data.message.result.srcLangType,
-		targetLang: response.data.message.result.tarLangType,
-		providerUsed: requestConfig.provider,
-	};
+	return parseTranslationResponse(req.provider, resp);
 }
 
-function buildFailureHint({ provider, status, detail }) {
-	const errorCode = detail?.errorCode;
-	if (provider === 'ncp' && (status === 401 || status === 403)) {
-		return 'NCP Papago는 PAPAGO_CLIENT_ID=API Key ID, PAPAGO_CLIENT_SECRET=API Key 값이어야 합니다(Access Key/Secret Key 아님).';
+/**
+ * 번역 (primary + fallback)
+ * - NCP면 endpoint primary 실패 시 fallback endpoint로 1회 재시도
+ * - (옵션) naver-openapi는 대부분 종료라 cross-provider fallback은 기본 OFF.
+ */
+async function translateText({ text, source = 'ko', target = 'en' }) {
+	if (!text || typeof text !== 'string') {
+		throw new Error('text is required');
 	}
-	if (provider === 'naver-openapi' && status === 404 && errorCode === '051') {
-		return '네이버 개발자센터 앱에서 Papago 번역 API가 활성화되지 않았거나 앱 권한이 누락되었습니다.';
+
+	const creds = getPapagoCredentials();
+	const { clientId, clientSecret, provider, hasPapagoPair, hasNaverPair } = creds;
+
+	if (!provider || !clientId || !clientSecret) {
+		return {
+			ok: false,
+			provider: provider ?? null,
+			message: 'Papago credential is missing',
+			translatedText: null,
+			detail: null,
+			envState: { hasPapagoPair, hasNaverPair },
+		};
 	}
-	if (status === 404) {
-		return '엔드포인트/상품 연결이 올바른지 확인하세요. 필요 시 PAPAGO_NCP_ENDPOINT 환경변수로 엔드포인트를 명시할 수 있습니다.';
-	}
-	return null;
-}
 
-function createPapagoService(httpClient = axios) {
-	async function translateText({ text, source = 'auto', target }) {
-		const { clientId, clientSecret, provider, hasPapagoPair, hasNaverPair } = getPapagoCredentials();
+	const primaryReq = buildRequestConfig({ provider, clientId, clientSecret, source, target, text });
 
-		if (!clientId || !clientSecret) {
-			const err = new Error('Papago API 인증 정보가 없습니다. .env에 PAPAGO_CLIENT_ID/PAPAGO_CLIENT_SECRET 또는 NAVER_CLIENT_ID/NAVER_CLIENT_SECRET를 설정하세요.');
-			err.status = 500;
-			throw err;
-		}
-
-		if (!text || typeof text !== 'string') {
-			const err = new Error('번역할 text는 문자열로 입력해야 합니다.');
-			err.status = 400;
-			throw err;
-		}
-
-		if (!target || typeof target !== 'string') {
-			const err = new Error('target 언어 코드를 입력해야 합니다.');
-			err.status = 400;
-			throw err;
-		}
-
-		const params = new URLSearchParams({ source, target, text });
-		const primaryReq = buildRequestConfig({ clientId, clientSecret, provider, params });
-		const shouldRetryCrossProvider = hasPapagoPair && hasNaverPair;
-		const fallbackProvider = primaryReq.provider === 'ncp' ? 'naver-openapi' : 'ncp';
-		const fallbackReq = shouldRetryCrossProvider
-			? buildRequestConfig({
-					clientId: fallbackProvider === 'ncp' ? cleanEnvValue(process.env.PAPAGO_CLIENT_ID) : cleanEnvValue(process.env.NAVER_CLIENT_ID),
-					clientSecret: fallbackProvider === 'ncp' ? cleanEnvValue(process.env.PAPAGO_CLIENT_SECRET) : cleanEnvValue(process.env.NAVER_CLIENT_SECRET),
-					provider: fallbackProvider,
-					params,
-				})
-			: null;
+	// 1) primary 시도
+	try {
+		const translatedText = await requestTranslationOnce(primaryReq);
+		return {
+			ok: true,
+			provider: primaryReq.provider,
+			message: 'success',
+			translatedText,
+			detail: null,
+			envState: { hasPapagoPair, hasNaverPair },
+		};
+	} catch (err) {
+		// 2) fallback 시도 (NCP면 endpoint만 바꿔서 한번 더)
+		const primaryStatus = err?.response?.status ?? null;
 
 		try {
-			return await requestTranslation(httpClient, primaryReq);
-		} catch (err) {
-			const status = err?.response?.status;
-			const retryableStatus = new Set([401, 403, 404]);
-			if (!retryableStatus.has(status)) {
-				throw err;
+			if (primaryReq.provider === 'ncp') {
+				const fallbackReq = {
+					...primaryReq,
+					endpoint: NCP_ENDPOINT_FALLBACK,
+					provider: 'ncp',
+				};
+				const translatedText = await requestTranslationOnce(fallbackReq);
+				return {
+					ok: true,
+					provider: fallbackReq.provider,
+					message: 'success (fallback endpoint)',
+					translatedText,
+					detail: { primaryStatus, usedFallback: true },
+					envState: { hasPapagoPair, hasNaverPair },
+				};
 			}
 
-			if (!shouldRetryCrossProvider) {
-				const authErr = new Error(
-					`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}). 현재 .env는 단일 키 세트만 감지되어 cross-provider 재시도를 생략했습니다. App 등록 API 선택(Papago) 및 권한/활성화를 확인하세요. PAPAGO_*는 API Gateway Key ID/Key 쌍이어야 합니다.`,
-				);
-				authErr.status = 502;
-				authErr.response = err.response;
-				throw authErr;
-			}
+			// naver-openapi는 서비스 종료 가능성이 커서 cross-provider fallback은 기본 비활성
+			// 필요하면 여기서 NCP로 바꿔 재시도하는 로직을 추가해도 됨.
+			throw err;
+		} catch (err2) {
+			const status2 = err2?.response?.status ?? primaryStatus;
+			const providerLabel = primaryReq.provider;
 
-			try {
-				return await requestTranslation(httpClient, fallbackReq);
-			} catch (fallbackErr) {
-				const fallbackStatus = fallbackErr?.response?.status;
-				if (retryableStatus.has(fallbackStatus) || retryableStatus.has(status)) {
-					const detail = fallbackErr.response?.data || err.response?.data || null;
-					const hint = buildFailureHint({
-						provider: primaryReq.provider,
-						status: fallbackStatus || status,
-						detail,
-					});
-					const authErr = new Error(
-						`Papago 인증/엔드포인트 실패(primary=${primaryReq.provider}:${status}, fallback=${fallbackReq.provider}:${fallbackStatus || 'n/a'}). provider는 .env 키 조합으로 자동 선택됩니다(수동 설정값 아님). 키 타입/권한/서비스 활성화를 확인하세요.${hint ? ` 힌트: ${hint}` : ''}`,
-					);
-					authErr.status = 502;
-					authErr.response = fallbackErr.response || err.response;
-					authErr.hint = hint;
-					authErr.diagnostics = {
-						primaryProvider: primaryReq.provider,
-						fallbackProvider: fallbackReq.provider,
-						primaryEndpoint: primaryReq.endpoint,
-						fallbackEndpoint: fallbackReq.endpoint,
-					};
-					throw authErr;
-				}
-				throw fallbackErr;
-			}
+			return {
+				ok: false,
+				provider: providerLabel,
+				message:
+					`Papago 인증/엔드포인트 실패(primary=${providerLabel}:${status2 ?? 'unknown'})` +
+					`. App 등록 API 선택(Papago) 및 권한/활성화를 확인하세요.` +
+					` PAPAGO_*는 X-NCP-APIGW-API-KEY-ID/KEY 쌍이어야 합니다.`,
+				translatedText: null,
+				detail: null, // 응답 바디/헤더를 여기서 노출하고 싶으면 확장 가능
+				envState: { hasPapagoPair, hasNaverPair },
+			};
 		}
 	}
-
-	return { translateText };
 }
 
-const papagoService = createPapagoService();
+/**
+ * 상태 체크 (routes에서 /api/translate/status 구현할 때 사용)
+ * - probe=true면 실제로 한번 번역 호출해서 살아있는지 확인 가능
+ */
+async function getStatus({ probe = false } = {}) {
+	const creds = getPapagoCredentials();
+
+	const res = {
+		ok: true,
+		hasCredentials: Boolean(creds.clientId && creds.clientSecret),
+		provider: creds.provider,
+		envState: {
+			hasPapagoPair: creds.hasPapagoPair,
+			hasNaverPair: creds.hasNaverPair,
+		},
+		providerNote: 'provider는 .env에 입력한 키 조합(PAPAGO_* 또는 NAVER_*)으로 자동 선택됩니다.',
+		message: creds.clientId && creds.clientSecret ? 'credential detected' : 'credential missing',
+	};
+
+	if (!probe) return res;
+
+	// probe 모드: 실제로 NCP 호출해보기
+	try {
+		const out = await translateText({ text: '테스트', source: 'ko', target: 'en' });
+		if (!out.ok) {
+			return {
+				...res,
+				ok: false,
+				message: out.message,
+				detail: out.detail ?? null,
+			};
+		}
+		return {
+			...res,
+			ok: true,
+			message: 'live probe success',
+			detail: null,
+		};
+	} catch (e) {
+		return {
+			...res,
+			ok: false,
+			message: e?.message || 'probe failed',
+			detail: null,
+		};
+	}
+}
 
 module.exports = {
-	createPapagoService,
-	translateText: papagoService.translateText,
+	getPapagoCredentials,
+	translateText,
+	getStatus,
 };
