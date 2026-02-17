@@ -1,15 +1,12 @@
 const axios = require('axios');
 
-const NCP_ENDPOINT = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
-const NAVER_OPENAPI_ENDPOINT = 'https://openapi.naver.com/v1/papago/n2mt';
+const NCP_ENDPOINT_PRIMARY = 'https://papago.apigw.ntruss.com/nmt/v1/translation';
+const NCP_ENDPOINT_FALLBACK = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
 
 function cleanEnvValue(value) {
 	if (typeof value !== 'string') return value;
 	const trimmed = value.trim();
-	if (
-		(trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-		(trimmed.startsWith("'") && trimmed.endsWith("'"))
-	) {
+	if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
 		return trimmed.slice(1, -1).trim();
 	}
 	return trimmed;
@@ -42,11 +39,12 @@ function getPapagoCredentials() {
 function buildRequestConfig({ clientId, clientSecret, provider, params }) {
 	if (provider === 'naver-openapi') {
 		return {
-			provider,
-			endpoint: NAVER_OPENAPI_ENDPOINT,
+			provider: 'ncp',
+			endpoint: NCP_ENDPOINT_PRIMARY,
+			fallbackEndpoint: NCP_ENDPOINT_FALLBACK,
 			headers: {
-				'X-Naver-Client-Id': clientId,
-				'X-Naver-Client-Secret': clientSecret,
+				'X-NCP-APIGW-API-KEY-ID': clientId,
+				'X-NCP-APIGW-API-KEY': clientSecret,
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 			},
 			body: params.toString(),
@@ -90,9 +88,7 @@ function createPapagoService(httpClient = axios) {
 		const { clientId, clientSecret, provider } = getPapagoCredentials();
 
 		if (!clientId || !clientSecret) {
-			const err = new Error(
-				'Papago API 인증 정보가 없습니다. .env에 PAPAGO_CLIENT_ID/PAPAGO_CLIENT_SECRET 또는 NAVER_CLIENT_ID/NAVER_CLIENT_SECRET를 설정하세요.',
-			);
+			const err = new Error('Papago API 인증 정보가 없습니다. .env에 PAPAGO_CLIENT_ID/PAPAGO_CLIENT_SECRET 또는 NAVER_CLIENT_ID/NAVER_CLIENT_SECRET를 설정하세요.');
 			err.status = 500;
 			throw err;
 		}
