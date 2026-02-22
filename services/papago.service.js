@@ -4,7 +4,7 @@ const axios = require('axios');
 // 테스트/컨트롤러가 기대하는 엔드포인트 규약
 // - PAPAGO_* (NCP) : apigw(ntruss) 엔드포인트 + X-NCP-* 헤더
 // - NAVER_* (OpenAPI) : openapi.naver.com 엔드포인트 + X-Naver-* 헤더
-const NCP_TRANSLATE_ENDPOINT = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
+const NCP_TRANSLATE_ENDPOINT = 'https://papago.apigw.ntruss.com/nmt/v1/translation';
 const NAVER_OPENAPI_TRANSLATE_ENDPOINT = 'https://openapi.naver.com/v1/papago/n2mt';
 const DEFAULT_TIMEOUT_MS = 12_000;
 

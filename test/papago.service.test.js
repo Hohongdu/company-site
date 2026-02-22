@@ -17,7 +17,7 @@ test('PAPAGO_* 키는 NCP 엔드포인트/헤더로 호출한다', async () => {
 
 	const service = createPapagoService({
 		post: async (url, body, config) => {
-			assert.equal(url, 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation');
+			assert.equal(url, 'https://papago.apigw.ntruss.com/nmt/v1/translation');
 			assert.match(body, /text=hello/i);
 			assert.equal(config.headers['X-NCP-APIGW-API-KEY-ID'], 'ncp-id');
 			assert.equal(config.headers['X-NCP-APIGW-API-KEY'], 'ncp-secret');
