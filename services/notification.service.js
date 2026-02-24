@@ -20,13 +20,24 @@ async function postEmailPayload(payload) {
 	}
 }
 
-exports.sendInquiryReplyEmail = async ({ to, subject, html }) =>
-	postEmailPayload({
+exports.sendInquiryReplyEmail = async ({ to, subject, html, downloadUrl, fileName, expiresAt }) => {
+	const attachmentHtml = downloadUrl
+		? `
+    <div style="margin-top:12px; padding:12px; border:1px solid #e5e7eb; border-radius:8px;">
+      <div><strong>첨부 파일:</strong> ${fileName || '파일 링크'}</div>
+      <div><strong>다운로드 만료:</strong> ${expiresAt ? new Date(expiresAt).toLocaleString('ko-KR') : '-'}</div>
+      <div style="margin-top:8px;"><a href="${downloadUrl}">보안 링크로 파일 다운로드</a></div>
+    </div>
+  `
+		: '';
+
+	return postEmailPayload({
 		to,
 		subject,
-		html,
+		html: `${html}${attachmentHtml}`,
 		from: process.env.EMAIL_FROM || undefined,
 	});
+};
 
 exports.sendFileTransferEmail = async ({ to, senderName, senderEmail, message, filename, expiresAt, downloadUrl }) => {
 	const subject = `[파일전송] ${senderName}님이 ${filename} 파일을 보냈습니다`;

@@ -8,6 +8,7 @@ const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { sendInquiryReplyEmail } = require('../services/notification.service');
+const { createFileTransferService } = require('../services/file-transfer.service');
 let sharp = null;
 try {
 	sharp = require('sharp');
@@ -137,6 +138,17 @@ async function ensureOrderShippingColumns() {
    업로드/이미지 설정
 ========================= */
 const upload = multer({ dest: 'uploads/' });
+
+
+const inquiryReplyUpload = multer({
+	storage: multer.memoryStorage(),
+	limits: { fileSize: Number(process.env.FILE_TRANSFER_MAX_SIZE || 10 * 1024 * 1024) },
+});
+
+const inquiryAttachmentService = createFileTransferService({
+	storageDir: path.join(__dirname, '..', 'uploads', 'shared-files'),
+	tokenSecret: process.env.FILE_TRANSFER_TOKEN_SECRET || 'unsafe-dev-secret-change-me',
+});
 
 // tmp / public/uploads 폴더 보장
 const tmpDir = path.join(__dirname, '..', 'tmp');
@@ -1113,7 +1125,7 @@ router.get('/inquiries', async (req, res) => {
 	}
 });
 
-router.post('/inquiries/:id/reply', async (req, res) => {
+router.post('/inquiries/:id/reply', inquiryReplyUpload.single('attachmentFile'), async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();
@@ -1143,6 +1155,29 @@ router.post('/inquiries/:id/reply', async (req, res) => {
 
 		if (shouldSendEmail && recipientEmail) {
 			notificationChannel = 'EMAIL';
+
+			let downloadUrl = null;
+			let fileName = null;
+			let expiresAt = null;
+
+			if (req.file) {
+				const saved = await inquiryAttachmentService.saveFile({
+					fileBuffer: req.file.buffer,
+					originalName: req.file.originalname,
+					mimeType: req.file.mimetype,
+				});
+				expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+				const token = inquiryAttachmentService.createDownloadToken({
+					fileId: saved.fileId,
+					filename: saved.filename,
+					mimeType: saved.mimeType,
+					expiresAt,
+				});
+				const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+				downloadUrl = `${baseUrl}/admin/inquiries/attachment/download?token=${encodeURIComponent(token)}`;
+				fileName = saved.filename;
+			}
+
 			const emailResult = await sendInquiryReplyEmail({
 				to: recipientEmail,
 				subject: `[문의 답변] ${inquiry.title || '문의 답변 안내'}`,
@@ -1163,6 +1198,9 @@ router.post('/inquiries/:id/reply', async (req, res) => {
             <p style="margin-top:16px;">추가 문의가 있으시면 언제든지 연락주세요.</p>
           </div>
         `,
+				downloadUrl,
+				fileName,
+				expiresAt,
 			});
 			notificationStatus = emailResult.status;
 			notificationError = emailResult.error;
@@ -1188,6 +1226,22 @@ router.post('/inquiries/:id/reply', async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('문의 답변 처리 중 오류가 발생했습니다.');
+	}
+});
+
+
+router.get('/inquiries/attachment/download', requireAdmin, async (req, res) => {
+	try {
+		const token = String(req.query?.token || '');
+		const payload = inquiryAttachmentService.parseDownloadToken(token);
+		const filePath = await inquiryAttachmentService.getFilePath(payload.fileId);
+		res.setHeader('Content-Type', payload.mimeType || 'application/octet-stream');
+		return res.download(filePath, payload.filename);
+	} catch (err) {
+		const status = Number(err?.status || 500);
+		if (status >= 400 && status < 500) return res.status(status).send(err.message);
+		console.error(err);
+		return res.status(500).send('첨부 파일 다운로드 오류');
 	}
 });
 

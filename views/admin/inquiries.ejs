@@ -101,11 +101,17 @@
                                                     <div class="admin-inquiry-content"><%= inquiry.answer_content %></div>
                                                 </div>
                                             <% } %>
-                                            <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post">
+                                            <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post" enctype="multipart/form-data">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <div class="mb-2">
                                                     <label class="admin-muted small mb-1">답변 작성</label>
                                                     <textarea class="form-control" name="answerContent" rows="4" required><%= inquiry.answer_content || '' %></textarea>
+                                                </div>
+
+                                                <div class="mb-2">
+                                                    <label class="admin-muted small mb-1">첨부 파일 (선택)</label>
+                                                    <input type="file" class="form-control" name="attachmentFile">
+                                                    <div class="text-muted small mt-1">파일 없이도 답변 이메일 전송이 가능합니다.</div>
                                                 </div>
                                                 <div class="d-flex flex-wrap gap-2 align-items-center">
                                                     <div class="form-check">
