@@ -7,5 +7,6 @@ router.use('/auth', require('./auth.api'));
 router.use('/inquiry', require('./inquiry.api'));
 router.use('/products', require('./product.api'));
 router.use('/translate', require('./translation.api'));
+router.use('/file-transfer', require('./file-transfer.api'));
 
 module.exports = router;
