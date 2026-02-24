@@ -91,6 +91,9 @@
                                                     알림: <%= inquiry.notification_channel || 'NONE' %>
                                                     <%= inquiry.notification_status ? `(${inquiry.notification_status})` : '' %>
                                                 </div>
+                                                <% if (inquiry.notification_status === 'SKIPPED' && inquiry.notification_channel === 'EMAIL') { %>
+                                                    <div class="text-muted small">이메일 발송 설정이 없어 전송을 건너뛰었습니다. (.env의 EMAIL_WEBHOOK_URL 설정 필요)</div>
+                                                <% } %>
                                                 <% if (inquiry.notification_error) { %>
                                                     <div class="text-danger small">알림 오류: <%= inquiry.notification_error %></div>
                                                 <% } %>

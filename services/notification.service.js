@@ -4,7 +4,12 @@ const isEmailWebhookConfigured = () => Boolean(process.env.EMAIL_WEBHOOK_URL);
 
 async function postEmailPayload(payload) {
 	if (!isEmailWebhookConfigured()) {
-		return { ok: false, status: 'SKIPPED', error: 'EMAIL_WEBHOOK_URL 설정이 없습니다.' };
+		return {
+			ok: false,
+			status: 'SKIPPED',
+			error: null,
+			message: 'EMAIL_WEBHOOK_URL 설정이 없어 이메일 발송을 건너뜁니다.',
+		};
 	}
 
 	try {
