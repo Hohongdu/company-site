@@ -1,0 +1,141 @@
+{
+  "name": "company-site email webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "company-site-email",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "id": "Webhook_1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 260]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": ""
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "token-check",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{$json.headers.authorization || ''}}",
+              "rightValue": "=Bearer {{$env.EMAIL_WEBHOOK_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "If_Auth",
+      "name": "If Auth OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [520, 260]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.body.to}}",
+        "subject": "={{$json.body.subject}}",
+        "message": "={{$json.body.html}}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{$json.body.from || 'Company Site'}}"
+        }
+      },
+      "id": "Gmail_Send",
+      "name": "Send Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [780, 190],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_GMAIL_CREDENTIAL_ID",
+          "name": "REPLACE_GMAIL_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\":true,\"status\":\"SENT\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "Respond_OK",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1030, 190]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\":false,\"status\":\"UNAUTHORIZED\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "Respond_401",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [780, 350]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If Auth OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Auth OK": {
+      "main": [
+        [
+          {
+            "node": "Send Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Gmail": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}
