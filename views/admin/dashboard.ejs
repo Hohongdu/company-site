@@ -2,6 +2,7 @@
 
 <%
 const statsSafe = (typeof stats !== 'undefined' && stats) ? stats : {};
+const chartSafe = (typeof chartData !== 'undefined' && chartData) ? chartData : {};
 const totalProducts = Number(statsSafe.totalProducts || 0);
 const totalCategories = Number(statsSafe.totalCategories || 0);
 const totalOrders = Number(statsSafe.totalOrders || 0);
@@ -17,13 +18,19 @@ const quickCards = [
     { label: '총 주문', value: totalOrders, icon: 'bi-bag-check', tone: 'purple', href: '/admin/orders' },
     { label: '총 문의', value: totalInquiries, icon: 'bi-chat-left-dots', tone: 'pink', href: '/admin/inquiries' }
 ];
+
+const chartPayload = {
+    labels: Array.isArray(chartSafe.labels) ? chartSafe.labels : [],
+    orders: Array.isArray(chartSafe.orders) ? chartSafe.orders : [],
+    inquiries: Array.isArray(chartSafe.inquiries) ? chartSafe.inquiries : [],
+    revenue: Array.isArray(chartSafe.revenue) ? chartSafe.revenue : []
+};
 %>
 
 <div class="admin-dashboard">
     <div class="dashboard-head">
         <div>
             <h3 class="mb-1">운영 대시보드</h3>
-            <p class="mb-0 text-muted">기존 기능을 유지하면서, 요청해주신 레퍼런스와 비슷한 카드형 레이아웃으로 재구성했습니다.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-primary btn-sm" href="/admin/products/new"><i class="bi bi-plus-lg"></i> 새 상품</a>
@@ -40,13 +47,8 @@ const quickCards = [
                 </div>
                 <span class="metric-chip">+<%= orderGrowth %>%</span>
             </div>
-            <div class="text-muted mb-2">상품/주문/문의 집계 기반 가중 지수</div>
-            <div class="sparkline" aria-hidden="true">
-                <span style="height:26%"></span><span style="height:42%"></span><span style="height:31%"></span>
-                <span style="height:58%"></span><span style="height:45%"></span><span style="height:69%"></span>
-                <span style="height:52%"></span><span style="height:74%"></span><span style="height:63%"></span>
-                <span style="height:82%"></span>
-            </div>
+            <div class="text-muted mb-2">최근 6개월 주문량 추이</div>
+            <canvas id="ordersTrendChart" class="dashboard-canvas sparkline-canvas" role="img" aria-label="주문량 추이"></canvas>
         </section>
 
         <section class="dashboard-card kpi-strip">
@@ -66,12 +68,8 @@ const quickCards = [
                 <h5>상품 활성도</h5>
                 <span class="text-muted small"><%= productHealth %>%</span>
             </div>
-            <div class="mini-bars">
-                <span style="height:24%"></span><span style="height:38%"></span><span style="height:55%"></span>
-                <span style="height:33%"></span><span style="height:71%"></span><span style="height:45%"></span>
-                <span style="height:62%"></span><span style="height:80%"></span>
-            </div>
-            <p class="mb-0 text-muted">카테고리 대비 상품 수를 기준으로 계산</p>
+            <canvas id="revenueBarsChart" class="dashboard-canvas mini-canvas" role="img" aria-label="월별 매출 막대 차트"></canvas>
+            <p class="mb-0 text-muted">월별 매출(원) 실데이터 기반</p>
         </section>
 
         <section class="dashboard-card mini-metric">
@@ -82,29 +80,14 @@ const quickCards = [
             <div class="gauge-track" role="img" aria-label="고객응답 안정도 <%= inquiryHealth %> 퍼센트">
                 <div class="gauge-fill" style="--value:<%= inquiryHealth %>"></div>
             </div>
-            <p class="mb-0 text-muted">문의가 많을수록 응답 처리 집중도가 높아집니다.</p>
         </section>
 
         <section class="dashboard-card chart-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">운영 흐름 비교</h5>
-                <span class="text-muted small">Orders vs Inquiries</span>
+                <span class="text-muted small">Orders vs Inquiries (최근 6개월)</span>
             </div>
-            <div class="bar-compare">
-                <% const chartMax = Math.max(totalOrders, totalInquiries, 1); %>
-                <% ['1주', '2주', '3주', '4주', '5주', '6주'].forEach((week, idx) => {
-                    const orderValue = Math.max(1, Math.round((totalOrders / chartMax) * (45 + idx * 7) % 100));
-                    const inquiryValue = Math.max(1, Math.round((totalInquiries / chartMax) * (30 + idx * 9) % 100));
-                %>
-                    <div class="bar-group">
-                        <div class="bars">
-                            <span class="bar order" style="height:<%= orderValue %>%"></span>
-                            <span class="bar inquiry" style="height:<%= inquiryValue %>%"></span>
-                        </div>
-                        <small><%= week %></small>
-                    </div>
-                <% }) %>
-            </div>
+            <canvas id="flowCompareChart" class="dashboard-canvas compare-canvas" role="img" aria-label="주문과 문의 비교 그래프"></canvas>
         </section>
     </div>
 
@@ -183,5 +166,123 @@ const quickCards = [
     </div>
     <% } %>
 </div>
+
+<script>
+(function () {
+    const data = <%- JSON.stringify(chartPayload) %>;
+
+    function drawLineChart(canvas, labels, values, color) {
+        if (!canvas || !labels.length || !values.length) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth || 360;
+        const height = canvas.clientHeight || 120;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
+
+        const max = Math.max(...values, 1);
+        const min = Math.min(...values, 0);
+        const padX = 12;
+        const padY = 10;
+        const drawW = width - padX * 2;
+        const drawH = height - padY * 2;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        values.forEach((v, i) => {
+            const x = padX + (drawW * i) / Math.max(values.length - 1, 1);
+            const y = padY + drawH - ((v - min) / Math.max(max - min, 1)) * drawH;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.12;
+        ctx.lineTo(width - padX, height - padY);
+        ctx.lineTo(padX, height - padY);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+
+    function drawBarChart(canvas, labels, values, color) {
+        if (!canvas || !labels.length || !values.length) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth || 360;
+        const height = canvas.clientHeight || 120;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
+
+        const max = Math.max(...values, 1);
+        const padX = 10;
+        const padY = 14;
+        const drawW = width - padX * 2;
+        const drawH = height - padY * 2;
+        const barW = drawW / Math.max(values.length * 1.6, 1);
+
+        ctx.clearRect(0, 0, width, height);
+        values.forEach((v, i) => {
+            const x = padX + i * (barW * 1.6);
+            const h = (v / max) * drawH;
+            const y = padY + drawH - h;
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, barW, h);
+        });
+    }
+
+    function drawDualBarChart(canvas, labels, leftValues, rightValues) {
+        if (!canvas || !labels.length) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth || 520;
+        const height = canvas.clientHeight || 220;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
+
+        const max = Math.max(...leftValues, ...rightValues, 1);
+        const padX = 24;
+        const padTop = 16;
+        const padBottom = 30;
+        const drawW = width - padX * 2;
+        const drawH = height - padTop - padBottom;
+        const groupW = drawW / Math.max(labels.length, 1);
+        const barW = Math.max(8, groupW * 0.22);
+
+        ctx.clearRect(0, 0, width, height);
+        labels.forEach((label, i) => {
+            const baseX = padX + i * groupW + groupW * 0.2;
+            const leftH = (Number(leftValues[i] || 0) / max) * drawH;
+            const rightH = (Number(rightValues[i] || 0) / max) * drawH;
+
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(baseX, padTop + drawH - leftH, barW, leftH);
+
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(baseX + barW + 6, padTop + drawH - rightH, barW, rightH);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, baseX + barW, height - 10);
+        });
+    }
+
+    function redrawAll() {
+        drawLineChart(document.getElementById('ordersTrendChart'), data.labels, data.orders, '#10b981');
+        drawBarChart(document.getElementById('revenueBarsChart'), data.labels, data.revenue, '#f43f5e');
+        drawDualBarChart(document.getElementById('flowCompareChart'), data.labels, data.orders, data.inquiries);
+    }
+
+    redrawAll();
+    window.addEventListener('resize', redrawAll);
+})();
+</script>
 
 <%- include('partials/admin-footer') %>

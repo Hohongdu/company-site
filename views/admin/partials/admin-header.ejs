@@ -60,41 +60,57 @@
         <div class="admin-shell">
             <!-- SIDEBAR -->
             <aside class="admin-sidebar">
-                <div class="side-head">
-                    <div class="fw-semibold">관리 메뉴</div>
-                    <div class="admin-muted small">빠르게 이동</div>
+                <div class="sidebar-brand">
+                    <div class="logo-mark"><i class="bi bi-bar-chart-line"></i></div>
+                    <div>
+                        <div class="brand-title">Metoxi Admin</div>
+                        <div class="brand-sub">관리자 콘솔</div>
+                    </div>
                 </div>
 
-                <nav class="p-2">
+                <nav class="sidebar-nav" aria-label="관리자 메뉴">
+                    <div class="sidebar-group-label">MAIN</div>
+
                     <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/admin">
-                        대시보드
+                        <span class="left"><i class="bi bi-house-door"></i> 대시보드</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
 
+                    <div class="sidebar-group-label">CATALOG</div>
                     <a class="nav-link <%= active === 'products' ? 'active' : '' %>" href="/admin/products">
-                        상품 관리
+                        <span class="left"><i class="bi bi-box-seam"></i> 상품 관리</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
 
                     <a class="nav-link <%= active === 'product_new' ? 'active' : '' %>" href="/admin/products/new">
-                        상품 등록
-                    </a>
-
-                    <a class="nav-link <%= active === 'import' ? 'active' : '' %>" href="/admin/products/import">
-                        엑셀 업로드
+                        <span class="left"><i class="bi bi-plus-square"></i> 상품 등록</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
 
                     <a class="nav-link <%= active === 'categories' ? 'active' : '' %>" href="/admin/categories">
-                        카테고리
+                        <span class="left"><i class="bi bi-grid-3x3-gap"></i> 카테고리</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
 
+                    <a class="nav-link <%= active === 'import' ? 'active' : '' %>" href="/admin/products/import">
+                        <span class="left"><i class="bi bi-file-earmark-arrow-up"></i> 엑셀 업로드</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+
+                    <div class="sidebar-group-label">CUSTOMER</div>
                     <a class="nav-link <%= active === 'orders' ? 'active' : '' %>" href="/admin/orders">
-                        주문 관리
+                        <span class="left"><i class="bi bi-bag-check"></i> 주문 관리</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
 
                     <a class="nav-link <%= active === 'inquiries' ? 'active' : '' %>" href="/admin/inquiries">
-                        문의 관리
+                        <span class="left"><i class="bi bi-chat-left-dots"></i> 문의 관리</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
+
                     <a class="nav-link <%= active === 'notices' ? 'active' : '' %>" href="/admin/notices">
-                        공지 관리
+                        <span class="left"><i class="bi bi-megaphone"></i> 공지 관리</span>
+                        <i class="bi bi-chevron-right"></i>
                     </a>
                 </nav>
             </aside>
