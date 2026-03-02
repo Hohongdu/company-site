@@ -31,6 +31,7 @@ const chartPayload = {
     <div class="dashboard-head">
         <div>
             <h3 class="mb-1">운영 대시보드</h3>
+            <p class="mb-0 text-muted">상단바 구분성을 높이고, 그래프는 실제 데이터로 동작하도록 개선했습니다.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-primary btn-sm" href="/admin/products/new"><i class="bi bi-plus-lg"></i> 새 상품</a>
@@ -80,6 +81,7 @@ const chartPayload = {
             <div class="gauge-track" role="img" aria-label="고객응답 안정도 <%= inquiryHealth %> 퍼센트">
                 <div class="gauge-fill" style="--value:<%= inquiryHealth %>"></div>
             </div>
+            <p class="mb-0 text-muted">문의가 많을수록 응답 처리 집중도가 높아집니다.</p>
         </section>
 
         <section class="dashboard-card chart-card">
