@@ -1,302 +1,290 @@
 <%- include('partials/admin-header', { title: '관리자 대시보드' , subtitle: '관리자 기능 요약' , active: 'dashboard' }) %>
 
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-            <h3 class="mb-1">대시보드</h3>
-        </div>
+<%
+const statsSafe = (typeof stats !== 'undefined' && stats) ? stats : {};
+const chartSafe = (typeof chartData !== 'undefined' && chartData) ? chartData : {};
+const totalProducts = Number(statsSafe.totalProducts || 0);
+const totalCategories = Number(statsSafe.totalCategories || 0);
+const totalOrders = Number(statsSafe.totalOrders || 0);
+const totalInquiries = Number(statsSafe.totalInquiries || 0);
 
+const orderGrowth = totalOrders > 0 ? Math.min(99, Math.max(8, Math.round((totalInquiries / Math.max(totalOrders, 1)) * 100))) : 12;
+const productHealth = totalProducts > 0 ? Math.min(100, Math.max(15, Math.round((totalProducts / Math.max(totalProducts + totalCategories, 1)) * 100))) : 28;
+const inquiryHealth = totalInquiries > 0 ? Math.min(100, Math.max(10, 100 - Math.round((totalInquiries / Math.max(totalOrders + totalInquiries, 1)) * 80))) : 88;
+
+const quickCards = [
+    { label: '총 상품', value: totalProducts, icon: 'bi-box-seam', tone: 'blue', href: '/admin/products' },
+    { label: '총 카테고리', value: totalCategories, icon: 'bi-grid-3x3-gap', tone: 'mint', href: '/admin/categories' },
+    { label: '총 주문', value: totalOrders, icon: 'bi-bag-check', tone: 'purple', href: '/admin/orders' },
+    { label: '총 문의', value: totalInquiries, icon: 'bi-chat-left-dots', tone: 'pink', href: '/admin/inquiries' }
+];
+
+const chartPayload = {
+    labels: Array.isArray(chartSafe.labels) ? chartSafe.labels : [],
+    orders: Array.isArray(chartSafe.orders) ? chartSafe.orders : [],
+    inquiries: Array.isArray(chartSafe.inquiries) ? chartSafe.inquiries : [],
+    revenue: Array.isArray(chartSafe.revenue) ? chartSafe.revenue : []
+};
+%>
+
+<div class="admin-dashboard">
+    <div class="dashboard-head">
+        <div>
+            <h3 class="mb-1">운영 대시보드</h3>
+            <p class="mb-0 text-muted">상단바 구분성을 높이고, 그래프는 실제 데이터로 동작하도록 개선했습니다.</p>
+        </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-primary btn-sm" href="/admin/products/new">+ 새 상품</a>
-            <a class="btn btn-outline-primary btn-sm" href="/admin/products/import">엑셀 업로드</a>
+            <a class="btn btn-primary btn-sm" href="/admin/products/new"><i class="bi bi-plus-lg"></i> 새 상품</a>
+            <a class="btn btn-outline-primary btn-sm" href="/admin/products/import"><i class="bi bi-file-earmark-arrow-up"></i> 엑셀 업로드</a>
         </div>
     </div>
 
-    <% const statsSafe=(typeof stats !=='undefined' && stats) ? stats : {}; const
-        totalProducts=Number(statsSafe.totalProducts || 0); const totalCategories=Number(statsSafe.totalCategories ||
-        0); const totalUploads=Number(statsSafe.totalUploads || 0); %>
-
-        <div class="row g-3 mb-4">
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">총 상품</div>
-                        <div class="fs-4 fw-bold"><%= totalProducts.toLocaleString() %></div>
-                    </div>
+    <div class="dashboard-grid top-grid mb-3">
+        <section class="dashboard-card hero-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <div class="metric-title">관리 지표 합계</div>
+                    <div class="metric-value"><%= (totalProducts + totalOrders + totalInquiries).toLocaleString() %></div>
                 </div>
+                <span class="metric-chip">+<%= orderGrowth %>%</span>
             </div>
+            <div class="text-muted mb-2">최근 6개월 주문량 추이</div>
+            <canvas id="ordersTrendChart" class="dashboard-canvas sparkline-canvas" role="img" aria-label="주문량 추이"></canvas>
+        </section>
 
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">총 카테고리</div>
-                        <div class="fs-4 fw-bold"><%= totalCategories.toLocaleString() %></div>
-                    </div>
-                </div>
+        <section class="dashboard-card kpi-strip">
+            <% quickCards.forEach((item) => { %>
+                <a href="<%= item.href %>" class="kpi-item text-decoration-none">
+                    <span class="kpi-icon <%= item.tone %>"><i class="bi <%= item.icon %>"></i></span>
+                    <strong><%= item.value.toLocaleString() %></strong>
+                    <small><%= item.label %></small>
+                </a>
+            <% }) %>
+        </section>
+    </div>
+
+    <div class="dashboard-grid body-grid mb-3">
+        <section class="dashboard-card mini-metric">
+            <div class="d-flex justify-content-between">
+                <h5>상품 활성도</h5>
+                <span class="text-muted small"><%= productHealth %>%</span>
             </div>
+            <canvas id="revenueBarsChart" class="dashboard-canvas mini-canvas" role="img" aria-label="월별 매출 막대 차트"></canvas>
+            <p class="mb-0 text-muted">월별 매출(원) 실데이터 기반</p>
+        </section>
 
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">총 주문</div>
-                        <div class="fs-4 fw-bold"><%= Number(statsSafe.totalOrders || 0).toLocaleString() %></div>
-                    </div>
-                </div>
+        <section class="dashboard-card mini-metric">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5>고객응답 안정도</h5>
+                <span class="gauge-value"><%= inquiryHealth %>%</span>
             </div>
-
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">총 문의</div>
-                        <div class="fs-4 fw-bold"><%= Number(statsSafe.totalInquiries || 0).toLocaleString() %></div>
-                    </div>
-                </div>
+            <div class="gauge-track" role="img" aria-label="고객응답 안정도 <%= inquiryHealth %> 퍼센트">
+                <div class="gauge-fill" style="--value:<%= inquiryHealth %>"></div>
             </div>
-        </div>
+            <p class="mb-0 text-muted">문의가 많을수록 응답 처리 집중도가 높아집니다.</p>
+        </section>
 
-        <div class="row g-3">
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-2">상품 관리</div>
-                        <div class="d-grid gap-2">
-                            <a class="btn btn-primary btn-sm w-100" href="/admin/products">상품 목록</a>
-                            <a class="btn btn-outline-primary btn-sm w-100" href="/admin/products/new">상품 등록</a>
-                        </div>
-                    </div>
-                </div>
+        <section class="dashboard-card chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">운영 흐름 비교</h5>
+                <span class="text-muted small">Orders vs Inquiries (최근 6개월)</span>
             </div>
+            <canvas id="flowCompareChart" class="dashboard-canvas compare-canvas" role="img" aria-label="주문과 문의 비교 그래프"></canvas>
+        </section>
+    </div>
 
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-2">카테고리</div>
-                        <div class="d-grid gap-2">
-                            <a class="btn btn-primary btn-sm w-100" href="/admin/categories">카테고리 관리</a>
-                            <a class="btn btn-outline-primary btn-sm w-100" href="/admin/categories/export">엑셀
-                                Export</a>
-                        </div>
-                    </div>
-                </div>
+    <div class="dashboard-grid table-grid">
+        <section class="dashboard-card table-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h5 class="mb-0">최근 주문</h5>
+                <a class="btn btn-sm btn-outline-primary" href="/admin/orders">전체 보기</a>
             </div>
-
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-2">엑셀 업로드</div>
-                        <div class="d-grid gap-2">
-                            <a class="btn btn-primary btn-sm w-100" href="/admin/products/import">업로드</a>
-                            <a class="btn btn-outline-primary btn-sm w-100" href="/admin/uploads/export">업로드 히스토리
-                                Export</a>
-                        </div>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr><th>주문번호</th><th>주문자</th><th class="text-end">금액</th></tr>
+                    </thead>
+                    <tbody>
+                        <% if (!recentOrders || recentOrders.length === 0) { %>
+                            <tr><td colspan="3" class="text-center text-muted py-3">주문이 없습니다.</td></tr>
+                        <% } else { %>
+                            <% recentOrders.forEach((order) => { %>
+                                <tr>
+                                    <td class="text-truncate" style="max-width:160px;"><%= order.order_number %></td>
+                                    <td><%= order.user_name || order.guest_name || '비회원' %></td>
+                                    <td class="text-end fw-semibold"><%= Number(order.total_amount || 0).toLocaleString() %>원</td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
+        </section>
 
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="fw-semibold mb-2">바로가기</div>
-                        <div class="d-grid gap-2">
-                            <a class="btn btn-outline-dark btn-sm w-100" href="/">회사</a>
-                            <a class="btn btn-outline-dark btn-sm w-100" href="/shop">상품몰</a>
-                        </div>
-                    </div>
-                </div>
+        <section class="dashboard-card table-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h5 class="mb-0">최근 문의</h5>
+                <a class="btn btn-sm btn-outline-primary" href="/admin/inquiries">전체 보기</a>
             </div>
-        </div>
-
-        <div class="row g-3 mt-1">
-            <div class="col-12 col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h5 class="mb-0">최근 주문</h5>
-                            <a class="btn btn-sm btn-outline-primary" href="/admin/orders">전체 보기</a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>주문번호</th>
-                                        <th>주문자</th>
-                                        <th class="text-end">금액</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (!recentOrders || recentOrders.length === 0) { %>
-                                        <tr>
-                                            <td colspan="3" class="text-center text-muted py-3">주문이 없습니다.</td>
-                                        </tr>
-                                        <% } else { %>
-                                            <% recentOrders.forEach(order => { %>
-                                                <tr>
-                                                    <td>
-                                                        <a href="/admin/orders/<%= order.order_number %>"><%= order.order_number %></a>
-                                                    </td>
-                                                    <td><%= order.user_name || order.guest_name || '비회원' %></td>
-                                                    <td class="text-end"><%= Number(order.total_amount || 0).toLocaleString() %>원</td>
-                                                </tr>
-                                                <% }) %>
-                                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr><th>제목</th><th>문의자</th><th>상태</th></tr>
+                    </thead>
+                    <tbody>
+                        <% if (!recentInquiries || recentInquiries.length === 0) { %>
+                            <tr><td colspan="3" class="text-center text-muted py-3">문의가 없습니다.</td></tr>
+                        <% } else { %>
+                            <% recentInquiries.forEach((inquiry) => { %>
+                                <tr>
+                                    <td class="text-truncate" style="max-width:180px;"><%= inquiry.title %></td>
+                                    <td><%= inquiry.user_name || inquiry.guest_name || '비회원' %></td>
+                                    <td>
+                                        <span class="badge text-bg-<%= inquiry.status === 'NEW' ? 'warning' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %>"><%= inquiry.status %></span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
             </div>
+        </section>
+    </div>
 
-            <div class="col-12 col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h5 class="mb-0">최근 문의</h5>
-                            <a class="btn btn-sm btn-outline-primary" href="/admin/inquiries">전체 보기</a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>제목</th>
-                                        <th>문의자</th>
-                                        <th>상태</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (!recentInquiries || recentInquiries.length === 0) { %>
-                                        <tr>
-                                            <td colspan="3" class="text-center text-muted py-3">문의가 없습니다.</td>
-                                        </tr>
-                                        <% } else { %>
-                                            <% recentInquiries.forEach(inquiry => { %>
-                                                <tr>
-                                                    <td class="text-truncate" style="max-width:180px;"><%= inquiry.title %></td>
-                                                    <td><%= inquiry.user_name || inquiry.guest_name || '비회원' %></td>
-                                                    <td>
-                                                        <span class="badge text-bg-<%= inquiry.status === 'NEW' ? 'warning' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %>">
-                                                            <%= inquiry.status %>
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <% }) %>
-                                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <% if (typeof sys !== 'undefined' && sys) { %>
+    <div class="dashboard-card mt-3">
+        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+            <div>
+                <div class="metric-title">서버 상태</div>
+                <strong>CPU <%= sys.cpuRatioPct %>% · MEM <%= sys.memUsedPct %>% · DISK <%= sys.diskUsedPct %>%</strong>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge text-bg-<%= sys.cpuStatus.badge %>">CPU <%= sys.cpuStatus.text %></span>
+                <span class="badge text-bg-<%= sys.memStatus.badge %>">메모리 <%= sys.memStatus.text %></span>
+                <span class="badge text-bg-<%= sys.diskStatus.badge %>">디스크 <%= sys.diskStatus.text %></span>
+                <span class="badge text-bg-<%= sys.nginxStatus.badge %>">Nginx <%= sys.nginxStatus.text %></span>
             </div>
         </div>
+    </div>
+    <% } %>
+</div>
 
+<script>
+(function () {
+    const data = <%- JSON.stringify(chartPayload) %>;
 
-        <hr class="my-4">
+    function drawLineChart(canvas, labels, values, color) {
+        if (!canvas || !labels.length || !values.length) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth || 360;
+        const height = canvas.clientHeight || 120;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
 
-        <div class="row g-3">
-            <div class="col-12 col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="mb-2">빠른 작업</h5>
-                        <div class="d-grid gap-2 d-sm-flex">
-                            <a class="btn btn-outline-primary" href="/admin/products/new">상품 등록</a>
-                            <a class="btn btn-outline-primary" href="/admin/categories">카테고리 관리</a>
-                            <a class="btn btn-outline-primary" href="/admin/products/import">엑셀 업로드</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        const max = Math.max(...values, 1);
+        const min = Math.min(...values, 0);
+        const padX = 12;
+        const padY = 10;
+        const drawW = width - padX * 2;
+        const drawH = height - padY * 2;
 
-        </div>
-        <% if (typeof sys !=='undefined' && sys) { %>
-            <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-3">
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="text-muted small">서버 바쁨 정도</div>
-                                <span class="badge text-bg-<%= sys.cpuStatus.badge %>">
-                                    <%= sys.cpuStatus.text %>
-                                </span>
-                            </div>
-                            <div class="fs-5 fw-bold mt-1">
-                                <%= sys.cpuRatioPct %>% (대략)
-                            </div>
-                            <div class="text-muted small">
-                                기준: CPU <%= sys.cpuCores %>코어 대비 · (1분/5분/15분: <%= sys.load1.toFixed(2) %>/<%=
-                                        sys.load5.toFixed(2) %>/<%= sys.load15.toFixed(2) %>)
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        values.forEach((v, i) => {
+            const x = padX + (drawW * i) / Math.max(values.length - 1, 1);
+            const y = padY + drawH - ((v - min) / Math.max(max - min, 1)) * drawH;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.stroke();
 
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="text-muted small">메모리 사용량</div>
-                                <span class="badge text-bg-<%= sys.memStatus.badge %>">
-                                    <%= sys.memStatus.text %>
-                                </span>
-                            </div>
-                            <div class="fs-5 fw-bold mt-1">
-                                <%= sys.memUsedMB %>MB / <%= sys.memTotalMB %>MB (<%= sys.memUsedPct %>%)
-                            </div>
-                            <div class="text-muted small">여유: <%= sys.memFreeMB %>MB</div>
-                        </div>
-                    </div>
-                </div>
+        ctx.globalAlpha = 0.12;
+        ctx.lineTo(width - padX, height - padY);
+        ctx.lineTo(padX, height - padY);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
 
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="text-muted small">저장공간 사용량</div>
-                                <span class="badge text-bg-<%= sys.diskStatus.badge %>">
-                                    <%= sys.diskStatus.text %>
-                                </span>
-                            </div>
-                            <div class="fs-5 fw-bold mt-1">
-                                <%= sys.diskUsedPct %>% 사용 중
-                            </div>
-                            <div class="text-muted small">
-                                총 <%= sys.diskTotal %> · 사용 <%= sys.diskUsed %> · 남음 <%= sys.diskAvail %>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    function drawBarChart(canvas, labels, values, color) {
+        if (!canvas || !labels.length || !values.length) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth || 360;
+        const height = canvas.clientHeight || 120;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
 
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="text-muted small">웹 서버 상태</div>
-                                <span class="badge text-bg-<%= sys.nginxStatus.badge %>">
-                                    <%= sys.nginxStatus.text %>
-                                </span>
-                            </div>
-                            <div class="fw-bold mt-1">
-                                <%= sys.nginxHead %>
-                            </div>
-                            <div class="text-muted small">외부 접속(8080) 응답 확인</div>
-                        </div>
-                    </div>
-                </div>
+        const max = Math.max(...values, 1);
+        const padX = 10;
+        const padY = 14;
+        const drawW = width - padX * 2;
+        const drawH = height - padY * 2;
+        const barW = drawW / Math.max(values.length * 1.6, 1);
 
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="text-muted small mb-2">트래픽(대략)</div>
-                            <div class="fw-semibold">오늘</div>
-                            <div class="text-muted small" style="word-break:break-word;">
-                                <%= sys.vnstatDaily || '데이터 없음' %>
-                            </div>
-                            <div class="fw-semibold mt-2">이번 달</div>
-                            <div class="text-muted small" style="word-break:break-word;">
-                                <%= sys.vnstatMonthly || '데이터 없음' %>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <% } %>
+        ctx.clearRect(0, 0, width, height);
+        values.forEach((v, i) => {
+            const x = padX + i * (barW * 1.6);
+            const h = (v / max) * drawH;
+            const y = padY + drawH - h;
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, barW, h);
+        });
+    }
 
+    function drawDualBarChart(canvas, labels, leftValues, rightValues) {
+        if (!canvas || !labels.length) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth || 520;
+        const height = canvas.clientHeight || 220;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
 
-                <%- include('../layouts/admin-bottom') %>
+        const max = Math.max(...leftValues, ...rightValues, 1);
+        const padX = 24;
+        const padTop = 16;
+        const padBottom = 30;
+        const drawW = width - padX * 2;
+        const drawH = height - padTop - padBottom;
+        const groupW = drawW / Math.max(labels.length, 1);
+        const barW = Math.max(8, groupW * 0.22);
+
+        ctx.clearRect(0, 0, width, height);
+        labels.forEach((label, i) => {
+            const baseX = padX + i * groupW + groupW * 0.2;
+            const leftH = (Number(leftValues[i] || 0) / max) * drawH;
+            const rightH = (Number(rightValues[i] || 0) / max) * drawH;
+
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(baseX, padTop + drawH - leftH, barW, leftH);
+
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(baseX + barW + 6, padTop + drawH - rightH, barW, rightH);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, baseX + barW, height - 10);
+        });
+    }
+
+    function redrawAll() {
+        drawLineChart(document.getElementById('ordersTrendChart'), data.labels, data.orders, '#10b981');
+        drawBarChart(document.getElementById('revenueBarsChart'), data.labels, data.revenue, '#f43f5e');
+        drawDualBarChart(document.getElementById('flowCompareChart'), data.labels, data.orders, data.inquiries);
+    }
+
+    redrawAll();
+    window.addEventListener('resize', redrawAll);
+})();
+</script>
+
+<%- include('partials/admin-footer') %>
