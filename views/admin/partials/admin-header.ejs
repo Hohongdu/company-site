@@ -23,9 +23,9 @@
                 <button class="admin-hamburger d-lg-none" id="adminSidebarOpen" aria-label="관리 메뉴 열기">
                     <span></span><span></span><span></span>
                 </button>
-                <a class="brand-pill text-decoration-none" href="/admin">
+                <a class="brand-pill text-decoration-none" href="/admin/dashboard">
                     <span class="dot"></span>
-                    <span>ADMIN CONSOLE</span>
+                    <span>관리자 콘솔</span>
                 </a>
                 <span class="admin-muted d-none d-md-inline">운영/관리 전용</span>
             </div>
@@ -70,56 +70,44 @@
                             <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                         </svg>
                     </button>
-                    <div class="logo-mark"><i class="bi bi-bar-chart-line"></i></div>
-                    <div>
-                        <div class="brand-title">Metoxi Admin</div>
-                        <div class="brand-sub">관리자 콘솔</div>
-                    </div>
+                    <a class="sidebar-home-link" href="/admin/dashboard">관리자 콘솔</a>
                 </div>
 
                 <nav class="sidebar-nav" aria-label="관리자 메뉴">
                     <div class="sidebar-group-label">MAIN</div>
 
-                    <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/admin">
-                        <span class="left"><i class="bi bi-house-door"></i> 대시보드</span>
-                        <i class="bi bi-chevron-right"></i>
+                    <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard">
+                        <span class="left">대시보드</span>
                     </a>
 
                     <div class="sidebar-group-label">CATALOG</div>
                     <a class="nav-link <%= active === 'products' ? 'active' : '' %>" href="/admin/products">
-                        <span class="left"><i class="bi bi-box-seam"></i> 상품 관리</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">상품 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'product_new' ? 'active' : '' %>" href="/admin/products/new">
-                        <span class="left"><i class="bi bi-plus-square"></i> 상품 등록</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">상품 등록</span>
                     </a>
 
                     <a class="nav-link <%= active === 'categories' ? 'active' : '' %>" href="/admin/categories">
-                        <span class="left"><i class="bi bi-grid-3x3-gap"></i> 카테고리</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">카테고리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'import' ? 'active' : '' %>" href="/admin/products/import">
-                        <span class="left"><i class="bi bi-file-earmark-arrow-up"></i> 엑셀 업로드</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">엑셀 업로드</span>
                     </a>
 
                     <div class="sidebar-group-label">CUSTOMER</div>
                     <a class="nav-link <%= active === 'orders' ? 'active' : '' %>" href="/admin/orders">
-                        <span class="left"><i class="bi bi-bag-check"></i> 주문 관리</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">주문 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'inquiries' ? 'active' : '' %>" href="/admin/inquiries">
-                        <span class="left"><i class="bi bi-chat-left-dots"></i> 문의 관리</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">문의 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'notices' ? 'active' : '' %>" href="/admin/notices">
-                        <span class="left"><i class="bi bi-megaphone"></i> 공지 관리</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span class="left">공지 관리</span>
                     </a>
                 </nav>
             </aside>
@@ -129,7 +117,7 @@
                 <% if (typeof backHref !=='undefined' && backHref) { %>
                     <div class="mb-3 d-flex justify-content-end">
                         <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-left"></i> 이전으로
+                            이전으로
                         </a>
                     </div>
                 <% } %>
