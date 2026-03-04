@@ -19,10 +19,13 @@
     <!-- TOP BAR -->
     <header class="admin-topbar">
         <div class="container py-3 d-flex align-items-center justify-content-between gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <a class="brand-pill text-decoration-none" href="/admin">
+            <div class="d-flex align-items-center gap-2">
+                <button class="admin-hamburger d-lg-none" id="adminSidebarOpen" aria-label="관리 메뉴 열기">
+                    <span></span><span></span><span></span>
+                </button>
+                <a class="brand-pill text-decoration-none" href="/admin/dashboard">
                     <span class="dot"></span>
-                    <span>ADMIN CONSOLE</span>
+                    <span>관리자 콘솔</span>
                 </a>
                 <span class="admin-muted d-none d-md-inline">운영/관리 전용</span>
             </div>
@@ -59,42 +62,52 @@
     <div class="container">
         <div class="admin-shell">
             <!-- SIDEBAR -->
-            <aside class="admin-sidebar">
-                <div class="side-head">
-                    <div class="fw-semibold">관리 메뉴</div>
-                    <div class="admin-muted small">빠르게 이동</div>
+            <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+            <aside class="admin-sidebar" id="adminSidebar">
+                <div class="sidebar-brand">
+                    <button class="admin-sidebar-close d-lg-none" id="adminSidebarClose" aria-label="관리 메뉴 닫기">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <a class="sidebar-home-link" href="/admin/dashboard">관리자 콘솔</a>
                 </div>
 
-                <nav class="p-2">
-                    <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/admin">
-                        대시보드
+                <nav class="sidebar-nav" aria-label="관리자 메뉴">
+                    <div class="sidebar-group-label">MAIN</div>
+
+                    <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard">
+                        <span class="left">대시보드</span>
                     </a>
 
+                    <div class="sidebar-group-label">CATALOG</div>
                     <a class="nav-link <%= active === 'products' ? 'active' : '' %>" href="/admin/products">
-                        상품 관리
+                        <span class="left">상품 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'product_new' ? 'active' : '' %>" href="/admin/products/new">
-                        상품 등록
-                    </a>
-
-                    <a class="nav-link <%= active === 'import' ? 'active' : '' %>" href="/admin/products/import">
-                        엑셀 업로드
+                        <span class="left">상품 등록</span>
                     </a>
 
                     <a class="nav-link <%= active === 'categories' ? 'active' : '' %>" href="/admin/categories">
-                        카테고리
+                        <span class="left">카테고리</span>
                     </a>
 
+                    <a class="nav-link <%= active === 'import' ? 'active' : '' %>" href="/admin/products/import">
+                        <span class="left">엑셀 업로드</span>
+                    </a>
+
+                    <div class="sidebar-group-label">CUSTOMER</div>
                     <a class="nav-link <%= active === 'orders' ? 'active' : '' %>" href="/admin/orders">
-                        주문 관리
+                        <span class="left">주문 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'inquiries' ? 'active' : '' %>" href="/admin/inquiries">
-                        문의 관리
+                        <span class="left">문의 관리</span>
                     </a>
+
                     <a class="nav-link <%= active === 'notices' ? 'active' : '' %>" href="/admin/notices">
-                        공지 관리
+                        <span class="left">공지 관리</span>
                     </a>
                 </nav>
             </aside>
@@ -104,7 +117,7 @@
                 <% if (typeof backHref !=='undefined' && backHref) { %>
                     <div class="mb-3 d-flex justify-content-end">
                         <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-left"></i> 이전으로
+                            이전으로
                         </a>
                     </div>
                 <% } %>
