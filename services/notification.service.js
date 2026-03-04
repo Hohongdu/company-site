@@ -1,28 +1,100 @@
 const axios = require('axios');
+const fs = require('fs/promises');
+const path = require('path');
+const { spawn } = require('child_process');
 
 const isEmailWebhookConfigured = () => Boolean(process.env.EMAIL_WEBHOOK_URL);
+const isSendmailConfigured = () => Boolean(process.env.EMAIL_SENDMAIL_BIN);
+
+function escapeHeader(value) {
+	return String(value || '')
+		.replace(/\r/g, ' ')
+		.replace(/\n/g, ' ')
+		.trim();
+}
+
+function stripHtml(html) {
+	return String(html || '')
+		.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+		.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+async function writeMailToLocalOutbox(payload) {
+	const outboxDir = process.env.EMAIL_OUTBOX_DIR || path.join(__dirname, '..', 'uploads', 'mail-outbox');
+	await fs.mkdir(outboxDir, { recursive: true });
+	const now = new Date();
+	const filePath = path.join(outboxDir, `${now.toISOString().replace(/[:.]/g, '-')}-${Math.random().toString(36).slice(2)}.json`);
+	await fs.writeFile(filePath, JSON.stringify({ createdAt: now.toISOString(), ...payload }, null, 2), 'utf8');
+	return filePath;
+}
+
+function sendBySendmail({ to, subject, html, from }) {
+	return new Promise((resolve) => {
+		const sendmailPath = process.env.EMAIL_SENDMAIL_BIN;
+		const sender = escapeHeader(from || process.env.EMAIL_FROM || 'no-reply@localhost');
+		const recipient = escapeHeader(to);
+		const safeSubject = escapeHeader(subject);
+		const bodyText = stripHtml(html);
+		const rawMail = [
+			`From: ${sender}`,
+			`To: ${recipient}`,
+			`Subject: ${safeSubject}`,
+			'MIME-Version: 1.0',
+			'Content-Type: text/plain; charset=UTF-8',
+			'',
+			bodyText,
+		].join('\n');
+
+		const proc = spawn(sendmailPath, ['-t', '-i']);
+		let stderr = '';
+
+		proc.stderr.on('data', (chunk) => {
+			stderr += chunk.toString();
+		});
+
+		proc.on('error', (err) => {
+			resolve({ ok: false, status: 'FAILED', error: String(err?.message || err), provider: 'SENDMAIL' });
+		});
+
+		proc.on('close', (code) => {
+			if (code === 0) return resolve({ ok: true, status: 'SENT', error: null, provider: 'SENDMAIL' });
+			return resolve({ ok: false, status: 'FAILED', error: stderr.trim() || `sendmail exited with ${code}`, provider: 'SENDMAIL' });
+		});
+
+		proc.stdin.end(rawMail);
+	});
+}
 
 async function postEmailPayload(payload) {
-	if (!isEmailWebhookConfigured()) {
-		return {
-			ok: false,
-			status: 'SKIPPED',
-			error: null,
-			message: 'EMAIL_WEBHOOK_URL 설정이 없어 이메일 발송을 건너뜁니다.',
-		};
+	if (isSendmailConfigured()) {
+		return sendBySendmail(payload);
 	}
 
-	try {
-		await axios.post(process.env.EMAIL_WEBHOOK_URL, payload, {
-			headers: process.env.EMAIL_WEBHOOK_TOKEN
-				? { Authorization: `Bearer ${process.env.EMAIL_WEBHOOK_TOKEN}` }
-				: undefined,
-			timeout: 5000,
-		});
-		return { ok: true, status: 'SENT', error: null };
-	} catch (err) {
-		return { ok: false, status: 'FAILED', error: String(err?.message || err) };
+	if (isEmailWebhookConfigured()) {
+		try {
+			await axios.post(process.env.EMAIL_WEBHOOK_URL, payload, {
+				headers: process.env.EMAIL_WEBHOOK_TOKEN
+					? { Authorization: `Bearer ${process.env.EMAIL_WEBHOOK_TOKEN}` }
+					: undefined,
+				timeout: 5000,
+			});
+			return { ok: true, status: 'SENT', error: null, provider: 'WEBHOOK' };
+		} catch (err) {
+			return { ok: false, status: 'FAILED', error: String(err?.message || err), provider: 'WEBHOOK' };
+		}
 	}
+
+	const outboxPath = await writeMailToLocalOutbox(payload);
+	return {
+		ok: false,
+		status: 'SKIPPED',
+		error: null,
+		provider: 'LOCAL_OUTBOX',
+		message: `이메일 설정이 없어 실제 전송 대신 로컬 아웃박스에 저장했습니다. (${outboxPath})`,
+	};
 }
 
 exports.sendInquiryReplyEmail = async ({ to, subject, html, downloadUrl, fileName, expiresAt }) => {
@@ -53,6 +125,27 @@ exports.sendFileTransferEmail = async ({ to, senderName, senderEmail, message, f
     <p><strong>다운로드 만료:</strong> ${new Date(expiresAt).toLocaleString('ko-KR')}</p>
     <p><strong>메시지:</strong> ${message || '(메시지 없음)'}</p>
     <p><a href="${downloadUrl}">보안 링크로 파일 다운로드</a></p>
+  `;
+
+	return postEmailPayload({
+		to,
+		subject,
+		html,
+		from: process.env.EMAIL_FROM || undefined,
+	});
+};
+
+exports.sendTemporaryPasswordEmail = async ({ to, userName, temporaryPassword }) => {
+	const subject = '[비밀번호 재설정] 임시 비밀번호 안내';
+	const html = `
+    <div style="font-family:Arial,sans-serif; line-height:1.6;">
+      <h2 style="margin-bottom:8px;">임시 비밀번호가 발급되었습니다</h2>
+      <p>안녕하세요 ${userName || '고객'}님, 요청하신 임시 비밀번호를 안내드립니다.</p>
+      <div style="padding:12px; background:#f7f7f7; border-radius:8px; margin:12px 0;">
+        <strong>임시 비밀번호:</strong> ${temporaryPassword}
+      </div>
+      <p>로그인 후 <strong>반드시 비밀번호를 변경</strong>해 주세요.</p>
+    </div>
   `;
 
 	return postEmailPayload({
