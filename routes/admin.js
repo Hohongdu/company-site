@@ -243,6 +243,44 @@ router.get('/dashboard', async (req, res) => {
        LIMIT 5`,
 		);
 
+		const [monthlyOrders] = await db.execute(
+			`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
+        COUNT(*) AS cnt,
+        COALESCE(SUM(total_amount), 0) AS revenue
+       FROM orders
+       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+       GROUP BY ym
+       ORDER BY ym ASC`,
+		);
+
+		const [monthlyInquiries] = await db.execute(
+			`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
+        COUNT(*) AS cnt
+       FROM inquiries
+       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+       GROUP BY ym
+       ORDER BY ym ASC`,
+		);
+
+		const monthLabels = [];
+		const now = new Date();
+		for (let i = 5; i >= 0; i -= 1) {
+			const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+			const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+			monthLabels.push(ym);
+		}
+
+		const orderMap = new Map(monthlyOrders.map((row) => [row.ym, Number(row.cnt || 0)]));
+		const revenueMap = new Map(monthlyOrders.map((row) => [row.ym, Number(row.revenue || 0)]));
+		const inquiryMap = new Map(monthlyInquiries.map((row) => [row.ym, Number(row.cnt || 0)]));
+
+		const chartData = {
+			labels: monthLabels.map((ym) => ym.slice(5).replace('-', '/')),
+			orders: monthLabels.map((ym) => orderMap.get(ym) || 0),
+			inquiries: monthLabels.map((ym) => inquiryMap.get(ym) || 0),
+			revenue: monthLabels.map((ym) => revenueMap.get(ym) || 0),
+		};
+
 		// --- 시스템 상태 ---
 		const cpuCores = os.cpus().length;
 		const load = os.loadavg(); // [1m,5m,15m]
@@ -316,6 +354,7 @@ router.get('/dashboard', async (req, res) => {
 			},
 			recentOrders,
 			recentInquiries,
+			chartData,
 		});
 	} catch (err) {
 		console.error(err);
