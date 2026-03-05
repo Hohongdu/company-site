@@ -627,9 +627,11 @@ a:hover {
 .drawer-close {
 	border: none;
 	background: transparent;
-	font-size: 22px;
 	cursor: pointer;
 	color: #94a3b8;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 
 /* Modal (login) */
@@ -686,9 +688,11 @@ a:hover {
 .modal2 .x {
 	border: none;
 	background: transparent;
-	font-size: 20px;
 	color: #94a3b8;
 	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 .modal2 .subtitle {
 	margin: 0 0 14px;
@@ -774,6 +778,10 @@ a:hover {
 	gap: 8px;
 	color: #111827;
 	font-size: 14px;
+}
+
+.keep span {
+	white-space: nowrap;
 }
 
 /* Responsive */
