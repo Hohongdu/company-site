@@ -629,3 +629,38 @@ body.admin-body {
 		border-right: 0;
 	}
 }
+
+.admin-product-table-wrap {
+	overflow-x: auto;
+}
+
+.admin-product-table {
+	table-layout: fixed;
+	min-width: 980px;
+}
+
+.admin-product-table th,
+.admin-product-table td {
+	vertical-align: middle;
+}
+
+.admin-product-table .admin-cell-code,
+.admin-product-table .admin-cell-price,
+.admin-product-table .admin-cell-status {
+	white-space: nowrap;
+}
+
+.admin-product-table .admin-cell-name,
+.admin-product-table .admin-cell-category {
+	min-width: 0;
+}
+
+.admin-product-table .js-stock-input {
+	max-width: 84px;
+}
+
+@media (max-width: 1200px) {
+	.admin-product-table {
+		min-width: 920px;
+	}
+}
