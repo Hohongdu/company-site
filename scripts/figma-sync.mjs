@@ -16,12 +16,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const FIGMA_TOKEN = process.env.FIGMA_key || process.env.FIGMA_TOKEN;
+const FIGMA_TOKEN = process.env.FIGMA_KEY || process.env.FIGMA_key || process.env.FIGMA_TOKEN;
 const FILE_KEY = process.env.FIGMA_FILE_KEY;
 const EXPORT_PREFIX = process.env.FIGMA_EXPORT_PREFIX ?? '@export ';
 
 if (!FIGMA_TOKEN) {
-  console.error('Missing FIGMA_key (preferred) or FIGMA_TOKEN env var.');
+  console.error('Missing FIGMA_KEY (preferred) or FIGMA_key or FIGMA_TOKEN env var.');
   process.exit(1);
 }
 if (!FILE_KEY) {

@@ -28,7 +28,7 @@ jobs:
 
       - name: Sync from Figma
         env:
-          FIGMA_key: ${{ secrets.FIGMA_key }}
+          FIGMA_KEY: ${{ secrets.FIGMA_KEY }}
           FIGMA_FILE_KEY: tg1ZEeoFwwrRtatKqIWBE8
         run: npm run figma:sync
 
