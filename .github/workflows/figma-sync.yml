@@ -1,14 +1,18 @@
 name: Figma Sync
 
+
 on:
     workflow_dispatch:
     schedule:
         # Every day at 01:30 KST (16:30 UTC)
-        - cron: '30 16 * * *'
+        - cron: '30 16 * * *'→ Runs at 16:30
+
+
 
 permissions:
     contents: write
     pull-requests: write
+
 
 jobs:
     sync:
@@ -16,21 +20,30 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+name: Figma Sync
 
+
+on:
+  workflow_dispatch:
+    schedule:
+        # Every da
             - name: Setup Node
               uses: actions/setup-node@v4
               with:
                   node-version: 22
                   cache: npm
 
+
             - name: Install
               run: npm ci
+
 
             - name: Sync from Figma
               env:
                   FIGMA_KEY: ${{ secrets.FIGMA_KEY }}
-                  FIGMA_FILE_KEY: tg1ZEeoFwwrRtatKqIWBE8
+                  FIGMA_FILE_KEY: kk6NyIgAMBJU7lJlSSxFqY
               run: npm run figma:sync
+
 
             - name: Create Pull Request
               uses: peter-evans/create-pull-request@v6
@@ -40,8 +53,10 @@ jobs:
                   body: |
                       Automated sync from Figma.
 
+
                       - Updates public/styles/tokens.css
                       - Updates views/partials/generated/figma-sections.ejs
+
 
                       If this PR looks wrong, adjust Figma Variables / @export frames.
                   branch: chore/figma-sync
