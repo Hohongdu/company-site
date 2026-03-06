@@ -7,22 +7,33 @@
                     <div class="text-center mb-4">
                         <span class="badge rounded-pill text-bg-primary mb-2">계정 도움말</span>
                         <h1 class="h3 fw-bold mb-2">아이디 · 비밀번호 찾기</h1>
-                        <p class="text-muted mb-0">계정 정보 확인은 고객센터를 통해 도와드리고 있습니다.</p>
+                        <p class="text-muted mb-0">가입 이메일로 임시 비밀번호를 받아 로그인할 수 있습니다.</p>
                     </div>
 
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
-                            <p class="mb-3">
-                                보안 정책에 따라 이메일 주소 확인 및 임시 비밀번호 발급은 상담 후 진행됩니다.
-                            </p>
-                            <ul class="text-muted small mb-4">
-                                <li>문의 시 성함과 가입 이메일을 함께 알려주세요.</li>
-                                <li>영업시간 내에 순차적으로 답변드립니다.</li>
+                            <% if (message) { %>
+                                <div class="alert alert-info" role="alert"><%= message %></div>
+                            <% } %>
+
+                            <form method="post" action="/auth/forgot" class="d-flex flex-column gap-3">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <div>
+                                    <label for="forgotEmail" class="form-label">가입 이메일</label>
+                                    <input id="forgotEmail" name="email" type="email" class="form-control" placeholder="you@example.com" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">임시 비밀번호 발급</button>
+                            </form>
+
+                            <hr class="my-4">
+                            <ul class="text-muted small mb-3">
+                                <li>가입된 이메일이 맞다면 임시 비밀번호가 전송됩니다.</li>
+                                <li>이메일 전송은 서버 설정(SMTP/웹훅)에 따라 동작합니다.</li>
                             </ul>
 
                             <div class="d-flex flex-column flex-sm-row gap-2">
-                                <a href="/contact" class="btn btn-primary">문의하기</a>
-                                <a href="/auth/login" class="btn btn-outline-secondary">로그인 페이지로</a>
+                                <a href="/contact" class="btn btn-outline-secondary">문의하기</a>
+                                <a href="/auth/login" class="btn btn-outline-dark">로그인 페이지로</a>
                             </div>
                         </div>
                     </div>

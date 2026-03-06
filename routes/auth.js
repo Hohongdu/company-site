@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
+const { sendTemporaryPasswordEmail } = require('../services/notification.service');
 
 const router = express.Router();
 
@@ -25,7 +27,59 @@ router.get('/login', (req, res) => {
 router.get('/forgot', (req, res) => {
 	return res.render('auth/forgot', {
 		csrfToken: req.csrfToken(),
+		message: null,
 	});
+});
+
+function generateTemporaryPassword(length = 12) {
+	return crypto
+		.randomBytes(length)
+		.toString('base64')
+		.replace(/[^a-zA-Z0-9]/g, '')
+		.slice(0, length);
+}
+
+router.post('/forgot', async (req, res) => {
+	const successMessage = '요청이 접수되었습니다. 가입된 이메일이라면 임시 비밀번호를 발송했습니다.';
+
+	try {
+		const email = String(req.body.email || '').trim().toLowerCase();
+		if (!email) {
+			return res.status(400).render('auth/forgot', {
+				csrfToken: req.csrfToken(),
+				message: '이메일 주소를 입력해 주세요.',
+			});
+		}
+
+		const [rows] = await db.execute('SELECT id, name, email FROM users WHERE email = ? LIMIT 1', [email]);
+		if (rows.length > 0) {
+			const user = rows[0];
+			const temporaryPassword = generateTemporaryPassword(12);
+			const hashedPw = await bcrypt.hash(temporaryPassword, 10);
+			await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPw, user.id]);
+
+			const emailResult = await sendTemporaryPasswordEmail({
+				to: user.email,
+				userName: user.name,
+				temporaryPassword,
+			});
+
+			if (emailResult.status === 'FAILED') {
+				console.error('[auth/forgot] temporary password mail failed:', emailResult.error);
+			}
+		}
+
+		return res.render('auth/forgot', {
+			csrfToken: req.csrfToken(),
+			message: successMessage,
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).render('auth/forgot', {
+			csrfToken: req.csrfToken(),
+			message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+		});
+	}
 });
 router.get('/register', (req, res) => res.render('auth/register'));
 
