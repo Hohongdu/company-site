@@ -13,10 +13,10 @@ const productHealth = totalProducts > 0 ? Math.min(100, Math.max(15, Math.round(
 const inquiryHealth = totalInquiries > 0 ? Math.min(100, Math.max(10, 100 - Math.round((totalInquiries / Math.max(totalOrders + totalInquiries, 1)) * 80))) : 88;
 
 const quickCards = [
-    { label: '총 상품', value: totalProducts, icon: 'bi-box-seam', tone: 'blue', href: '/admin/products' },
-    { label: '총 카테고리', value: totalCategories, icon: 'bi-grid-3x3-gap', tone: 'mint', href: '/admin/categories' },
-    { label: '총 주문', value: totalOrders, icon: 'bi-bag-check', tone: 'purple', href: '/admin/orders' },
-    { label: '총 문의', value: totalInquiries, icon: 'bi-chat-left-dots', tone: 'pink', href: '/admin/inquiries' }
+    { label: '총 상품', value: totalProducts, href: '/admin/products' },
+    { label: '총 카테고리', value: totalCategories, href: '/admin/categories' },
+    { label: '총 주문', value: totalOrders, href: '/admin/orders' },
+    { label: '총 문의', value: totalInquiries, href: '/admin/inquiries' }
 ];
 
 const chartPayload = {
@@ -55,7 +55,6 @@ const chartPayload = {
         <section class="dashboard-card kpi-strip">
             <% quickCards.forEach((item) => { %>
                 <a href="<%= item.href %>" class="kpi-item text-decoration-none">
-                    <span class="kpi-icon <%= item.tone %>"><i class="bi <%= item.icon %>"></i></span>
                     <strong><%= item.value.toLocaleString() %></strong>
                     <small><%= item.label %></small>
                 </a>
