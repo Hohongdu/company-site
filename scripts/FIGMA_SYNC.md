@@ -1,12 +1,16 @@
 # Figma Sync
 
-This repo includes a small sync pipeline to pull **Figma Variables** into the codebase.
+This repo includes a small sync pipeline to pull Figma data into the codebase.
+
+> Note: If your Figma token/workspace does not expose the `file_variables:read` scope,
+> the Variables endpoint will 403 and **token sync will be skipped**. Section scaffolding still works.
 
 ## What it generates
 
 - `public/styles/tokens.css`
   - CSS variables under `:root`
   - Optional `[data-theme="dark"]` variables when a Figma mode contains the word `dark`
+  - **If Variables scope is unavailable, this file is left unchanged**
 - `views/partials/generated/figma-sections.ejs`
   - Scaffolds `<section>` tags for any Figma FRAME/COMPONENT whose name starts with `@export `
 

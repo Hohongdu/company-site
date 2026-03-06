@@ -234,7 +234,23 @@ async function scaffoldExportFrames() {
 }
 
 async function main() {
-  const tokensResult = await syncVariablesToCss();
+  let tokensResult = { skipped: true, reason: 'not-run' };
+
+  try {
+    tokensResult = await syncVariablesToCss();
+  } catch (err) {
+    const msg = String(err?.message || err);
+
+    // Common case: token doesn't have Variables scope in this workspace/account.
+    if (msg.includes('requires the file_variables:read scope') || msg.includes('/variables/local')) {
+      console.warn('[figma-sync] Variables sync skipped:', msg.split('\n')[0]);
+      // Do NOT fail the whole workflow. Keep existing tokens.css as-is.
+      tokensResult = { skipped: true, reason: 'missing-file_variables-scope' };
+    } else {
+      throw err;
+    }
+  }
+
   const scaffoldResult = await scaffoldExportFrames();
 
   console.log(JSON.stringify({
