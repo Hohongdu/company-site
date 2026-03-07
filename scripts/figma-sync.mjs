@@ -55,8 +55,14 @@ async function figmaGetJson(urlPath, { retries = 5 } = {}) {
     if ((status === 429 || (status >= 500 && status <= 599)) && attempt < retries) {
       // Honor Retry-After if provided; otherwise exponential backoff.
       const ra = res.headers.get('retry-after');
-      const retryAfterMs = ra ? (Number(ra) * 1000) : null;
-      const backoffMs = retryAfterMs ?? Math.min(30_000, 800 * (2 ** attempt));
+      // Retry-After may be seconds, or can be misconfigured. Cap it hard.
+      const retryAfterSec = ra && !Number.isNaN(Number(ra)) ? Number(ra) : null;
+      const retryAfterMsRaw = retryAfterSec != null ? (retryAfterSec * 1000) : null;
+
+      const expBackoffMs = Math.min(30_000, 800 * (2 ** attempt));
+      const backoffMs = (retryAfterMsRaw != null && retryAfterMsRaw > 0 && retryAfterMsRaw <= 30_000)
+        ? retryAfterMsRaw
+        : expBackoffMs;
 
       // Drain body to avoid resource leaks
       await res.text().catch(() => '');
