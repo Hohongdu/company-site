@@ -30,6 +30,8 @@ jobs:
               env:
                   FIGMA_KEY: ${{ secrets.FIGMA_KEY }}
                   FIGMA_FILE_KEY: NnTQQhMv1k7NeFKefDu2G3
+                  # Pace Figma API requests to avoid 429s on GitHub-hosted runners
+                  FIGMA_MIN_GAP_MS: 1200
               run: npm run figma:sync
 
             - name: Create Pull Request
