@@ -34,15 +34,41 @@ const ROOT = path.resolve(process.cwd());
 const outTokensCss = path.join(ROOT, 'public', 'styles', 'tokens.css');
 const outSectionsEjs = path.join(ROOT, 'views', 'partials', 'generated', 'figma-sections.ejs');
 
-async function figmaGetJson(urlPath) {
-  const res = await fetch(`https://api.figma.com/v1/${urlPath}`, {
-    headers: { 'X-Figma-Token': FIGMA_TOKEN },
-  });
-  if (!res.ok) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function figmaGetJson(urlPath, { retries = 5 } = {}) {
+  let attempt = 0;
+  // Basic retry with backoff for 429 / transient 5xx.
+  while (true) {
+    const res = await fetch(`https://api.figma.com/v1/${urlPath}`, {
+      headers: { 'X-Figma-Token': FIGMA_TOKEN },
+    });
+
+    if (res.ok) return res.json();
+
+    const status = res.status;
+    const statusText = res.statusText;
+
+    // Rate limit
+    if ((status === 429 || (status >= 500 && status <= 599)) && attempt < retries) {
+      // Honor Retry-After if provided; otherwise exponential backoff.
+      const ra = res.headers.get('retry-after');
+      const retryAfterMs = ra ? (Number(ra) * 1000) : null;
+      const backoffMs = retryAfterMs ?? Math.min(30_000, 800 * (2 ** attempt));
+
+      // Drain body to avoid resource leaks
+      await res.text().catch(() => '');
+      console.warn(`[figma-sync] Figma API ${status} for ${urlPath}; retrying in ${backoffMs}ms (attempt ${attempt + 1}/${retries})`);
+      await sleep(backoffMs);
+      attempt++;
+      continue;
+    }
+
     const text = await res.text().catch(() => '');
-    throw new Error(`Figma API ${res.status} ${res.statusText} for ${urlPath}\n${text}`);
+    throw new Error(`Figma API ${status} ${statusText} for ${urlPath}\n${text}`);
   }
-  return res.json();
 }
 
 function clamp255(n) {
