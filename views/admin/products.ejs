@@ -114,26 +114,26 @@
 
                                     <% list.forEach((p)=> { %>
                                         <tr>
-                                            <td>
+                                            <td data-label="선택">
                                                 <input class="form-check-input js-row-check" type="checkbox"
                                                     data-id="<%= p.id %>">
                                             </td>
-                                                <td>
+                                                <td data-label="ID">
                                                     <%= p.id %>
                                                 </td>
-                                                <td class="text-muted admin-cell-code">
+                                                <td class="text-muted admin-cell-code" data-label="코드">
                                                     <span class="text-truncate d-inline-block" style="max-width: 130px; vertical-align: bottom;"><%= p.code || '-' %></span>
                                                 </td>
-                                                <td class="fw-semibold admin-cell-name">
+                                                <td class="fw-semibold admin-cell-name" data-label="상품명">
                                                     <span class="text-truncate d-inline-block" style="max-width: 240px; vertical-align: bottom;"><%= p.name %></span>
                                                 </td>
-                                                <td class="text-muted admin-cell-category">
+                                                <td class="text-muted admin-cell-category" data-label="카테고리">
                                                     <span class="text-truncate d-inline-block" style="max-width: 120px; vertical-align: bottom;"><%= p.category_name || '-' %></span>
                                                 </td>
-                                                <td class="text-end admin-cell-price">
+                                                <td class="text-end admin-cell-price" data-label="가격">
                                                     <%= Number(p.price || 0).toLocaleString() %>원
                                                 </td>
-                                                <td>
+                                                <td data-label="재고">
                                                     <% const stockQty = Number(p.stock_quantity || 0); %>
                                                     <% if (stockQty <= 0) { %>
                                                         <span class="badge text-bg-danger">품절</span>
@@ -149,7 +149,7 @@
                                                             type="button" data-id="<%= p.id %>">저장</button>
                                                     </div>
                                                 </td>
-                                                <td class="admin-cell-status">
+                                                <td class="admin-cell-status" data-label="상태">
                                                     <div class="d-flex gap-2 align-items-center admin-inline flex-wrap">
                                                         <select class="form-select form-select-sm js-visibility-select"
                                                             data-id="<%= p.id %>">
@@ -164,7 +164,7 @@
                                                             type="button" data-id="<%= p.id %>">변경</button>
                                                     </div>
                                                 </td>
-                                                <td>
+                                                <td data-label="관리">
                                                     <div class="d-flex gap-2 flex-wrap admin-actions">
                                                         <a class="btn btn-sm btn-outline-primary"
                                                             href="/admin/products/<%= p.id %>/edit">수정</a>
