@@ -89,7 +89,7 @@ function cssVarLine(varName, cssValue) {
   return `  --${varName}: ${cssValue};`;
 }
 
-async function syncVariablesToCss() {
+async function syncVariablesToCssLines() {
   // Variables API (beta-ish): /v1/files/:key/variables/local
   const data = await figmaGetJson(`files/${FILE_KEY}/variables/local`);
 
@@ -152,23 +152,177 @@ async function syncVariablesToCss() {
   rootLines.sort();
   darkLines.sort();
 
+  return {
+    meta: { variablesCount: Object.keys(variables).length, emittedRoot: rootLines.length, emittedDark: darkLines.length },
+    lines: { rootLines, darkLines },
+  };
+}
+
+async function figmaGetNodes(ids) {
+  const url = `files/${FILE_KEY}/nodes?ids=${encodeURIComponent(ids.join(','))}`;
+  return figmaGetJson(url);
+}
+
+function takeFirstSolidPaint(paints) {
+  for (const p of (paints ?? [])) {
+    if (p?.type === 'SOLID' && p?.color) return p;
+  }
+  return null;
+}
+
+function styleToColorVars(styleName, color) {
+  const base = `color-${sanitizeCssVarName(styleName)}`;
+  return [cssVarLine(base, figmaColorToCss(color))];
+}
+
+function styleToTextVars(styleName, textStyle) {
+  const base = `font-${sanitizeCssVarName(styleName)}`;
+  const out = [];
+  if (textStyle?.fontFamily) out.push(cssVarLine(`${base}-family`, `${textStyle.fontFamily}`));
+  if (textStyle?.fontPostScriptName) out.push(cssVarLine(`${base}-ps`, `${textStyle.fontPostScriptName}`));
+  if (textStyle?.fontWeight) out.push(cssVarLine(`${base}-weight`, `${textStyle.fontWeight}`));
+  if (textStyle?.fontSize) out.push(cssVarLine(`${base}-size`, `${textStyle.fontSize}px`));
+
+  // lineHeight can be PIXELS or PERCENT
+  if (textStyle?.lineHeightPx) out.push(cssVarLine(`${base}-line-height`, `${textStyle.lineHeightPx}px`));
+  if (textStyle?.lineHeightPercent) out.push(cssVarLine(`${base}-line-height`, `${textStyle.lineHeightPercent / 100}`));
+
+  if (textStyle?.letterSpacing) {
+    const { unit, value } = textStyle.letterSpacing;
+    if (unit === 'PIXELS') out.push(cssVarLine(`${base}-letter-spacing`, `${value}px`));
+    else if (unit === 'PERCENT') out.push(cssVarLine(`${base}-letter-spacing`, `${value / 100}em`));
+  }
+
+  return out;
+}
+
+async function syncStylesToCssLines() {
+  // Styles API: /v1/files/:key/styles
+  // Then node details for each style's node_id via /v1/files/:key/nodes
+  const data = await figmaGetJson(`files/${FILE_KEY}/styles`);
+  const styles = data?.meta?.styles ?? [];
+
+  const ids = styles.map(s => s.node_id).filter(Boolean);
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+
+  const rootLines = [];
+
+  for (const chunk of chunks) {
+    const nodesRes = await figmaGetNodes(chunk);
+    const nodes = nodesRes?.nodes ?? {};
+
+    for (const st of styles) {
+      if (!st?.node_id || !chunk.includes(st.node_id)) continue;
+      const nodeDoc = nodes?.[st.node_id]?.document;
+      if (!nodeDoc) continue;
+
+      if (st.style_type === 'FILL') {
+        const solid = takeFirstSolidPaint(nodeDoc.fills);
+        if (!solid) continue;
+        rootLines.push(...styleToColorVars(st.name, solid.color));
+      } else if (st.style_type === 'TEXT') {
+        // Text style is usually in nodeDoc.style
+        rootLines.push(...styleToTextVars(st.name, nodeDoc.style));
+      }
+    }
+  }
+
+  // Dedup + sort
+  const unique = Array.from(new Set(rootLines)).sort();
+  return { meta: { stylesCount: styles.length, emittedRoot: unique.length }, lines: { rootLines: unique, darkLines: [] } };
+}
+
+function parseJsonFromText(text) {
+  // strict JSON only (no trailing commas, no comments)
+  return JSON.parse(text);
+}
+
+async function extractAtTokensJsonLines() {
+  // Find a node (frame/component) named exactly "@tokens" (case sensitive)
+  const file = await figmaGetJson(`files/${FILE_KEY}`);
+  const doc = file?.document;
+  if (!doc) throw new Error('No document in Figma file response.');
+
+  let tokensNodeId = null;
+  walk(doc, (n) => {
+    if (tokensNodeId) return;
+    if ((n?.type === 'FRAME' || n?.type === 'COMPONENT' || n?.type === 'COMPONENT_SET') && n?.name === '@tokens') {
+      tokensNodeId = n.id;
+    }
+  });
+
+  if (!tokensNodeId) return { meta: { found: false }, lines: [] };
+
+  const nodeRes = await figmaGetNodes([tokensNodeId]);
+  const nodeDoc = nodeRes?.nodes?.[tokensNodeId]?.document;
+  if (!nodeDoc) return { meta: { found: false }, lines: [] };
+
+  const textLayers = [];
+  walk(nodeDoc, (n) => {
+    if (n?.type === 'TEXT' && typeof n?.characters === 'string' && n.characters.trim()) {
+      textLayers.push(n.characters.trim());
+    }
+  });
+
+  if (!textLayers.length) return { meta: { found: true, parsed: false, reason: 'no-text-layer' }, lines: [] };
+
+  // If multiple text layers exist, concatenate with newlines.
+  const text = textLayers.join('\n');
+  let obj;
+  try {
+    obj = parseJsonFromText(text);
+  } catch (e) {
+    return { meta: { found: true, parsed: false, reason: 'invalid-json' }, lines: [] };
+  }
+
+  // Accept {"a": "b"} flat map; values become raw CSS values.
+  const lines = [];
+  for (const [k, v] of Object.entries(obj ?? {})) {
+    const varName = sanitizeCssVarName(String(k));
+    if (!varName) continue;
+    lines.push(cssVarLine(varName, String(v)));
+  }
+  lines.sort();
+
+  return { meta: { found: true, parsed: true, emitted: lines.length }, lines };
+}
+
+async function writeTokensCss({ variables, styles, atTokens }) {
+  const root = [];
+  const dark = [];
+
+  // Base order: variables -> styles -> @tokens (override)
+  if (variables?.lines?.rootLines?.length) root.push(...variables.lines.rootLines);
+  if (styles?.lines?.rootLines?.length) root.push(...styles.lines.rootLines);
+  if (atTokens?.lines?.length) root.push(...atTokens.lines);
+
+  // Dedup keeping last definition (override). We'll do this by walking forward and storing index.
+  const map = new Map();
+  for (const line of root) {
+    const m = line.match(/^\s*--([a-z0-9\-_]+):/);
+    if (!m) continue;
+    map.set(m[1], line);
+  }
+  const mergedRoot = Array.from(map.values()).sort();
+
   const css = [
     '/* AUTO-GENERATED by scripts/figma-sync.mjs */',
     `/* Source: https://www.figma.com/file/${FILE_KEY} */`,
-    '/* Do not edit by hand; edit Figma Variables instead. */',
+    '/* Do not edit by hand; edit Figma Styles / @tokens frame instead. */',
+    '/* Priority: Variables (if available) < Styles < @tokens(JSON override) */',
     '',
     ':root {',
-    ...rootLines,
+    ...(mergedRoot.length ? mergedRoot : ['  /* placeholder until first sync */']),
     '}',
     '',
-    ...(darkLines.length
-      ? ['[data-theme="dark"] {', ...darkLines, '}', '']
-      : []),
+    ...(dark.length ? ['[data-theme="dark"] {', ...dark, '}', ''] : []),
   ].join('\n');
 
   await fs.mkdir(path.dirname(outTokensCss), { recursive: true });
   await fs.writeFile(outTokensCss, css, 'utf8');
-  return { variablesCount: Object.keys(variables).length, emittedRoot: rootLines.length, emittedDark: darkLines.length };
+
+  return { emittedRoot: mergedRoot.length };
 }
 
 function walk(node, fn) {
@@ -239,29 +393,58 @@ async function scaffoldExportFrames() {
 }
 
 async function main() {
-  let tokensResult = { skipped: true, reason: 'not-run' };
+  let variablesResult = { skipped: true, reason: 'not-run' };
+  let stylesResult = { skipped: true, reason: 'not-run' };
+  let atTokensResult = { skipped: true, reason: 'not-run' };
 
+  // 1) Try Variables (best case) but skip if not available
   try {
-    tokensResult = await syncVariablesToCss();
+    variablesResult = await syncVariablesToCssLines();
   } catch (err) {
     const msg = String(err?.message || err);
 
     // Common case: token doesn't have Variables scope in this workspace/account.
     if (msg.includes('requires the file_variables:read scope') || msg.includes('/variables/local')) {
       console.warn('[figma-sync] Variables sync skipped:', msg.split('\n')[0]);
-      // Do NOT fail the whole workflow. Keep existing tokens.css as-is.
-      tokensResult = { skipped: true, reason: 'missing-file_variables-scope' };
+      variablesResult = { skipped: true, reason: 'missing-file_variables-scope' };
     } else {
       throw err;
     }
   }
+
+  // 2) Styles fallback
+  try {
+    stylesResult = await syncStylesToCssLines();
+  } catch (err) {
+    console.warn('[figma-sync] Styles sync skipped:', String(err?.message || err).split('\n')[0]);
+    stylesResult = { skipped: true, reason: 'styles-api-error' };
+  }
+
+  // 3) @tokens JSON override
+  try {
+    atTokensResult = await extractAtTokensJsonLines();
+  } catch (err) {
+    console.warn('[figma-sync] @tokens parse skipped:', String(err?.message || err).split('\n')[0]);
+    atTokensResult = { skipped: true, reason: 'tokens-parse-error' };
+  }
+
+  const tokensWrite = await writeTokensCss({
+    variables: variablesResult?.lines ? variablesResult : null,
+    styles: stylesResult?.lines ? stylesResult : null,
+    atTokens: atTokensResult?.lines ? atTokensResult : null,
+  });
 
   const scaffoldResult = await scaffoldExportFrames();
 
   console.log(JSON.stringify({
     ok: true,
     fileKey: FILE_KEY,
-    tokens: tokensResult,
+    tokens: {
+      variables: variablesResult?.meta ?? variablesResult,
+      styles: stylesResult?.meta ?? stylesResult,
+      atTokens: atTokensResult?.meta ?? atTokensResult,
+      written: tokensWrite,
+    },
     sections: scaffoldResult,
   }, null, 2));
 }
