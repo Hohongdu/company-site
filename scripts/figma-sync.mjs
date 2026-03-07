@@ -41,8 +41,10 @@ function sleep(ms) {
 // Very small client-side pacing to reduce 429s when runners burst requests.
 let _lastFigmaReqAt = 0;
 const MIN_GAP_MS = Number(process.env.FIGMA_MIN_GAP_MS ?? 250);
+const DEFAULT_RETRIES = Number(process.env.FIGMA_RETRIES ?? 20);
+const MAX_BACKOFF_MS = Number(process.env.FIGMA_MAX_BACKOFF_MS ?? 300000); // 5 min cap
 
-async function figmaGetJson(urlPath, { retries = 8 } = {}) {
+async function figmaGetJson(urlPath, { retries = DEFAULT_RETRIES } = {}) {
   let attempt = 0;
   // Basic retry with backoff for 429 / transient 5xx.
   while (true) {
@@ -70,8 +72,8 @@ async function figmaGetJson(urlPath, { retries = 8 } = {}) {
       const retryAfterSec = ra && !Number.isNaN(Number(ra)) ? Number(ra) : null;
       const retryAfterMsRaw = retryAfterSec != null ? (retryAfterSec * 1000) : null;
 
-      const expBackoffMs = Math.min(60_000, 800 * (2 ** attempt));
-      const backoffMs = (retryAfterMsRaw != null && retryAfterMsRaw > 0 && retryAfterMsRaw <= 60_000)
+      const expBackoffMs = Math.min(MAX_BACKOFF_MS, 800 * (2 ** attempt));
+      const backoffMs = (retryAfterMsRaw != null && retryAfterMsRaw > 0 && retryAfterMsRaw <= MAX_BACKOFF_MS)
         ? retryAfterMsRaw
         : expBackoffMs;
 
@@ -281,9 +283,21 @@ function parseJsonFromText(text) {
   return JSON.parse(text);
 }
 
+let _cachedFile = null;
+async function figmaGetFileOnce() {
+  if (_cachedFile) return _cachedFile;
+  _cachedFile = await figmaGetJson(`files/${FILE_KEY}`);
+  return _cachedFile;
+}
+
+function isRateLimitError(err) {
+  const msg = String(err?.message || err);
+  return msg.includes('Figma API 429') || msg.includes('Rate limit exceeded') || msg.includes('Too Many Requests');
+}
+
 async function extractAtTokensJsonLines() {
   // Find a node (frame/component) named exactly "@tokens" (case sensitive)
-  const file = await figmaGetJson(`files/${FILE_KEY}`);
+  const file = await figmaGetFileOnce();
   const doc = file?.document;
   if (!doc) throw new Error('No document in Figma file response.');
 
@@ -386,7 +400,7 @@ function toSlugClass(name) {
 
 async function scaffoldExportFrames() {
   // Basic: find frames whose name starts with EXPORT_PREFIX and generate EJS skeleton.
-  const file = await figmaGetJson(`files/${FILE_KEY}`);
+  const file = await figmaGetFileOnce();
   const doc = file?.document;
   if (!doc) throw new Error('No document in Figma file response.');
 
@@ -455,29 +469,49 @@ async function main() {
     }
   }
 
-  // 2) Styles fallback
-  try {
-    stylesResult = await syncStylesToCssLines();
-  } catch (err) {
-    console.warn('[figma-sync] Styles sync skipped:', String(err?.message || err).split('\n')[0]);
-    stylesResult = { skipped: true, reason: 'styles-api-error' };
+  // 2) Styles fallback (optional: can be disabled to reduce API calls)
+  const ENABLE_STYLES = (process.env.FIGMA_ENABLE_STYLES ?? '0') === '1';
+  if (ENABLE_STYLES) {
+    try {
+      stylesResult = await syncStylesToCssLines();
+    } catch (err) {
+      const first = String(err?.message || err).split('\n')[0];
+      console.warn('[figma-sync] Styles sync skipped:', first);
+      stylesResult = { skipped: true, reason: isRateLimitError(err) ? 'rate-limited' : 'styles-api-error' };
+    }
+  } else {
+    stylesResult = { skipped: true, reason: 'disabled' };
   }
 
   // 3) @tokens JSON override
   try {
     atTokensResult = await extractAtTokensJsonLines();
   } catch (err) {
-    console.warn('[figma-sync] @tokens parse skipped:', String(err?.message || err).split('\n')[0]);
-    atTokensResult = { skipped: true, reason: 'tokens-parse-error' };
+    const first = String(err?.message || err).split('\n')[0];
+    console.warn('[figma-sync] @tokens parse skipped:', first);
+    atTokensResult = { skipped: true, reason: isRateLimitError(err) ? 'rate-limited' : 'tokens-parse-error' };
   }
 
-  const tokensWrite = await writeTokensCss({
-    variables: variablesResult?.lines ? variablesResult : null,
-    styles: stylesResult?.lines ? stylesResult : null,
-    atTokens: atTokensResult?.lines ? atTokensResult : null,
-  });
+  let tokensWrite = { skipped: true, reason: 'not-run' };
+  try {
+    tokensWrite = await writeTokensCss({
+      variables: variablesResult?.lines ? variablesResult : null,
+      styles: stylesResult?.lines ? stylesResult : null,
+      atTokens: atTokensResult?.lines ? atTokensResult : null,
+    });
+  } catch (err) {
+    console.warn('[figma-sync] write tokens.css skipped:', String(err?.message || err).split('\n')[0]);
+    tokensWrite = { skipped: true, reason: 'write-failed' };
+  }
 
-  const scaffoldResult = await scaffoldExportFrames();
+  let scaffoldResult = { skipped: true, reason: 'not-run' };
+  try {
+    scaffoldResult = await scaffoldExportFrames();
+  } catch (err) {
+    const first = String(err?.message || err).split('\n')[0];
+    console.warn('[figma-sync] scaffold skipped:', first);
+    scaffoldResult = { skipped: true, reason: isRateLimitError(err) ? 'rate-limited' : 'scaffold-error' };
+  }
 
   console.log(JSON.stringify({
     ok: true,
