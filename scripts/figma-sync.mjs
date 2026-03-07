@@ -38,10 +38,21 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function figmaGetJson(urlPath, { retries = 5 } = {}) {
+// Very small client-side pacing to reduce 429s when runners burst requests.
+let _lastFigmaReqAt = 0;
+const MIN_GAP_MS = Number(process.env.FIGMA_MIN_GAP_MS ?? 250);
+
+async function figmaGetJson(urlPath, { retries = 8 } = {}) {
   let attempt = 0;
   // Basic retry with backoff for 429 / transient 5xx.
   while (true) {
+    const now = Date.now();
+    const gap = now - _lastFigmaReqAt;
+    if (gap >= 0 && gap < MIN_GAP_MS) {
+      await sleep(MIN_GAP_MS - gap);
+    }
+    _lastFigmaReqAt = Date.now();
+
     const res = await fetch(`https://api.figma.com/v1/${urlPath}`, {
       headers: { 'X-Figma-Token': FIGMA_TOKEN },
     });
@@ -59,8 +70,8 @@ async function figmaGetJson(urlPath, { retries = 5 } = {}) {
       const retryAfterSec = ra && !Number.isNaN(Number(ra)) ? Number(ra) : null;
       const retryAfterMsRaw = retryAfterSec != null ? (retryAfterSec * 1000) : null;
 
-      const expBackoffMs = Math.min(30_000, 800 * (2 ** attempt));
-      const backoffMs = (retryAfterMsRaw != null && retryAfterMsRaw > 0 && retryAfterMsRaw <= 30_000)
+      const expBackoffMs = Math.min(60_000, 800 * (2 ** attempt));
+      const backoffMs = (retryAfterMsRaw != null && retryAfterMsRaw > 0 && retryAfterMsRaw <= 60_000)
         ? retryAfterMsRaw
         : expBackoffMs;
 
