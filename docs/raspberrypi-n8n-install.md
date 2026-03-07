@@ -47,6 +47,9 @@ sudo usermod -aG docker $USER
 ```bash
 cd /workspace/company-site/deploy/n8n
 cp .env.example .env
+
+# 또는 자동 초기화 스크립트 사용
+./bootstrap.sh
 ```
 
 `.env`에서 최소 아래 값 수정 권장:
@@ -185,3 +188,21 @@ EMAIL_WEBHOOK_TOKEN=<스크립트가 생성한 64hex 토큰>
 cd /workspace/company-site/deploy/n8n
 docker compose up -d
 ```
+
+
+### 자주 만나는 오류 즉시 해결
+
+- 오류: `env file .../.env not found`
+  - 원인: `deploy/n8n/.env`가 없음
+  - 해결:
+
+```bash
+cd /home/ras/apps/company-site/deploy/n8n
+./bootstrap.sh
+# 또는 cp .env.example .env
+docker compose up -d
+```
+
+- 경고: `the attribute version is obsolete`
+  - 최신 compose에서는 `version` 키를 쓰지 않습니다.
+  - 현재 템플릿은 해당 키를 제거해 경고 없이 동작합니다.

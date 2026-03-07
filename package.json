@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "figma:sync": "node scripts/figma-sync.mjs"
   },
   "repository": {
     "type": "git",
