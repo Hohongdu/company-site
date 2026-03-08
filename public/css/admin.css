@@ -336,13 +336,13 @@ body.admin-body {
 	.admin-sidebar {
 		position: fixed;
 		top: 0;
-		left: 0;
+		right: 0;
 		width: min(86vw, 340px);
 		height: 100vh;
 		max-height: 100vh;
-		border-radius: 0 18px 18px 0;
+		border-radius: 18px 0 0 18px;
 		z-index: 1050;
-		transform: translateX(-105%);
+		transform: translateX(105%);
 		transition: transform 0.2s ease;
 	}
 
@@ -501,11 +501,12 @@ body.admin-body {
 
 .kpi-item {
 	border-right: 1px solid #e2e8f0;
-	padding: 10px;
+	padding: 12px 10px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
+	gap: 4px;
 	color: #0f172a;
 }
 
@@ -521,20 +522,6 @@ body.admin-body {
 	color: #64748b;
 }
 
-.kpi-icon {
-	width: 44px;
-	height: 44px;
-	border-radius: 50%;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 1.1rem;
-}
-
-.kpi-icon.blue { background: #dbeafe; color: #2563eb; }
-.kpi-icon.mint { background: #dcfce7; color: #16a34a; }
-.kpi-icon.purple { background: #ede9fe; color: #7c3aed; }
-.kpi-icon.pink { background: #fce7f3; color: #db2777; }
 
 .mini-metric h5,
 .chart-card h5,
@@ -662,5 +649,142 @@ body.admin-body {
 @media (max-width: 1200px) {
 	.admin-product-table {
 		min-width: 920px;
+	}
+}
+
+/* ===== readability refresh ===== */
+body.admin-wrap {
+	margin: 0;
+	background: #f3f6fb;
+	color: #0f172a;
+}
+
+.admin-main > .card,
+.admin-main > .admin-card,
+.admin-main form.card {
+	margin-bottom: 14px;
+}
+
+.admin-main h3 {
+	font-size: 1.55rem;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+}
+
+.admin-card,
+.card.shadow-sm {
+	border-radius: 18px !important;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+}
+
+.admin-card .card-body,
+.card.shadow-sm .card-body {
+	padding: 18px 18px;
+}
+
+.admin-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: #f8fbff;
+	white-space: nowrap;
+}
+
+.admin-table tbody td {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+.admin-table tbody tr {
+	border-bottom: 1px solid #edf2f7;
+}
+
+.admin-inline .form-control,
+.admin-inline .form-select {
+	height: 34px;
+}
+
+.admin-product-table-wrap {
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+}
+
+.admin-product-table {
+	font-size: 0.96rem;
+}
+
+@media (max-width: 992px) {
+	.admin-main h3 {
+		font-size: 1.3rem;
+	}
+
+	.admin-card .card-body,
+	.card.shadow-sm .card-body {
+		padding: 14px;
+	}
+}
+
+@media (max-width: 992px) {
+	.admin-product-table-wrap {
+		overflow-x: visible;
+		border: 0;
+	}
+
+	.admin-product-table {
+		min-width: 0;
+		table-layout: auto;
+	}
+
+	.admin-product-table thead {
+		display: none;
+	}
+
+	.admin-product-table,
+	.admin-product-table tbody,
+	.admin-product-table tr,
+	.admin-product-table td {
+		display: block;
+		width: 100%;
+	}
+
+	.admin-product-table tbody tr {
+		background: #fff;
+		border: 1px solid #e2e8f0;
+		border-radius: 14px;
+		padding: 10px 12px;
+		margin-bottom: 10px;
+	}
+
+	.admin-product-table td {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		padding: 6px 0;
+		border: 0;
+		text-align: left !important;
+	}
+
+	.admin-product-table td::before {
+		content: attr(data-label);
+		font-size: 0.82rem;
+		font-weight: 700;
+		color: #64748b;
+		min-width: 64px;
+	}
+
+	.admin-product-table .admin-cell-name .text-truncate,
+	.admin-product-table .admin-cell-code .text-truncate,
+	.admin-product-table .admin-cell-category .text-truncate {
+		max-width: 170px !important;
+	}
+
+	.admin-product-table .admin-inline,
+	.admin-product-table .admin-actions {
+		justify-content: flex-end;
+	}
+
+	.admin-product-table td[data-label='선택']::before {
+		content: '선택';
 	}
 }
