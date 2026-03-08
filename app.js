@@ -1,5 +1,6 @@
 // app.js
 const path = require('path');
+const fs = require('fs');
 
 // ✅ dotenv: 실행 위치(CWD) 꼬임 방지 위해 절대경로로 로드
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -24,6 +25,48 @@ const PORT = Number(process.env.PORT || 3000);
 const BASE_URL = process.env.BASE_URL;
 const KAKAO_ADMIN_KEY = process.env.KAKAO_ADMIN_KEY;
 const KAKAO_CID = process.env.KAKAO_CID || 'TC0ONETIME';
+const FIGMA_PAGES_MANIFEST_PATH = path.join(__dirname, 'views', 'partials', 'generated', 'figma-pages', 'manifest.json');
+let figmaManifestCache = { mtimeMs: null, data: null };
+
+function normalizeViewKey(viewName) {
+	return String(viewName || '')
+		.trim()
+		.replace(/\\/g, '/')
+		.replace(/\.ejs$/i, '')
+		.replace(/^\/+/, '')
+		.replace(/\/+$/, '')
+		.toLowerCase();
+}
+
+function loadFigmaPagesManifest() {
+	try {
+		const stat = fs.statSync(FIGMA_PAGES_MANIFEST_PATH);
+		if (figmaManifestCache.mtimeMs !== stat.mtimeMs) {
+			const raw = fs.readFileSync(FIGMA_PAGES_MANIFEST_PATH, 'utf8');
+			figmaManifestCache = {
+				mtimeMs: stat.mtimeMs,
+				data: JSON.parse(raw),
+			};
+		}
+		return figmaManifestCache.data;
+	} catch (_err) {
+		figmaManifestCache = { mtimeMs: null, data: null };
+		return null;
+	}
+}
+
+function getFigmaPageMeta(viewName) {
+	const viewKey = normalizeViewKey(viewName);
+	const manifest = loadFigmaPagesManifest();
+	const pageMeta = manifest?.pages?.[viewKey] || null;
+
+	return {
+		viewKey,
+		partialName: pageMeta?.partial || null,
+		hasExports: Boolean(pageMeta?.hasExports),
+		sectionCount: Number(pageMeta?.sectionCount || 0),
+	};
+}
 
 // =====================
 // 기본 설정
@@ -134,6 +177,37 @@ app.use(async (req, res, next) => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Inject page-specific Figma metadata on every res.render call.
+app.use((req, res, next) => {
+	const originalRender = res.render.bind(res);
+
+	res.render = (view, locals, callback) => {
+		let renderLocals = locals;
+		let renderCallback = callback;
+
+		if (typeof renderLocals === 'function') {
+			renderCallback = renderLocals;
+			renderLocals = {};
+		}
+
+		const safeLocals = renderLocals && typeof renderLocals === 'object' ? renderLocals : {};
+		const figmaMeta = getFigmaPageMeta(view);
+
+		return originalRender(
+			view,
+			{
+				...safeLocals,
+				figmaPageKey: figmaMeta.viewKey,
+				figmaPagePartialName: figmaMeta.partialName,
+				figmaPageHasExports: figmaMeta.hasExports,
+				figmaPageSectionCount: figmaMeta.sectionCount,
+			},
+			renderCallback,
+		);
+	};
+
+	next();
+});
 // =====================
 // Routes
 // =====================

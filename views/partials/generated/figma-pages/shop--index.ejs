@@ -1,0 +1,79 @@
+﻿<% /* Refined implementation mapped from @export Home/* */ %>
+<%
+const latestSafe = Array.isArray(latest) ? latest : [];
+const categorySafe = Array.isArray(categories) ? categories : [];
+const latestCount = latestSafe.length;
+const categoryCount = categorySafe.length;
+%>
+<div class="figma-page figma-page-shop-index figma-page--shop" data-figma-page="shop/index">
+  <section class="figma-section figma-home-hero" data-figma-node-id="7:3" data-figma-source="@export Home/Hero">
+    <div class="figma-hero-grid">
+      <div>
+        <span class="figma-eyebrow">Shop Main</span>
+        <h2>Move from discovery to checkout with fewer steps</h2>
+        <p>Keep this section editable in Figma for launch campaigns, category focus, and operational notices.</p>
+
+        <div class="figma-chip-row">
+          <span class="figma-chip">Latest Items: <%= latestCount %></span>
+          <span class="figma-chip">Categories: <%= categoryCount %></span>
+          <span class="figma-chip">Guest Flow Ready</span>
+        </div>
+
+        <div class="figma-hero-actions">
+          <a class="figma-btn figma-btn-primary" href="/shop/products">Browse Products</a>
+          <a class="figma-btn figma-btn-ghost" href="/shop/cart">Open Cart</a>
+        </div>
+      </div>
+
+      <aside class="figma-hero-panel" aria-label="Shop quick status">
+        <div class="figma-hero-stat">
+          <strong><%= latestCount %></strong>
+          <span>Latest products rendered on this page</span>
+        </div>
+        <div class="figma-hero-stat">
+          <strong><%= categoryCount %></strong>
+          <span>Filter groups available for browsing</span>
+        </div>
+        <ul class="figma-hero-list">
+          <li>Catalog and inquiry flow stay connected</li>
+          <li>Guest order lookup route stays visible</li>
+          <li>Admin route remains one click away for operators</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <section class="figma-section figma-home-features" data-figma-node-id="7:2" data-figma-source="@export Home/Features">
+    <header class="figma-section-head">
+      <h3>Conversion-focused flow blocks</h3>
+      <p>Connected to Figma <code>Home/Features</code></p>
+    </header>
+
+    <div class="figma-feature-grid">
+      <article class="figma-feature-card">
+        <span class="kicker">Discovery</span>
+        <h4>Category-first browsing</h4>
+        <p>Users can scan product groups quickly before opening detail pages.</p>
+      </article>
+      <article class="figma-feature-card">
+        <span class="kicker">Checkout</span>
+        <h4>Flexible buyer paths</h4>
+        <p>Both member and guest routes stay available from the same entry page.</p>
+      </article>
+      <article class="figma-feature-card">
+        <span class="kicker">Support</span>
+        <h4>Inquiry continuity</h4>
+        <p>Questions stay linked to order context for clearer follow-up response.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="figma-section figma-home-footer" data-figma-node-id="2:2" data-figma-source="@export Home/Footer">
+    <div>
+      <h4>Need to jump directly into the full catalog?</h4>
+      <p>Open all products and filter by category or keyword in one screen.</p>
+      <p class="figma-micro">Live data: latest <%= latestCount %>, categories <%= categoryCount %></p>
+    </div>
+    <a class="figma-btn figma-btn-light" href="/shop/products">Go to Catalog</a>
+  </section>
+</div>
