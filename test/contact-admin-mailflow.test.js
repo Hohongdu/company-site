@@ -16,9 +16,10 @@ test('문의 페이지는 문의 전용 필드만 포함한다', () => {
 	assert.doesNotMatch(contact, /name="file"/);
 });
 
-test('관리자 문의 답변 폼은 선택 첨부 파일을 지원한다', () => {
+test('관리자 문의 답변 폼은 이메일/첨부 전송 UI 없이 답변 저장만 지원한다', () => {
 	const adminInquiries = read('views/admin/inquiries.ejs');
-	assert.match(adminInquiries, /enctype="multipart\/form-data"/);
-	assert.match(adminInquiries, /name="attachmentFile"/);
-	assert.match(adminInquiries, /파일 없이도 답변 이메일 전송이 가능합니다/);
+	assert.doesNotMatch(adminInquiries, /multipart\/form-data/);
+	assert.doesNotMatch(adminInquiries, /name="attachmentFile"/);
+	assert.doesNotMatch(adminInquiries, /name="sendEmail"/);
+	assert.match(adminInquiries, /답변 저장만 가능합니다/);
 });
