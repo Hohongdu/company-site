@@ -1,95 +1,72 @@
-<%- include('../layouts/shop-top', { title: '쇼핑몰' , active: '' }) %>
+﻿<%- include('../layouts/shop-top', { title: 'SHOP', active: 'home' }) %>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-lg-7">
-            <div class="shop-card p-4">
-                <div class="small text-muted mb-1" data-i18n data-i18n-ko="환영합니다"
-                   >Welcome</div>
-                <h2 class="fw-bold mb-2" data-i18n data-i18n-ko="특수 소재 / 가공 상품 쇼핑몰"
-                   
-                   
-                   >특수 소재 / 가공 상품 쇼핑몰</h2>
-                <p class="text-muted mb-3" data-i18n
-                    data-i18n-ko="카테고리별로 상품을 찾고 장바구니에 담아보세요. 비회원도 장바구니 사용 가능(세션 종료 시 초기화)."
-                   
-                   
-                   >
-                    카테고리별로 상품을 찾고 장바구니에 담아보세요.
-                    비회원도 장바구니 사용 가능(세션 종료 시 초기화).
-                </p>
-
-                <div class="d-flex gap-2 flex-wrap">
-                    <a href="/shop/products" class="btn btn-primary" data-i18n data-i18n-ko="상품 보러가기"
-                       >상품 보러가기</a>
-                    <a href="/shop/cart" class="btn btn-outline-dark" data-i18n data-i18n-ko="장바구니"
-                       >장바구니</a>
-                </div>
+<section class="shop-home">
+    <section class="shop-home-hero">
+        <div class="shop-home-hero-inner container">
+            <p class="shop-home-hero-eyebrow">2026 SPRING CURATION</p>
+            <h1>?곸긽 ?몃꽕???ㅽ궓 紐⑥쓬??/h1>
+            <p>癒몃Т???쒓컙??留ㅼ텧???쒕떎, ?곸긽?쇰줈 ?쒖꽑???щ줈?≪쑝?몄슂.</p>
+            <div class="shop-home-hero-actions">
+                <a href="/shop/products" class="shop-home-hero-btn is-primary">?꾩껜 ?곹뭹 蹂닿린</a>
+                <a href="/shop/cart" class="shop-home-hero-btn">?λ컮援щ땲</a>
             </div>
         </div>
+    </section>
 
-        <div class="col-12 col-lg-5">
-            <div class="shop-card p-4">
-                <div class="fw-semibold mb-2" data-i18n data-i18n-ko="빠른 카테고리"
-                   >빠른 카테고리</div>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-sm btn-outline-primary" href="/shop/products?category=all" data-i18n
-                        data-i18n-ko="전체">전체</a>
-                    <% (categories || []).slice(0, 10).forEach(c=> { %>
-                        <a class="btn btn-sm btn-outline-primary" href="/shop/products?category=<%= c.slug %>">
-                            <%= c.name %>
+    <section class="shop-home-catalog container">
+        <header class="shop-home-catalog-head">
+            <p class="shop-home-count"><strong><%= Number(totalCount || (latest || []).length || 0).toLocaleString() %>媛?/strong> ?붿옄??/p>
+
+            <div class="shop-home-category-row" aria-label="移댄뀒怨좊━">
+                <a class="shop-home-category-chip is-active" href="/shop/products?category=all">?꾩껜</a>
+                <% (categories || []).slice(0, 8).forEach((category) => { %>
+                    <a class="shop-home-category-chip" href="/shop/products?category=<%= category.slug %>"><%= category.name %></a>
+                <% }) %>
+            </div>
+        </header>
+
+        <% if (!latest || latest.length === 0) { %>
+            <div class="shop-home-empty">
+                ?꾩쭅 ?몄텧???곹뭹???놁뒿?덈떎. 愿由ъ옄?먯꽌 ?곹뭹???깅줉??二쇱꽭??
+            </div>
+        <% } else { %>
+            <div class="shop-home-grid">
+                <% (latest || []).forEach((product) => { %>
+                    <% const thumb = product.image_thumb || product.image || 'https://via.placeholder.com/1200x900?text=No+Image'; %>
+                    <article class="shop-home-card">
+                        <a class="shop-home-thumb" href="/shop/products/<%= product.id %>">
+                            <img src="<%= thumb %>" alt="<%= product.name %>" loading="lazy">
                         </a>
-                        <% }) %>
-                </div>
-                <% if (!categories || categories.length===0) { %>
-                    <div class="text-muted small mt-2" data-i18n data-i18n-ko="카테고리가 아직 없습니다."
-                       
-                       >카테고리가 아직 없습니다.</div>
-                    <% } %>
-            </div>
-        </div>
-    </div>
 
-    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-2">
-        <h4 class="fw-bold mb-0" data-i18n data-i18n-ko="최근 등록 상품"
-           >최근 등록 상품</h4>
-        <a href="/shop/products" class="btn btn-sm btn-outline-secondary" data-i18n data-i18n-ko="전체 보기"
-           >전체 보기</a>
-    </div>
+                        <div class="shop-home-card-body">
+                            <div class="shop-home-badges">
+                                <span class="shop-home-badge">諛섏쓳??/span>
+                                <span class="shop-home-badge shop-home-badge-safe">?덉쟾嫄곕옒</span>
+                            </div>
 
-    <div class="row g-3">
-        <% if (!latest || latest.length===0) { %>
-            <div class="col-12">
-                <div class="alert alert-light border" data-i18n data-i18n-ko="최근 등록된 상품이 없습니다."
-                   
-                   >최근 등록된 상품이 없습니다.</div>
-            </div>
-            <% } %>
+                            <h2 class="shop-home-title">
+                                <a href="/shop/products/<%= product.id %>"><%= product.name %></a>
+                            </h2>
 
-                <% (latest || []).forEach(p=> { %>
-                    <div class="col-12 col-sm-6 col-lg-3">
-                        <div class="shop-card p-3 h-100">
-                            <a href="/shop/products/<%= p.id %>" class="text-decoration-none">
-                                <div class="bg-light rounded-3 mb-2" style="height:140px; overflow:hidden;">
-                                    <img
-                                        src="<%= p.image_thumb || p.image || 'https://via.placeholder.com/800x600?text=No+Image' %>">
-                                    alt="<%= p.name %>" style="width:100%; height:100%; object-fit:cover;">
+                            <% if (product.category_name || product.spec) { %>
+                                <p class="shop-home-meta"><%= product.category_name || product.spec %></p>
+                            <% } %>
+
+                            <div class="shop-home-card-foot">
+                                <strong class="shop-home-price"><%= Number(product.price || 0).toLocaleString() %>??/strong>
+                                <div class="shop-home-card-actions">
+                                    <a class="shop-home-like" href="<%= user ? '/shop/wishlist' : '/auth/login' %>" aria-label="李?>??/a>
+                                    <a class="shop-home-sample" href="/shop/products/<%= product.id %>">SAMPLE</a>
                                 </div>
-                                <div class="fw-semibold text-dark">
-                                    <%= p.name %>
-                                </div>
-                            </a>
-
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <div class="price">
-                                    <%= Number(p.price || 0).toLocaleString() %>원
-                                </div>
-                                <a class="btn btn-sm btn-outline-primary" href="/shop/products/<%= p.id %>" data-i18n
-                                    data-i18n-ko="보기"
-                                   >보기</a>
                             </div>
                         </div>
-                    </div>
-                    <% }) %>
-    </div>
+                    </article>
+                <% }) %>
+            </div>
+        <% } %>
+    </section>
+</section>
 
-    <%- include('../layouts/shop-bottom') %>
+<%- include('../layouts/shop-bottom') %>
+
+

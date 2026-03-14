@@ -43,26 +43,36 @@
 <script>
     const form = document.getElementById('inquiryForm');
     const resultBox = document.getElementById('resultBox');
+    const contactEmail = '<%= contactEmail %>';
 
-    form?.addEventListener('submit', async (e) => {
+    form?.addEventListener('submit', (e) => {
         e.preventDefault();
         resultBox.classList.add('d-none');
 
         const payload = Object.fromEntries(new FormData(form).entries());
-        try {
-            const res = await fetch('/api/inquiry', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await res.json();
-            resultBox.textContent = JSON.stringify(data, null, 2);
+        const subject = `[Website Inquiry] ${payload.name || 'Customer'}`;
+        const body = [
+            'New inquiry from website.',
+            '',
+            `Name: ${payload.name || ''}`,
+            `Email: ${payload.email || ''}`,
+            '',
+            '[Message]',
+            payload.message || '',
+        ].join('\n');
+
+        if (!contactEmail) {
+            resultBox.textContent = 'Contact email is not configured.';
             resultBox.classList.remove('d-none');
-            if (res.ok && data.ok) form.reset();
-        } catch (err) {
-            resultBox.textContent = `요청 실패: ${err.message}`;
-            resultBox.classList.remove('d-none');
+            return;
         }
+
+        const mailtoUrl = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoUrl;
+
+        resultBox.textContent = 'Your mail app has opened. Please press send to finish.';
+        resultBox.classList.remove('d-none');
+        form.reset();
     });
 </script>
 

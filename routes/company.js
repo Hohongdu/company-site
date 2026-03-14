@@ -28,7 +28,15 @@ async function ensureNoticeCategoryColumn() {
 router.get('/', (req, res) => res.render('company/index'));
 router.get('/about', (req, res) => res.render('company/about'));
 router.get('/history', (req, res) => res.render('company/history'));
-router.get('/contact', (req, res) => res.render('company/contact'));
+router.get('/contact', (req, res) =>
+	res.render('company/contact', {
+		contactEmail:
+			process.env.CONTACT_EMAIL ||
+			process.env.EMAIL_TO ||
+			process.env.EMAIL_FROM ||
+			'contact@example.com',
+	}),
+);
 
 router.get('/notices', async (req, res) => {
 	try {
