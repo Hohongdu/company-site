@@ -91,9 +91,6 @@
                                                     알림: <%= inquiry.notification_channel || 'NONE' %>
                                                     <%= inquiry.notification_status ? `(${inquiry.notification_status})` : '' %>
                                                 </div>
-                                                <% if (inquiry.notification_status === 'SKIPPED' && inquiry.notification_channel === 'EMAIL') { %>
-                                                    <div class="text-muted small">이메일 발송 설정이 없어 전송을 건너뛰었습니다. (.env의 EMAIL_WEBHOOK_URL 설정 필요)</div>
-                                                <% } %>
                                                 <% if (inquiry.notification_error) { %>
                                                     <div class="text-danger small">알림 오류: <%= inquiry.notification_error %></div>
                                                 <% } %>
@@ -104,29 +101,14 @@
                                                     <div class="admin-inquiry-content"><%= inquiry.answer_content %></div>
                                                 </div>
                                             <% } %>
-                                            <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post" enctype="multipart/form-data">
+                                            <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <div class="mb-2">
                                                     <label class="admin-muted small mb-1">답변 작성</label>
                                                     <textarea class="form-control" name="answerContent" rows="4" required><%= inquiry.answer_content || '' %></textarea>
                                                 </div>
-
-                                                <div class="mb-2">
-                                                    <label class="admin-muted small mb-1">첨부 파일 (선택)</label>
-                                                    <input type="file" class="form-control" name="attachmentFile">
-                                                    <div class="text-muted small mt-1">파일 없이도 답변 이메일 전송이 가능합니다.</div>
-                                                </div>
+                                                <div class="text-muted small mb-2">이메일 전송 기능이 비활성화되어 답변 저장만 가능합니다.</div>
                                                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="sendEmail" id="sendEmail-<%= inquiry.id %>"
-                                                            <%= inquiry.user_email || inquiry.guest_email ? '' : 'disabled' %>>
-                                                        <label class="form-check-label" for="sendEmail-<%= inquiry.id %>">
-                                                            이메일로 답변 발송
-                                                        </label>
-                                                    </div>
-                                                    <% if (!(inquiry.user_email || inquiry.guest_email)) { %>
-                                                        <span class="text-muted small">이메일 정보가 없어 알림 발송 불가</span>
-                                                    <% } %>
                                                     <button type="submit" class="btn btn-admin btn-sm ms-auto">답변 저장</button>
                                                 </div>
                                             </form>

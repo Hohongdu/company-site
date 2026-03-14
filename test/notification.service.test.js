@@ -1,36 +1,27 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('fs/promises');
-const path = require('path');
 
 const notificationService = require('../services/notification.service');
 
-test('이메일 설정이 없으면 로컬 아웃박스에 저장되고 SKIPPED를 반환한다', async () => {
-	const prevUrl = process.env.EMAIL_WEBHOOK_URL;
-	const prevSendmail = process.env.EMAIL_SENDMAIL_BIN;
-	const prevOutbox = process.env.EMAIL_OUTBOX_DIR;
-
-	delete process.env.EMAIL_WEBHOOK_URL;
-	delete process.env.EMAIL_SENDMAIL_BIN;
-	process.env.EMAIL_OUTBOX_DIR = path.join(__dirname, '..', 'tmp', 'mail-outbox-test');
-
-	await fs.rm(process.env.EMAIL_OUTBOX_DIR, { recursive: true, force: true });
-
+test('문의 답변 이메일 전송 요청은 비활성화 상태를 반환한다', async () => {
 	const result = await notificationService.sendInquiryReplyEmail({
 		to: 'user@example.com',
 		subject: 'test',
 		html: '<p>hello</p>',
 	});
 
-	assert.equal(result.status, 'SKIPPED');
-	assert.match(result.message || '', /로컬 아웃박스/);
-	assert.equal(result.provider, 'LOCAL_OUTBOX');
+	assert.equal(result.status, 'DISABLED');
+	assert.equal(result.provider, 'NONE');
+	assert.match(result.error || '', /비활성화/);
+});
 
-	const files = await fs.readdir(process.env.EMAIL_OUTBOX_DIR);
-	assert.equal(files.length, 1);
+test('임시 비밀번호 이메일 전송 요청도 비활성화 상태를 반환한다', async () => {
+	const result = await notificationService.sendTemporaryPasswordEmail({
+		to: 'user@example.com',
+		userName: '홍길동',
+		temporaryPassword: 'Temp1234',
+	});
 
-	if (prevUrl) process.env.EMAIL_WEBHOOK_URL = prevUrl;
-	if (prevSendmail) process.env.EMAIL_SENDMAIL_BIN = prevSendmail;
-	if (prevOutbox) process.env.EMAIL_OUTBOX_DIR = prevOutbox;
-	else delete process.env.EMAIL_OUTBOX_DIR;
+	assert.equal(result.status, 'DISABLED');
+	assert.equal(result.provider, 'NONE');
 });

@@ -1,7 +1,6 @@
 const path = require('node:path');
 const multer = require('multer');
 const { createFileTransferService } = require('../services/file-transfer.service');
-const { sendFileTransferEmail } = require('../services/notification.service');
 
 const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
 
@@ -23,14 +22,12 @@ exports.createTransfer = async (req, res) => {
 	try {
 		const senderName = String(req.body?.senderName || '').trim();
 		const senderEmail = String(req.body?.senderEmail || '').trim();
-		const recipientEmail = String(req.body?.recipientEmail || '').trim();
-		const message = String(req.body?.message || '').trim();
 		const expiresHoursRaw = Number(req.body?.expiresHours || 24);
 		const expiresHours = Math.min(Math.max(expiresHoursRaw, 1), 168);
 
 		if (!req.file) return res.status(400).json({ ok: false, message: '파일이 필요합니다.' });
-		if (!senderName || !isEmail(senderEmail) || !isEmail(recipientEmail)) {
-			return res.status(400).json({ ok: false, message: '발신자/수신자 이메일 형식을 확인해주세요.' });
+		if (!senderName || !isEmail(senderEmail)) {
+			return res.status(400).json({ ok: false, message: '발신자 정보를 확인해주세요.' });
 		}
 
 		const saved = await fileTransferService.saveFile({
@@ -50,22 +47,10 @@ exports.createTransfer = async (req, res) => {
 		const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
 		const downloadUrl = `${baseUrl}/api/file-transfer/download?token=${encodeURIComponent(token)}`;
 
-		const emailResult = await sendFileTransferEmail({
-			to: recipientEmail,
-			senderName,
-			senderEmail,
-			message,
-			filename: saved.filename,
-			expiresAt,
-			downloadUrl,
-		});
-
 		return res.json({
 			ok: true,
 			downloadUrl,
 			expiresAt,
-			emailStatus: emailResult.status,
-			emailError: emailResult.error,
 		});
 	} catch (err) {
 		console.error('[file-transfer:createTransfer]', err);

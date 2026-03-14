@@ -7,8 +7,6 @@ const fs = require('fs/promises');
 const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
-const { sendInquiryReplyEmail } = require('../services/notification.service');
-const { createFileTransferService } = require('../services/file-transfer.service');
 let sharp = null;
 try {
 	sharp = require('sharp');
@@ -140,15 +138,6 @@ async function ensureOrderShippingColumns() {
 const upload = multer({ dest: 'uploads/' });
 
 
-const inquiryReplyUpload = multer({
-	storage: multer.memoryStorage(),
-	limits: { fileSize: Number(process.env.FILE_TRANSFER_MAX_SIZE || 10 * 1024 * 1024) },
-});
-
-const inquiryAttachmentService = createFileTransferService({
-	storageDir: path.join(__dirname, '..', 'uploads', 'shared-files'),
-	tokenSecret: process.env.FILE_TRANSFER_TOKEN_SECRET || 'unsafe-dev-secret-change-me',
-});
 
 // tmp / public/uploads 폴더 보장
 const tmpDir = path.join(__dirname, '..', 'tmp');
@@ -1164,11 +1153,10 @@ router.get('/inquiries', async (req, res) => {
 	}
 });
 
-router.post('/inquiries/:id/reply', inquiryReplyUpload.single('attachmentFile'), async (req, res) => {
+router.post('/inquiries/:id/reply', async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();
-		const shouldSendEmail = req.body.sendEmail === 'on';
 
 		if (!inquiryId || !answerContent) {
 			return res.status(400).send('답변 내용이 필요합니다.');
@@ -1188,66 +1176,11 @@ router.post('/inquiries/:id/reply', inquiryReplyUpload.single('attachmentFile'),
 		}
 
 		const recipientEmail = inquiry.user_email || inquiry.guest_email || null;
-		let notificationStatus = 'SKIPPED';
-		let notificationError = null;
-		let notificationChannel = 'NONE';
-
-		if (shouldSendEmail && recipientEmail) {
-			notificationChannel = 'EMAIL';
-
-			let downloadUrl = null;
-			let fileName = null;
-			let expiresAt = null;
-
-			if (req.file) {
-				const saved = await inquiryAttachmentService.saveFile({
-					fileBuffer: req.file.buffer,
-					originalName: req.file.originalname,
-					mimeType: req.file.mimetype,
-				});
-				expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-				const token = inquiryAttachmentService.createDownloadToken({
-					fileId: saved.fileId,
-					filename: saved.filename,
-					mimeType: saved.mimeType,
-					expiresAt,
-				});
-				const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
-				downloadUrl = `${baseUrl}/admin/inquiries/attachment/download?token=${encodeURIComponent(token)}`;
-				fileName = saved.filename;
-			}
-
-			const emailResult = await sendInquiryReplyEmail({
-				to: recipientEmail,
-				subject: `[문의 답변] ${inquiry.title || '문의 답변 안내'}`,
-				html: `
-          <div style="font-family:Arial,sans-serif; line-height:1.6;">
-            <h2 style="margin-bottom:8px;">문의 답변 안내</h2>
-            <p>안녕하세요 ${inquiry.user_name || inquiry.guest_name || '고객'}님,</p>
-            <p>문의 주신 내용에 대한 답변을 전달드립니다.</p>
-            <div style="padding:12px; background:#f7f7f7; border-radius:8px; margin:12px 0;">
-              <strong>문의 제목:</strong> ${inquiry.title || '-'}<br/>
-              <strong>문의 내용:</strong><br/>
-              <div style="white-space:pre-wrap;">${inquiry.content || '-'}</div>
-            </div>
-            <div style="padding:12px; background:#fff; border:1px solid #eee; border-radius:8px;">
-              <strong>답변:</strong><br/>
-              <div style="white-space:pre-wrap;">${answerContent}</div>
-            </div>
-            <p style="margin-top:16px;">추가 문의가 있으시면 언제든지 연락주세요.</p>
-          </div>
-        `,
-				downloadUrl,
-				fileName,
-				expiresAt,
-			});
-			notificationStatus = emailResult.status;
-			notificationError = emailResult.error;
-		} else if (shouldSendEmail && !recipientEmail) {
-			notificationChannel = 'EMAIL';
-			notificationStatus = 'FAILED';
-			notificationError = '이메일 정보가 없습니다.';
-		}
+		const notificationChannel = recipientEmail ? 'EMAIL' : 'NONE';
+		const notificationStatus = 'DISABLED';
+		const notificationError = recipientEmail
+			? '이메일 전송 기능이 비활성화되었습니다.'
+			: '이메일 정보가 없습니다.';
 
 		await db.execute(
 			`UPDATE inquiries
@@ -1265,22 +1198,6 @@ router.post('/inquiries/:id/reply', inquiryReplyUpload.single('attachmentFile'),
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('문의 답변 처리 중 오류가 발생했습니다.');
-	}
-});
-
-
-router.get('/inquiries/attachment/download', requireAdmin, async (req, res) => {
-	try {
-		const token = String(req.query?.token || '');
-		const payload = inquiryAttachmentService.parseDownloadToken(token);
-		const filePath = await inquiryAttachmentService.getFilePath(payload.fileId);
-		res.setHeader('Content-Type', payload.mimeType || 'application/octet-stream');
-		return res.download(filePath, payload.filename);
-	} catch (err) {
-		const status = Number(err?.status || 500);
-		if (status >= 400 && status < 500) return res.status(status).send(err.message);
-		console.error(err);
-		return res.status(500).send('첨부 파일 다운로드 오류');
 	}
 });
 
