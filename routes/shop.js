@@ -212,7 +212,7 @@ router.get('/', async (req, res) => {
       LIMIT 8
     `);
 
-		res.render('shop/index', { categories, latest });
+		res.render('shop/index', { categories, latest, totalCount: latest.length });
 	} catch (err) {
 		console.error(err);
 		return res.redirect('/shop/products');
