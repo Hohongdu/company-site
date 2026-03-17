@@ -1,54 +1,116 @@
+/* ============================================================
+   GLOBAL DESIGN SYSTEM — shared tokens & utilities
+   ============================================================ */
 :root {
-	--blue: #2563eb;
-	--blue2: #1d4ed8;
-	--ink: #0f172a;
-	--muted: #64748b;
-	--bg: #f8fafc;
-	--line: #e2e8f0;
-	--radius: 12px;
+	/* Brand */
+	--brand:         #0a1628;
+	--brand-mid:     #1e3a5f;
+	--accent:        #2563eb;
+	--accent-dark:   #1d4ed8;
+	--accent-light:  #eff6ff;
+
+	/* Text */
+	--ink:           #0f172a;
+	--text:          #1e293b;
+	--muted:         #64748b;
+	--subtle:        #94a3b8;
+
+	/* Surface */
+	--bg:            #f8fafc;
+	--surface:       #ffffff;
+	--border:        #e2e8f0;
+	--border-strong: #cbd5e1;
+
+	/* Status */
+	--success:       #059669;
+	--warning:       #d97706;
+	--danger:        #dc2626;
+	--info:          #0284c7;
+
+	/* Radius */
+	--radius-sm:     6px;
+	--radius:        10px;
+	--radius-lg:     16px;
+	--radius-xl:     22px;
+	--radius-full:   9999px;
+
+	/* Shadows */
+	--shadow-sm:     0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+	--shadow:        0 4px 16px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.04);
+	--shadow-lg:     0 10px 40px rgba(15,23,42,0.12);
+	--shadow-xl:     0 20px 60px rgba(15,23,42,0.16);
+
+	/* Legacy aliases (backward compat) */
+	--blue:          #2563eb;
+	--blue2:         #1d4ed8;
+	--line:          #e2e8f0;
+	--radius-base:   10px;
 }
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-	color: var(--ink);
-	background: #fff;
+	color: var(--text);
+	background: var(--surface);
+	font-family:
+		"Pretendard", "Apple SD Gothic Neo", "Noto Sans KR",
+		ui-sans-serif, system-ui, -apple-system,
+		"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	line-height: 1.6;
 }
 
+a { color: inherit; text-decoration: none; }
+a:hover { color: inherit; }
+
+img { max-width: 100%; display: block; }
+
+/* ── Bootstrap overrides ── */
 .btn,
 .form-control,
 .form-select {
 	border-radius: var(--radius) !important;
 }
 
-.btn-primary {
-	background: var(--blue) !important;
-	border-color: var(--blue) !important;
+.btn {
+	font-weight: 600;
+	transition: all 0.15s ease;
 }
-.btn-primary:hover {
-	background: var(--blue2) !important;
-	border-color: var(--blue2) !important;
+
+.btn-primary {
+	background: var(--accent) !important;
+	border-color: var(--accent) !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+	background: var(--accent-dark) !important;
+	border-color: var(--accent-dark) !important;
 }
 
 .btn-outline-primary {
-	border-color: var(--blue) !important;
-	color: var(--blue) !important;
+	border-color: var(--accent) !important;
+	color: var(--accent) !important;
 }
-.btn-outline-primary:hover {
-	background: var(--blue) !important;
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+	background: var(--accent) !important;
 	color: #fff !important;
 }
 
 .card {
-	border-radius: var(--radius) !important;
-	border: 1px solid var(--line) !important;
-	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+	border-radius: var(--radius-lg) !important;
+	border: 1px solid var(--border) !important;
+	box-shadow: var(--shadow-sm);
 }
 
-/* 모바일에서 버튼/텍스트 깨짐 방지 */
+/* ── Layout helpers ── */
 .container,
 .row,
 .col {
 	min-width: 0;
 }
+
 .ellipsis {
 	max-width: 160px;
 	white-space: nowrap;
@@ -56,6 +118,7 @@ body {
 	text-overflow: ellipsis;
 }
 
+/* ── Language widget ── */
 .lang-widget {
 	position: fixed;
 	right: 16px;
@@ -66,11 +129,14 @@ body {
 .lang-toggle {
 	width: 46px;
 	height: 46px;
-	border: 1px solid var(--line);
-	border-radius: 999px;
-	background: #fff;
-	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-full);
+	background: var(--surface);
+	box-shadow: var(--shadow);
 	font-size: 20px;
+	cursor: pointer;
+	display: grid;
+	place-items: center;
 }
 
 .lang-menu {
@@ -78,21 +144,21 @@ body {
 	gap: 6px;
 	margin-bottom: 8px;
 	padding: 8px;
-	background: #fff;
-	border: 1px solid var(--line);
-	border-radius: 10px;
-	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-lg);
 }
 
 .lang-option {
-	border: 1px solid var(--line);
-	background: #fff;
+	border: 1px solid var(--border);
+	background: var(--surface);
 	border-radius: 8px;
 	padding: 6px 10px;
 	text-align: left;
 	font-size: 14px;
+	cursor: pointer;
 }
-
 .lang-option:hover {
 	background: var(--bg);
 }
@@ -105,13 +171,15 @@ body {
 .lang-log-toggle {
 	width: 40px;
 	height: 40px;
-	border: 1px solid var(--line);
-	border-radius: 999px;
-	background: #fff;
-	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-full);
+	background: var(--surface);
+	box-shadow: var(--shadow);
 	font-size: 16px;
+	cursor: pointer;
 }
 
+/* ── i18n debug panel ── */
 .i18n-log-panel {
 	position: fixed;
 	right: 16px;
@@ -123,8 +191,8 @@ body {
 	background: #0f172a;
 	color: #e2e8f0;
 	border: 1px solid #334155;
-	border-radius: 10px;
-	box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-xl);
 }
 
 .i18n-log-header {

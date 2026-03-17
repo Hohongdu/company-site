@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
+const { sendTemporaryPasswordEmail } = require('../services/notification.service');
 
 const router = express.Router();
 
@@ -31,24 +33,66 @@ router.get('/forgot', (req, res) => {
 
 
 router.post('/forgot', async (req, res) => {
+	const SUCCESS_MSG = '입력하신 이메일 주소로 임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.';
+
 	try {
 		const email = String(req.body.email || '').trim().toLowerCase();
 		if (!email) {
 			return res.status(400).render('auth/forgot', {
 				csrfToken: req.csrfToken(),
 				message: '이메일 주소를 입력해 주세요.',
+				messageType: 'error',
 			});
+		}
+
+		// 1) 사용자 조회 (없어도 동일한 성공 메시지: 이메일 존재 여부 노출 방지)
+		const [[user]] = await db.execute(
+			'SELECT id, name, email FROM users WHERE email = ? LIMIT 1',
+			[email],
+		);
+
+		if (!user) {
+			// 보안: 계정 존재 여부를 알려주지 않음
+			return res.render('auth/forgot', {
+				csrfToken: req.csrfToken(),
+				message: SUCCESS_MSG,
+				messageType: 'success',
+			});
+		}
+
+		// 2) 임시 비밀번호 생성 (숫자+영문 대소문자 10자리)
+		const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+		const tempPassword = Array.from(
+			{ length: 10 },
+			() => chars[Math.floor(Math.random() * chars.length)],
+		).join('');
+
+		// 3) bcrypt 해싱 후 DB 업데이트
+		const hashed = await bcrypt.hash(tempPassword, 10);
+		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
+
+		// 4) 이메일 발송 (실패해도 사용자에게 성공 메시지 - 임시 비밀번호는 이미 변경됨)
+		const emailResult = await sendTemporaryPasswordEmail({
+			to: email,
+			name: user.name,
+			tempPassword,
+		});
+
+		if (!emailResult.ok) {
+			console.warn(`[forgot] Email send failed for ${email}:`, emailResult.error);
 		}
 
 		return res.render('auth/forgot', {
 			csrfToken: req.csrfToken(),
-			message: '현재 이메일 전송 기능이 비활성화되어 비밀번호 찾기를 사용할 수 없습니다. 관리자에게 문의해 주세요.',
+			message: SUCCESS_MSG,
+			messageType: 'success',
 		});
 	} catch (err) {
 		console.error(err);
 		return res.status(500).render('auth/forgot', {
 			csrfToken: req.csrfToken(),
 			message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+			messageType: 'error',
 		});
 	}
 });

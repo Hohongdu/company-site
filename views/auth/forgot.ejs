@@ -13,7 +13,7 @@
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
                             <% if (message) { %>
-                                <div class="alert alert-info" role="alert"><%= message %></div>
+                                <div class="alert alert-<%= messageType === 'success' ? 'success' : (messageType === 'error' ? 'danger' : 'info') %>" role="alert"><%= message %></div>
                             <% } %>
 
                             <form method="post" action="/auth/forgot" class="d-flex flex-column gap-3">

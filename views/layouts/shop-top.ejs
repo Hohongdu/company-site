@@ -23,8 +23,8 @@
     <header class="shop-site-header sticky-top">
         <div class="container shop-site-header__inner">
             <a class="shop-brand" href="/shop">
-                <span class="shop-brand-logo">cafe24</span>
-                <span class="shop-brand-sub">Store | 디자인</span>
+                <span class="shop-brand-logo">ENERMADE</span>
+                <span class="shop-brand-sub">SHOP</span>
             </a>
 
             <button class="navbar-toggler shop-nav-toggle d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#shopMobileNav" aria-controls="shopMobileNav" aria-expanded="false" aria-label="모바일 메뉴">
@@ -32,13 +32,11 @@
             </button>
 
             <nav class="shop-main-nav d-none d-lg-flex" aria-label="쇼핑 내비게이션">
-                <a class="<%= isProducts ? 'is-active' : '' %>" href="/shop/products">카테고리</a>
-                <a class="<%= isHome ? 'is-active' : '' %>" href="/shop">기획전</a>
-                <a href="/shop/products">스토리</a>
-                <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/orders/guest">실시간</a>
-                <a href="/shop/products">베스트</a>
-                <a href="/shop/inquiries">디자인나눔</a>
-                <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries/guest">고객지원</a>
+                <a class="<%= isHome ? 'is-active' : '' %>" href="/shop">홈</a>
+                <a class="<%= isProducts ? 'is-active' : '' %>" href="/shop/products">전체 상품</a>
+                <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/orders/guest">주문 조회</a>
+                <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries/guest">문의 조회</a>
+                <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries">문의하기</a>
             </nav>
 
             <div class="shop-header-tools d-none d-lg-flex">
@@ -73,15 +71,15 @@
                 </form>
 
                 <div class="shop-mobile-nav-grid">
-                    <a class="<%= isHome ? 'is-active' : '' %>" href="/shop">기획전</a>
-                    <a class="<%= isProducts ? 'is-active' : '' %>" href="/shop/products">카테고리</a>
-                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/orders/guest">주문조회</a>
-                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries/guest">문의조회</a>
-                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries">문의하기</a>
+                    <a class="<%= isHome ? 'is-active' : '' %>" href="/shop">홈</a>
+                    <a class="<%= isProducts ? 'is-active' : '' %>" href="/shop/products">전체 상품</a>
                     <a class="<%= isCart ? 'is-active' : '' %>" href="/shop/cart">장바구니<% if (safeCartCount > 0) { %> (<%= safeCartCount %>)<% } %></a>
+                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/orders/guest">주문 조회</a>
+                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries/guest">문의 조회</a>
+                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries">문의하기</a>
                     <% if (user) { %>
-                        <a class="<%= isAccount ? 'is-active' : '' %>" href="/shop/account">내정보</a>
-                        <a class="<%= isWishlist ? 'is-active' : '' %>" href="/shop/wishlist">찜한상품</a>
+                        <a class="<%= isAccount ? 'is-active' : '' %>" href="/shop/account">내 정보</a>
+                        <a class="<%= isWishlist ? 'is-active' : '' %>" href="/shop/wishlist">찜한 상품</a>
                         <a href="/auth/logout">로그아웃</a>
                     <% } else { %>
                         <a href="/auth/login">로그인</a>

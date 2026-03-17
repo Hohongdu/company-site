@@ -7,6 +7,7 @@ const fs = require('fs/promises');
 const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
+const { sendInquiryReplyEmail } = require('../services/notification.service');
 let sharp = null;
 try {
 	sharp = require('sharp');
@@ -1176,11 +1177,23 @@ router.post('/inquiries/:id/reply', async (req, res) => {
 		}
 
 		const recipientEmail = inquiry.user_email || inquiry.guest_email || null;
-		const notificationChannel = recipientEmail ? 'EMAIL' : 'NONE';
-		const notificationStatus = 'DISABLED';
-		const notificationError = recipientEmail
-			? '이메일 전송 기능이 비활성화되었습니다.'
-			: '이메일 정보가 없습니다.';
+		const recipientName = inquiry.user_name || inquiry.guest_name || null;
+
+		// 이메일 발송 시도
+		let notificationChannel = recipientEmail ? 'EMAIL' : 'NONE';
+		let notificationStatus = 'SKIPPED';
+		let notificationError = recipientEmail ? null : '이메일 정보가 없습니다.';
+
+		if (recipientEmail) {
+			const emailResult = await sendInquiryReplyEmail({
+				to: recipientEmail,
+				name: recipientName,
+				inquiryTitle: inquiry.title,
+				replyContent: answerContent,
+			});
+			notificationStatus = emailResult.status || (emailResult.ok ? 'SENT' : 'FAILED');
+			notificationError = emailResult.error || null;
+		}
 
 		await db.execute(
 			`UPDATE inquiries
@@ -1200,5 +1213,6 @@ router.post('/inquiries/:id/reply', async (req, res) => {
 		return res.status(500).send('문의 답변 처리 중 오류가 발생했습니다.');
 	}
 });
+
 
 module.exports = router;

@@ -1,53 +1,164 @@
 <%- include('../layouts/company-top', { title: '로그인' , active: '' }) %>
 
-    <section class="py-5 bg-light">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-12 col-md-8 col-lg-5">
-                    <div class="text-center mb-4">
-                        <span class="badge rounded-pill text-bg-primary mb-2">우리 회사 계정</span>
-                        <h1 class="h3 fw-bold mb-2">로그인</h1>
-                        <p class="text-muted mb-0">회사 소식과 상품몰 이용을 위한 통합 계정으로 로그인하세요.</p>
+<style>
+.auth-section {
+    min-height: calc(100vh - 68px);
+    background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
+    display: flex;
+    align-items: center;
+    padding: 48px 0;
+}
+.auth-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(10,22,40,0.25);
+    overflow: hidden;
+}
+.auth-card-header {
+    padding: 36px 36px 28px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+}
+.auth-brand {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: #0a1628;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+.auth-title { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
+.auth-subtitle { color: #64748b; font-size: 14px; margin: 0; }
+.auth-card-body { padding: 32px 36px 36px; }
+.auth-form-group { margin-bottom: 18px; }
+.auth-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 7px;
+}
+.auth-form-group .form-control {
+    height: 46px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px !important;
+    font-size: 14px;
+    background: #f8fafc;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.auth-form-group .form-control:focus {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.auth-btn-primary {
+    width: 100%;
+    height: 48px;
+    border: none;
+    border-radius: 10px;
+    background: #0a1628;
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 4px;
+}
+.auth-btn-primary:hover { background: #0d1f3c; transform: translateY(-1px); }
+.auth-btn-primary:active { transform: translateY(0); }
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: #94a3b8;
+    font-size: 13px;
+}
+.auth-divider::before,
+.auth-divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+.auth-footer-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #64748b;
+}
+.auth-footer-links a { color: #2563eb; font-weight: 700; text-decoration: none; }
+.auth-footer-links a:hover { text-decoration: underline; }
+.auth-register-cta {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: #64748b;
+}
+.auth-register-cta a { color: #0a1628; font-weight: 800; text-decoration: none; }
+.auth-register-cta a:hover { text-decoration: underline; }
+.auth-guest-link {
+    display: block;
+    width: 100%;
+    height: 44px;
+    line-height: 44px;
+    text-align: center;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+    text-decoration: none;
+    margin-top: 10px;
+    transition: border-color 0.15s, color 0.15s;
+}
+.auth-guest-link:hover { border-color: #0a1628; color: #0a1628; }
+</style>
+
+<section class="auth-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+                <div class="auth-card">
+                    <div class="auth-card-header">
+                        <div class="auth-brand">ENERMADE</div>
+                        <h1 class="auth-title">로그인</h1>
+                        <p class="auth-subtitle">회사 소식과 상품몰을 한 계정으로 이용하세요</p>
                     </div>
+                    <div class="auth-card-body">
+                        <form method="POST" action="/auth/login">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
 
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-4">
+                            <div class="auth-form-group">
+                                <label for="login-email">이메일</label>
+                                <input type="email" id="login-email" name="email" class="form-control"
+                                    placeholder="example@company.com" autocomplete="email" required>
+                            </div>
 
-                            <!-- ✅ form은 딱 1개만, action은 /auth/login -->
-                            <form method="POST" action="/auth/login" class="d-grid gap-3">
-                                <!-- ✅ CSRF 토큰: 반드시 로그인 POST에 포함 -->
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <div class="auth-form-group">
+                                <label for="login-pw">비밀번호</label>
+                                <input type="password" id="login-pw" name="password" class="form-control"
+                                    placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
+                            </div>
 
-                                <!-- returnTo 유지 -->
-                                <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
+                            <div class="auth-footer-links mb-3">
+                                <span></span>
+                                <a href="/auth/forgot">비밀번호를 잊으셨나요?</a>
+                            </div>
 
-                                <div>
-                                    <label class="form-label">이메일</label>
-                                    <input type="email" name="email" class="form-control"
-                                        placeholder="example@company.com" required>
-                                </div>
+                            <button type="submit" class="auth-btn-primary">로그인</button>
 
-                                <div>
-                                    <label class="form-label">비밀번호</label>
-                                    <input type="password" name="password" class="form-control"
-                                        placeholder="비밀번호를 입력하세요" required>
-                                </div>
+                            <div class="auth-divider">또는</div>
 
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    로그인
-                                </button>
-                            </form>
+                            <a class="auth-guest-link" href="/shop/orders/guest">비회원 주문 조회</a>
+                        </form>
 
+                        <div class="auth-register-cta">
+                            아직 회원이 아니신가요?
+                            <a href="/auth/register">회원가입 하기 →</a>
                         </div>
                     </div>
-
-                    <p class="text-center text-muted mt-4 mb-0">
-                        아직 회원이 아니신가요?
-                        <a href="/auth/register" class="text-decoration-none fw-semibold">회원가입 하기</a>
-                    </p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <%- include('../layouts/company-bottom') %>
+<%- include('../layouts/company-bottom') %>

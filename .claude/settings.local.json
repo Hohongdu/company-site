@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find c:/Users/pke03/company-site/public -type f \\\\\\(-name *.css -o -name *.js -o -name *.jpg -o -name *.png -o -name *.gif \\\\\\))"
+    ]
+  }
+}
