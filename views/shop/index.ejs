@@ -15,7 +15,7 @@
 
     <section class="shop-home-catalog container">
         <header class="shop-home-catalog-head">
-            <p class="shop-home-count"><strong><%= Number(totalCount || (latest || []).length || 0).toLocaleString() %>媛?/strong> ?붿옄??/p>
+            <p class="shop-home-count"><strong><%= Number((typeof totalCount !== 'undefined' ? totalCount : null) || (latest || []).length || 0).toLocaleString() %>媛?/strong> ?붿옄??/p>
 
             <div class="shop-home-category-row" aria-label="移댄뀒怨좊━">
                 <a class="shop-home-category-chip is-active" href="/shop/products?category=all">?꾩껜</a>
