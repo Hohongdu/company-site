@@ -3,65 +3,79 @@
 <% const currentType = typeof type !== 'undefined' ? type : 'all'; %>
 <% const queryParam = query ? `&q=${encodeURIComponent(query)}` : ''; %>
 <% const typeLabels = { all: '전체', general: '일반공지', product: '제품공지' }; %>
-<% const typeBadge = { general: '일반', product: '제품' }; %>
+<% const typeBadge  = { general: '일반', product: '제품' }; %>
 
-<section class="section notice-board">
-    <div class="container-wide">
-        <h2 class="section-title text-center">공지사항</h2>
-        <p class="section-sub text-center">회사 소식과 업데이트를 확인하세요.</p>
+<!-- Page Banner -->
+<div class="page-banner">
+  <div class="container">
+    <h1>공지사항</h1>
+    <p>회사 소식과 업데이트를 확인하세요</p>
+  </div>
+</div>
 
-        <div class="notice-tabs">
-            <a class="tab <%= currentType === 'all' ? 'active' : '' %>" href="/notices?type=all<%= queryParam %>">
-                <%= typeLabels.all %>
-            </a>
-            <a class="tab <%= currentType === 'general' ? 'active' : '' %>"
-                href="/notices?type=general<%= queryParam %>">
-                <%= typeLabels.general %>
-            </a>
-            <a class="tab <%= currentType === 'product' ? 'active' : '' %>"
-                href="/notices?type=product<%= queryParam %>">
-                <%= typeLabels.product %>
-            </a>
-        </div>
+<section class="section-py">
+  <div class="container">
 
-        <div class="notice-toolbar">
-            <div class="notice-count">총 <strong><%= notices ? notices.length : 0 %></strong>건</div>
-            <form class="notice-search" method="get" action="/notices">
-                <input type="hidden" name="type" value="<%= currentType %>">
-                <input type="text" name="q" placeholder="검색어를 입력하세요" value="<%= query || '' %>">
-                <button type="submit">검색</button>
-            </form>
-        </div>
+    <!-- Filter + Search row -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <!-- Tabs -->
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm <%= currentType === 'all'     ? 'btn-dark'          : 'btn-outline-dark' %>"
+           href="/notices?type=all<%= queryParam %>"><%= typeLabels.all %></a>
+        <a class="btn btn-sm <%= currentType === 'general' ? 'btn-dark'          : 'btn-outline-dark' %>"
+           href="/notices?type=general<%= queryParam %>"><%= typeLabels.general %></a>
+        <a class="btn btn-sm <%= currentType === 'product' ? 'btn-dark'          : 'btn-outline-dark' %>"
+           href="/notices?type=product<%= queryParam %>"><%= typeLabels.product %></a>
+      </div>
 
-        <% if (!notices || notices.length === 0) { %>
-            <div class="card-soft">
-                <p class="text-muted mb-0">등록된 공지가 없습니다.</p>
-            </div>
-        <% } else { %>
-            <div class="notice-table">
-                <div class="notice-row notice-head">
-                    <div>번호</div>
-                    <div>구분</div>
-                    <div>제목</div>
-                    <div>작성일</div>
-                    <div>조회</div>
-                </div>
-                <% notices.forEach((notice, idx) => { %>
-                    <div class="notice-row">
-                        <div><%= notices.length - idx %></div>
-                        <div>
-                            <span class="notice-tag"><%= typeBadge[notice.category] || '일반' %></span>
-                        </div>
-                        <div class="notice-title">
-                            <a href="/notices/<%= notice.id %>"><%= notice.title %></a>
-                        </div>
-                        <div><%= new Date(notice.created_at).toLocaleDateString() %></div>
-                        <div><%= notice.views || 0 %></div>
-                    </div>
-                <% }) %>
-            </div>
-        <% } %>
+      <!-- Search -->
+      <form class="d-flex gap-2" method="get" action="/notices" style="min-width:220px;">
+        <input type="hidden" name="type" value="<%= currentType %>">
+        <input type="text" name="q" class="form-control form-control-sm"
+          placeholder="검색어를 입력하세요" value="<%= query || '' %>">
+        <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">검색</button>
+      </form>
     </div>
+
+    <!-- Count -->
+    <p class="small text-em-muted mb-3">총 <strong><%= notices ? notices.length : 0 %></strong>건</p>
+
+    <!-- Notice List -->
+    <% if (!notices || notices.length === 0) { %>
+      <div class="card p-5 text-center">
+        <p class="text-em-muted mb-0">등록된 공지가 없습니다.</p>
+      </div>
+    <% } else { %>
+      <div class="card overflow-hidden">
+        <!-- Table header -->
+        <div class="d-none d-md-grid px-4 py-2 bg-surface border-bottom"
+          style="grid-template-columns: 60px 80px 1fr 120px 70px; gap: 1rem; font-size:.8rem; font-weight:800; color:var(--em-muted); letter-spacing:.04em; text-transform:uppercase;">
+          <div>번호</div>
+          <div>구분</div>
+          <div>제목</div>
+          <div>작성일</div>
+          <div class="text-end">조회</div>
+        </div>
+        <!-- Rows -->
+        <% notices.forEach((notice, i) => { %>
+          <a href="/notices/<%= notice.id %>"
+            class="d-grid px-4 py-3 border-bottom text-decoration-none em-notice-grid"
+            style="grid-template-columns: 60px 80px 1fr 120px 70px; gap: 1rem; align-items:center; color:var(--em-text); transition: background var(--em-t);"
+            onmouseenter="this.style.background='var(--em-bg)'"
+            onmouseleave="this.style.background=''">
+            <div class="text-em-muted small d-none d-md-block"><%= notices.length - i %></div>
+            <div>
+              <span class="badge bg-blue-pale text-em-blue"><%= typeBadge[notice.category] || '일반' %></span>
+            </div>
+            <div class="fw-semibold"><%= notice.title %></div>
+            <div class="text-em-muted small d-none d-md-block"><%= new Date(notice.created_at).toLocaleDateString('ko-KR') %></div>
+            <div class="text-em-muted small text-end d-none d-md-block"><%= notice.views || 0 %></div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+
+  </div>
 </section>
 
 <%- include('../layouts/company-bottom') %>

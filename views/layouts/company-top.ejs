@@ -1,177 +1,134 @@
-<% const pageTitle=(typeof title !=='undefined' && title) ? title : 'CERAMIC PRO' ; const activeKey=(typeof active
-    !=='undefined' && active) ? active : '' ; const returnTo=(typeof currentUrl !=='undefined' && currentUrl) ?
-    currentUrl : (typeof currentPath !=='undefined' ? currentPath : '/' ); const csrfTokenValue=(typeof csrfToken
-    !=='undefined' && csrfToken) ? csrfToken : '' ; const isLoggedIn=!!user; %>
-    <!doctype html>
-    <html lang="ko">
+<% const pageTitle=(typeof title !=='undefined' && title) ? title : 'ENERMADE'; %>
+<% const activeKey=(typeof active !=='undefined' && active) ? active : ''; %>
+<% const returnTo=(typeof currentUrl !=='undefined' && currentUrl) ? currentUrl : (typeof currentPath !=='undefined' ? currentPath : '/'); %>
+<% const csrfTokenValue=(typeof csrfToken !=='undefined' && csrfToken) ? csrfToken : ''; %>
+<% const isLoggedIn=!!user; %>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="고객 맞춤형 세라믹 솔루션 전문기업 ENERMADE" />
+  <title><%= pageTitle %> | ENERMADE</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/company.css" />
+</head>
+<body>
 
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>
-            <%= pageTitle %>
-        </title>
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar em-navbar sticky-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/">ENERMADE</a>
 
-        <!-- Bootstrap is kept for forms + existing pages, but this layout is mostly custom CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="/styles/tokens.css" />
+    <!-- Desktop nav -->
+    <div class="d-none d-lg-flex flex-grow-1 justify-content-center">
+      <ul class="navbar-nav flex-row gap-1">
+        <li class="nav-item"><a class="nav-link <%= activeKey==='home'    ? 'active' : '' %>" href="/">홈</a></li>
+        <li class="nav-item"><a class="nav-link <%= activeKey==='about'   ? 'active' : '' %>" href="/about">회사 소개</a></li>
+        <li class="nav-item"><a class="nav-link <%= activeKey==='history' ? 'active' : '' %>" href="/history">연혁</a></li>
+        <li class="nav-item"><a class="nav-link <%= activeKey==='notices' ? 'active' : '' %>" href="/notices">공지사항</a></li>
+        <li class="nav-item"><a class="nav-link <%= activeKey==='contact' ? 'active' : '' %>" href="/contact">문의</a></li>
+      </ul>
+    </div>
 
-        <link rel="stylesheet" href="/css/main.css" />
-        <link rel="stylesheet" href="/css/company.css" />
-    </head>
+    <!-- Desktop actions -->
+    <div class="header-actions d-none d-lg-flex">
+      <a class="icon-btn" href="/shop" aria-label="쇼핑몰">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </a>
+      <% if (isLoggedIn) { %>
+        <a class="icon-btn" href="/account" aria-label="내 계정">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 21a8 8 0 00-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </a>
+        <% if (user && user.is_admin) { %>
+          <a class="icon-btn" href="/admin/dashboard" aria-label="관리자">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
+            </svg>
+          </a>
+        <% } %>
+      <% } else { %>
+        <button class="btn btn-primary btn-sm ms-2 js-open-login" type="button">로그인</button>
+      <% } %>
+    </div>
 
-    <body>
-        <header class="site-header">
-            <div class="container-wide">
-                <div class="header-inner">
-                    <!-- Mobile: hamburger -->
-                    <button class="hamburger" id="btnDrawerOpen" aria-label="硫붾돱 ?닿린">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" />
-                        </svg>
-                    </button>
+    <!-- Mobile toggler -->
+    <button class="navbar-toggler d-lg-none" type="button"
+      data-bs-toggle="collapse" data-bs-target="#mobileNav"
+      aria-controls="mobileNav" aria-expanded="false" aria-label="메뉴 열기">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
 
-                    <!-- Brand -->
-                    <a class="brand" href="/">
-                        ENERMADE
-                    </a>
+  <!-- Mobile nav -->
+  <div class="collapse em-mobile-nav w-100" id="mobileNav">
+    <a class="nav-link <%= activeKey==='home'    ? 'active' : '' %>" href="/">홈</a>
+    <a class="nav-link <%= activeKey==='about'   ? 'active' : '' %>" href="/about">회사 소개</a>
+    <a class="nav-link <%= activeKey==='history' ? 'active' : '' %>" href="/history">연혁</a>
+    <a class="nav-link <%= activeKey==='notices' ? 'active' : '' %>" href="/notices">공지사항</a>
+    <a class="nav-link <%= activeKey==='contact' ? 'active' : '' %>" href="/contact">문의</a>
+    <a class="nav-link" href="/shop">쇼핑몰</a>
+    <div class="mobile-auth-row">
+      <% if (isLoggedIn) { %>
+        <a class="btn btn-outline-dark btn-sm flex-fill text-center" href="/account">내 계정</a>
+        <a class="btn btn-outline-dark btn-sm flex-fill text-center" href="/auth/logout">로그아웃</a>
+      <% } else { %>
+        <button class="btn btn-primary btn-sm flex-fill js-open-login" type="button">로그인</button>
+        <a class="btn btn-outline-dark btn-sm flex-fill text-center" href="/auth/register">회원가입</a>
+      <% } %>
+    </div>
+  </div>
+</nav>
 
-                    <!-- Desktop center nav -->
-                    <nav class="nav-center" aria-label="二쇱슂 硫붾돱">
-                        <a href="/" class="<%= activeKey==='home' ? 'active' : '' %>" data-i18n data-i18n-ko="??>??/a>
-                        <a href=" /about" class="<%= activeKey==='about' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="?뚯궗 ?뚭컻">?뚯궗 ?뚭컻</a>
-                        <a href="/history" class="<%= activeKey==='history' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="?고쁺">?고쁺</a>
-                        <a href="/notices" class="<%= activeKey==='notices' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="怨듭?">怨듭?</a>
-                        <a href="/contact" class="<%= activeKey==='contact' ? 'active' : '' %>" data-i18n
-                            data-i18n-ko="臾몄쓽">臾몄쓽</a>
-                    </nav>
-
-                    <!-- Actions -->
-                    <div class="header-actions">
-                        <!-- User -->
-                        <a class="icon-btn" href="/shop" aria-label="?쒗뭹">
-                            ?썟
-                        </a>
-                        <% if (isLoggedIn) { %>
-                            <a class="icon-btn" href="/account" aria-label="??怨꾩젙">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" />
-                                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
-                                </svg>
-                            </a>
-                            <% if (user && user.is_admin) { %>
-                                <a class="icon-btn" href="/admin/dashboard" aria-label="愿由ъ옄">
-                                    ?썱截?
-                                </a>
-                                <% } %>
-                                    <% } else { %>
-                                        <a class="icon-btn js-open-login"
-                                            href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>"
-                                            aria-label="濡쒓렇??>
-
-                                    <svg width=" 20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" />
-                                            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
-                                            </svg>
-                                        </a>
-                                        <% } %>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Mobile Drawer -->
-        <div class="drawer-backdrop" id="drawerBackdrop"></div>
-        <aside class="drawer" id="drawer" aria-label="紐⑤컮??硫붾돱">
-            <div class="drawer-top">
-                <% if (!isLoggedIn) { %>
-                    <div class="msg">
-                        <span data-i18n data-i18n-ko="濡쒓렇?몄씠 ?꾩슂?⑸땲??">濡쒓렇?몄씠 ?꾩슂?⑸땲??</span>
-                        <a href="#" class="js-open-login" data-i18n data-i18n-ko="濡쒓렇??
-                           >濡쒓렇??/a>
-                    </div>
-                    <% } else { %>
-                        <div class=" msg">
-                            <span>
-                                <%= user.name %>??
-                            </span>
-                            <a href="/auth/logout">濡쒓렇?꾩썐</a>
-                    </div>
-                    <% } %>
-                        <button class="drawer-close" id="btnDrawerClose" aria-label="硫붾돱 ?リ린">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" />
-                            </svg>
-                        </button>
-            </div>
-            <div class="drawer-list">
-                <a class="drawer-item" href="/" data-i18n data-i18n-ko="??
-                   >??/a>
-                <a class=" drawer-item" href="/about" data-i18n data-i18n-ko="?뚯궗 ?뚭컻">?뚯궗 ?뚭컻</a>
-                <a class="drawer-item" href="/history" data-i18n data-i18n-ko="?고쁺">?고쁺</a>
-                <a class="drawer-item" href="/notices" data-i18n data-i18n-ko="怨듭?">怨듭?</a>
-                <a class="drawer-item" href="/contact" data-i18n data-i18n-ko="臾몄쓽">臾몄쓽</a>
-            </div>
-        </aside>
-
-        <!-- Login Modal -->
-        <div class="modal-backdrop2" id="loginBackdrop"></div>
-        <div class="modal2" id="loginModal" role="dialog" aria-modal="true" aria-label="濡쒓렇??>
-            <div class=" hd">
-            <div class="title" data-i18n data-i18n-ko="濡쒓렇??
-                   >濡쒓렇??/div>
-                <button class=" x" id="btnLoginClose" aria-label="?リ린">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                </button>
-            </div>
-            <div class="bd">
-                <p class="subtitle" data-i18n data-i18n-ko="怨꾩젙?쇰줈 濡쒓렇?명븯怨?留욎땄 ?쒕퉬?ㅻ? ?댁슜?섏꽭??">
-                    怨꾩젙?쇰줈 濡쒓렇?명븯怨?留욎땄 ?쒕퉬?ㅻ? ?댁슜?섏꽭??
-                </p>
-                <form class="form2 login-form" method="post" action="/auth/login">
-                    <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
-                    <input type="hidden" name="returnTo" value="<%= returnTo %>" />
-                    <div class="stack">
-                        <input type="email" name="email" placeholder="?대찓?? autocomplete=" email" required
-                            data-i18n-placeholder data-i18n-placeholder-ko="?대찓??
-                           
-                            />
-                        <input type=" password" name="password" placeholder="鍮꾨?踰덊샇" autocomplete="current-password"
-                            data-i18n-placeholder data-i18n-placeholder-ko="鍮꾨?踰덊샇" required />
-                    </div>
-
-                    <div class="meta">
-                        <label class="keep">
-                            <input type="checkbox" checked />
-                            <span data-i18n data-i18n-ko="濡쒓렇???곹깭 ?좎?">濡쒓렇???곹깭 ?좎?</span>
-                        </label>
-                        <a class="forgot" href="/auth/forgot" data-i18n data-i18n-ko="?꾩씠??쨌 鍮꾨?踰덊샇 李얘린">?꾩씠??쨌 鍮꾨?踰덊샇
-                            李얘린</a>
-                    </div>
-
-                    <div class="actions">
-                        <button class="btn-login" type="submit" data-i18n data-i18n-ko="濡쒓렇??
-                           >濡쒓렇??/button>
-                        <a class=" btn-secondary text-center" href="/shop/orders/guest" data-i18n
-                            data-i18n-ko="鍮꾪쉶??二쇰Ц諛곗넚 議고쉶">鍮꾪쉶??二쇰Ц諛곗넚 議고쉶</a>
-                    </div>
-
-                    <div class="row">
-                        <span class="note" data-i18n data-i18n-ko="?꾩쭅 怨꾩젙???놁쑝?좉???">?꾩쭅 怨꾩젙???놁쑝?좉???</span>
-                        <a href="/auth/register" data-i18n data-i18n-ko="?뚯썝媛??
-                           >?뚯썝媛??/a>
-                    </div>
-                </form>
-            </div>
+<!-- ===== LOGIN MODAL ===== -->
+<div class="em-login-backdrop" id="loginBackdrop"></div>
+<div class="em-login-modal" id="loginModal" role="dialog" aria-modal="true" aria-label="로그인">
+  <div class="lm-header">
+    <span class="lm-title">로그인</span>
+    <button class="lm-close" id="btnLoginClose" aria-label="닫기" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="lm-body">
+    <p class="text-muted small mb-3">계정으로 로그인하여 더 많은 서비스를 이용하세요</p>
+    <form class="login-form" method="post" action="/auth/login">
+      <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
+      <input type="hidden" name="returnTo" value="<%= returnTo %>">
+      <div class="mb-3">
+        <input class="form-control" type="email" name="email" placeholder="이메일" autocomplete="email" required>
+      </div>
+      <div class="mb-1">
+        <input class="form-control" type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+      </div>
+      <div class="lm-meta mt-2">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="keepLogin" checked>
+          <label class="form-check-label text-muted" for="keepLogin">로그인 상태 유지</label>
         </div>
+        <a href="/auth/forgot">비밀번호 찾기</a>
+      </div>
+      <button class="btn btn-dark w-100 mb-2 mt-3" type="submit">로그인</button>
+      <a class="btn btn-outline-secondary w-100 btn-sm" href="/shop/orders/guest">비회원 주문 조회</a>
+    </form>
+    <p class="lm-footer">
+      아직 회원이 아니신가요?
+      <a href="/auth/register">회원가입 하기 →</a>
+    </p>
+  </div>
+</div>
 
-        <main>
+<main>
