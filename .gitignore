@@ -6,3 +6,9 @@ uploads/
 tmp/
 npm-debug.log
 .DS_Store
+
+# Screenshots (local preview only)
+*.png
+*.jpg
+screenshot-*.png
+screenshot-*.jpg

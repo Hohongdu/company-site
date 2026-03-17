@@ -1,56 +1,59 @@
 <%- include('../layouts/company-top', { title: '회원가입', active: '' }) %>
 
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-9 col-lg-6">
-                <div class="text-center mb-4">
-                    <span class="badge rounded-pill text-bg-primary mb-2">우리 회사 계정</span>
-                    <h1 class="h3 fw-bold mb-2">회원가입</h1>
-                    <p class="text-muted mb-0">회사와 상품몰을 함께 이용할 수 있는 계정을 만드세요.</p>
-                </div>
+<section class="em-auth-wrap">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+        <div class="em-auth-card">
+          <div class="em-auth-header">
+            <div class="em-auth-brand">ENERMADE</div>
+            <h1 class="em-auth-title">회원가입</h1>
+            <p class="em-auth-sub">회사와 상품몰을 함께 이용할 수 있는 계정을 만드세요</p>
+          </div>
+          <div class="em-auth-body">
+            <% if (locals.error) { %>
+              <div class="alert alert-danger mb-3" role="alert"><%= error %></div>
+            <% } %>
+            <form method="POST" action="/auth/register" class="d-grid gap-3">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <form method="POST" action="/auth/register" class="d-grid gap-3">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <div>
-                                <label class="form-label">이름</label>
-                                <input type="text" name="name" class="form-control" placeholder="이름을 입력하세요" required>
-                            </div>
+              <div>
+                <label class="form-label" for="reg-name">이름</label>
+                <input type="text" id="reg-name" name="name" class="form-control"
+                  placeholder="이름을 입력하세요" required>
+              </div>
 
-                            <div>
-                                <label class="form-label">이메일</label>
-                                <input type="email" name="email" class="form-control"
-                                    placeholder="example@company.com" required>
-                            </div>
+              <div>
+                <label class="form-label" for="reg-email">이메일</label>
+                <input type="email" id="reg-email" name="email" class="form-control"
+                  placeholder="example@company.com" required>
+              </div>
 
-                            <div>
-                                <label class="form-label">비밀번호</label>
-                                <input type="password" name="password" class="form-control"
-                                    placeholder="비밀번호를 입력하세요" required>
-                            </div>
+              <div>
+                <label class="form-label" for="reg-pw">비밀번호</label>
+                <input type="password" id="reg-pw" name="password" class="form-control"
+                  placeholder="비밀번호를 입력하세요" required>
+              </div>
 
-                            <div>
-                                <label class="form-label">비밀번호 확인</label>
-                                <input type="password" name="passwordConfirm" class="form-control"
-                                    placeholder="비밀번호를 다시 입력하세요" required>
-                            </div>
+              <div>
+                <label class="form-label" for="reg-pw2">비밀번호 확인</label>
+                <input type="password" id="reg-pw2" name="passwordConfirm" class="form-control"
+                  placeholder="비밀번호를 다시 입력하세요" required>
+              </div>
 
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                회원가입 완료
-                            </button>
-                        </form>
-                    </div>
-                </div>
+              <button type="submit" class="btn btn-dark btn-lg">회원가입 완료</button>
+            </form>
 
-                <p class="text-center text-muted mt-4 mb-0">
-                    이미 계정이 있으신가요?
-                    <a href="/auth/login" class="text-decoration-none fw-semibold">로그인하기</a>
-                </p>
-            </div>
+            <hr class="divider my-4">
+            <p class="text-center text-em-muted small mb-0">
+              이미 계정이 있으신가요?
+              <a href="/auth/login" class="fw-bold text-navy">로그인하기 →</a>
+            </p>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </section>
 
 <%- include('../layouts/company-bottom') %>

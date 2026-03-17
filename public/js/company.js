@@ -48,8 +48,8 @@
 	});
 
 	// Slider (simple)
-	const slides = $$('.slide');
-	const dots = $$('.dot');
+	const slides = $$('.em-slide');
+	const dots = $$('.em-dot');
 	let idx = 0;
 	const show = (i) => {
 		idx = (i + slides.length) % slides.length;
