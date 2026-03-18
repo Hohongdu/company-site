@@ -30,6 +30,15 @@
 /* ============================================================
    BASE OVERRIDES (Bootstrap)
    ============================================================ */
+
+/* Generic shop card — used in account, wishlist, order pages */
+.shop-card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+}
+
 .shop-wrap {
 	background: var(--bg);
 	color: var(--text);

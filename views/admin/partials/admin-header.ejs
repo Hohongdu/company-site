@@ -117,7 +117,7 @@
 
             <!-- MAIN -->
             <main class="admin-main">
-                <% if (figmaPageHasExports && figmaPagePartialName) { %>
+                <% if (typeof figmaPageHasExports !== 'undefined' && figmaPageHasExports && typeof figmaPagePartialName !== 'undefined' && figmaPagePartialName) { %>
                     <%- include('../../partials/generated/figma-pages/' + figmaPagePartialName) %>
                         <% } %>
                             <% if (typeof backHref !=='undefined' && backHref) { %>
