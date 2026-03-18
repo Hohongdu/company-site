@@ -115,6 +115,17 @@ async function ensureCouponTable() {
 	);
 }
 
+async function ensureOrderShippingColumns() {
+	const cols = ['shipping_name VARCHAR(100)', 'shipping_phone VARCHAR(30)', 'shipping_address VARCHAR(500)', 'discount_amount INT DEFAULT 0', 'coupon_code VARCHAR(50)'];
+	for (const col of cols) {
+		try {
+			await db.execute(`ALTER TABLE orders ADD COLUMN ${col}`);
+		} catch (err) {
+			if (!String(err?.message || '').includes('Duplicate column')) throw err;
+		}
+	}
+}
+
 function generateOrderNumber() {
 	const rand = Math.floor(Math.random() * 1000)
 		.toString()
@@ -122,15 +133,19 @@ function generateOrderNumber() {
 	return `ORD-${Date.now()}-${rand}`;
 }
 
-async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
+async function createOrderFromCart(req, { guestName, guestEmail, guestPhone, shippingName, shippingPhone, shippingAddress, discountAmount, couponCode }) {
 	const data = await getCartViewData(req);
 
 	if (!data.items.length || !data.totalAmount) {
 		return { error: '결제할 상품이 없습니다.' };
 	}
 
+	await ensureOrderShippingColumns();
+
 	const orderNumber = generateOrderNumber();
 	const userId = req.session.user?.id || null;
+	const discount = Number(discountAmount) || 0;
+	const finalAmount = Math.max(0, data.totalAmount - discount);
 
 	const connection = await db.getConnection();
 	try {
@@ -138,9 +153,9 @@ async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
 
 		const [orderResult] = await connection.execute(
 			`INSERT INTO orders
-        (order_number, user_id, guest_name, guest_email, guest_phone, status, total_amount)
-        VALUES (?, ?, ?, ?, ?, 'PENDING', ?)`,
-			[orderNumber, userId, guestName || null, guestEmail || null, guestPhone || null, data.totalAmount],
+        (order_number, user_id, guest_name, guest_email, guest_phone, status, total_amount, shipping_name, shipping_phone, shipping_address, discount_amount, coupon_code)
+        VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?)`,
+			[orderNumber, userId, guestName || null, guestEmail || null, guestPhone || null, finalAmount, shippingName || null, shippingPhone || null, shippingAddress || null, discount, couponCode || null],
 		);
 
 		const orderId = orderResult.insertId;
@@ -166,7 +181,7 @@ async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
 		}
 
 		await connection.commit();
-		return { orderId, orderNumber, items: data.items, totalAmount: data.totalAmount };
+		return { orderId, orderNumber, items: data.items, totalAmount: finalAmount };
 	} catch (err) {
 		await connection.rollback();
 		throw err;
@@ -329,6 +344,7 @@ router.get('/products/:id', async (req, res) => {
 			reviewStats,
 			wished,
 			related,
+			metaDescription: `${product.name} - ${product.description ? product.description.slice(0, 120) : '세라믹 부품 상세 정보를 확인하세요.'}`,
 		});
 	} catch (err) {
 		console.error(err);
@@ -420,16 +436,59 @@ router.get('/cart', async (req, res) => {
 		const cartError = req.session.cartError || null;
 		req.session.cartError = null;
 
+		const appliedCoupon = req.session.appliedCoupon || null;
+		const discountAmount = appliedCoupon ? Math.floor(data.totalAmount * (appliedCoupon.discount_pct / 100)) : 0;
+
 		res.render('shop/cart', {
 			...data,
 			paymentEnabled,
 			guestInfo: req.session.guestOrderInfo || {},
 			cartError,
+			appliedCoupon,
+			discountAmount,
+			finalAmount: Math.max(0, data.totalAmount - discountAmount),
 		});
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('장바구니 오류');
 	}
+});
+
+// 쿠폰 적용
+router.post('/cart/coupon', requireLogin, async (req, res) => {
+	try {
+		await ensureCouponTable();
+		const code = String(req.body.couponCode || '').trim().toUpperCase();
+		if (!code) {
+			req.session.cartError = '쿠폰 코드를 입력해주세요.';
+			return res.redirect('/shop/cart');
+		}
+
+		const [[coupon]] = await db.execute(
+			`SELECT * FROM user_coupons
+       WHERE user_id = ? AND code = ?
+         AND (expires_at IS NULL OR expires_at >= CURDATE())
+       LIMIT 1`,
+			[req.session.user.id, code],
+		);
+
+		if (!coupon) {
+			req.session.cartError = '유효하지 않거나 만료된 쿠폰입니다.';
+			return res.redirect('/shop/cart');
+		}
+
+		req.session.appliedCoupon = coupon;
+		return res.redirect('/shop/cart');
+	} catch (err) {
+		console.error(err);
+		res.status(500).send('쿠폰 적용 오류');
+	}
+});
+
+// 쿠폰 제거
+router.post('/cart/coupon/remove', (req, res) => {
+	req.session.appliedCoupon = null;
+	return res.redirect('/shop/cart');
 });
 
 // cart add
@@ -530,6 +589,10 @@ router.post('/checkout/kakao', async (req, res) => {
 		const guestEmail = isGuest ? String(req.body.guestEmail || '').trim() : null;
 		const guestPhone = isGuest ? String(req.body.guestPhone || '').trim() : null;
 
+		const shippingName = String(req.body.shippingName || '').trim() || null;
+		const shippingPhone = String(req.body.shippingPhone || '').trim() || null;
+		const shippingAddress = String(req.body.shippingAddress || '').trim() || null;
+
 		if (isGuest && (!guestName || (!guestEmail && !guestPhone))) {
 			req.session.cartError = '비회원 주문은 이름과 이메일 또는 연락처가 필요합니다.';
 			return res.redirect('/shop/cart');
@@ -539,7 +602,17 @@ router.post('/checkout/kakao', async (req, res) => {
 			req.session.guestOrderInfo = { guestName, guestEmail, guestPhone };
 		}
 
-		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone });
+		// 쿠폰 적용
+		const appliedCoupon = req.session.appliedCoupon || null;
+		let discountAmount = 0;
+		let couponCode = null;
+		if (appliedCoupon) {
+			const cartData = await getCartViewData(req);
+			discountAmount = Math.floor(cartData.totalAmount * (appliedCoupon.discount_pct / 100));
+			couponCode = appliedCoupon.code;
+		}
+
+		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone, shippingName, shippingPhone, shippingAddress, discountAmount, couponCode });
 		if (orderResult.error) {
 			req.session.cartError = orderResult.error;
 			return res.redirect('/shop/cart');
@@ -620,6 +693,7 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 
 		await clearCart(req);
 		req.session.kakaoPay = null;
+		req.session.appliedCoupon = null;
 
 		return res.render('shop/order-complete', {
 			order: detail?.order,

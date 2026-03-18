@@ -12,11 +12,14 @@ const orderGrowth = totalOrders > 0 ? Math.min(99, Math.max(8, Math.round((total
 const productHealth = totalProducts > 0 ? Math.min(100, Math.max(15, Math.round((totalProducts / Math.max(totalProducts + totalCategories, 1)) * 100))) : 28;
 const inquiryHealth = totalInquiries > 0 ? Math.min(100, Math.max(10, 100 - Math.round((totalInquiries / Math.max(totalOrders + totalInquiries, 1)) * 80))) : 88;
 
+const pendingInquiries = Number(statsSafe.pendingInquiries || 0);
+const thisMonthRevenue = Number(statsSafe.thisMonthRevenue || 0);
+
 const quickCards = [
     { label: '총 상품', value: totalProducts, href: '/admin/products' },
-    { label: '총 카테고리', value: totalCategories, href: '/admin/categories' },
     { label: '총 주문', value: totalOrders, href: '/admin/orders' },
-    { label: '총 문의', value: totalInquiries, href: '/admin/inquiries' }
+    { label: '미처리 문의', value: pendingInquiries, href: '/admin/inquiries' },
+    { label: '이달 매출', value: thisMonthRevenue.toLocaleString() + '원', href: '/admin/orders' }
 ];
 
 const chartPayload = {
@@ -149,6 +152,36 @@ const chartPayload = {
             </div>
         </section>
     </div>
+
+    <% if (typeof lowStockProducts !== 'undefined' && lowStockProducts && lowStockProducts.length > 0) { %>
+    <div class="dashboard-card mt-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> 재고 부족 상품</h5>
+            <a class="btn btn-sm btn-outline-secondary" href="/admin/products">상품 관리</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr><th>상품명</th><th>코드</th><th class="text-end">재고</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <% lowStockProducts.forEach(p => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= p.name %></td>
+                        <td class="text-muted small"><%= p.code || '-' %></td>
+                        <td class="text-end">
+                            <span class="badge bg-<%= p.stock_quantity === 0 ? 'danger' : 'warning' %>"><%= p.stock_quantity %>개</span>
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" href="/admin/products/<%= p.id %>/edit">수정</a>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <% } %>
 
     <% if (typeof sys !== 'undefined' && sys) { %>
     <div class="dashboard-card mt-3">

@@ -11,8 +11,12 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="admin-muted">상태</span>
-                    <span class="badge bg-<%= order.status === 'PAID' ? 'success' : order.status === 'PENDING' ? 'warning' : 'secondary' %>">
-                        <%= order.status %>
+                    <%
+                    const statusMap = {PENDING:'warning',PAID:'success',PROCESSING:'info',SHIPPED:'primary',DELIVERED:'success',CANCELED:'secondary',FAILED:'danger',CANCEL_REQUESTED:'warning'};
+                    const statusLabel = {PENDING:'대기',PAID:'결제완료',PROCESSING:'처리중',SHIPPED:'배송중',DELIVERED:'배송완료',CANCELED:'취소됨',FAILED:'실패',CANCEL_REQUESTED:'취소요청'};
+                    %>
+                    <span class="badge bg-<%= statusMap[order.status] || 'secondary' %>">
+                        <%= statusLabel[order.status] || order.status %>
                     </span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
@@ -23,10 +27,36 @@
                     <span class="admin-muted">연락처</span>
                     <span><%= order.user_email || order.guest_email || order.guest_phone || '-' %></span>
                 </div>
-                <div class="d-flex justify-content-between">
+                <% if (order.shipping_name || order.shipping_address) { %>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="admin-muted">배송 수령인</span>
+                    <span><%= order.shipping_name || '-' %> <%= order.shipping_phone || '' %></span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="admin-muted">배송지</span>
+                    <span class="text-end" style="max-width:200px"><%= order.shipping_address || '-' %></span>
+                </div>
+                <% } %>
+                <% if (order.coupon_code) { %>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="admin-muted">쿠폰</span>
+                    <span class="text-success"><%= order.coupon_code %> (-<%= Number(order.discount_amount||0).toLocaleString() %>원)</span>
+                </div>
+                <% } %>
+                <div class="d-flex justify-content-between mb-3">
                     <span class="admin-muted">총 금액</span>
                     <span class="fw-semibold"><%= Number(order.total_amount || 0).toLocaleString() %>원</span>
                 </div>
+                <hr>
+                <div class="fw-semibold small mb-2">주문 상태 변경</div>
+                <form action="/admin/orders/<%= order.order_number %>/status" method="post" class="d-flex gap-2">
+                    <select name="status" class="form-select form-select-sm">
+                        <% ['PENDING','PAID','PROCESSING','SHIPPED','DELIVERED','CANCELED'].forEach(s => { %>
+                            <option value="<%= s %>" <%= order.status === s ? 'selected' : '' %>><%= statusLabel[s] || s %></option>
+                        <% }) %>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary text-nowrap">변경</button>
+                </form>
             </div>
         </div>
     </div>
