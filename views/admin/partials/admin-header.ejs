@@ -24,17 +24,17 @@
             <div class="d-flex align-items-center gap-2">
                 <a class="brand-pill text-decoration-none" href="/admin/dashboard">
                     <span class="dot"></span>
-                    <span>愿由ъ옄 肄섏넄</span>
+                    <span>관리자 패널</span>
                 </a>
-                <span class="admin-muted d-none d-md-inline">?댁쁺/愿由??꾩슜</span>
+                <span class="admin-muted d-none d-md-inline">관리자 전용</span>
             </div>
 
             <div class="d-flex align-items-center gap-2">
                 <a href="/" class="btn btn-outline-secondary btn-sm">
-                    ?뚯궗濡?
+                    사이트로
                 </a>
                 <a href="/shop" class="btn btn-outline-secondary btn-sm">
-                    ?곹뭹紐곕줈
+                    상품몰로
                 </a>
 
                 <div class="vr mx-2"></div>
@@ -46,15 +46,15 @@
                         </strong>
                     </span>
                     <a href="/auth/logout" class="btn btn-outline-warning btn-sm">
-                        濡쒓렇?꾩썐
+                        로그아웃
                     </a>
                     <% } else { %>
                         <a href="/auth/login?redirect=<%= encodeURIComponent(currentUrl || '/') %>"
                             class="btn btn-outline-primary btn-sm">
-                            濡쒓렇??
+                            로그인
                         </a>
                         <% } %>
-                            <button class="admin-hamburger d-lg-none" id="adminSidebarOpen" aria-label="愿由?硫붾돱 ?닿린">
+                            <button class="admin-hamburger d-lg-none" id="adminSidebarOpen" aria-label="관리자 메뉴 열기">
                                 <span></span><span></span><span></span>
                             </button>
             </div>
@@ -67,50 +67,50 @@
             <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
             <aside class="admin-sidebar" id="adminSidebar">
                 <div class="sidebar-brand">
-                    <button class="admin-sidebar-close d-lg-none" id="adminSidebarClose" aria-label="愿由?硫붾돱 ?リ린">
+                    <button class="admin-sidebar-close d-lg-none" id="adminSidebarClose" aria-label="관리자 메뉴 닫기">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" />
                         </svg>
                     </button>
-                    <a class="sidebar-home-link" href="/admin/dashboard">愿由ъ옄 肄섏넄</a>
+                    <a class="sidebar-home-link" href="/admin/dashboard">관리자 패널</a>
                 </div>
 
-                <nav class="sidebar-nav" aria-label="愿由ъ옄 硫붾돱">
+                <nav class="sidebar-nav" aria-label="관리자 메뉴">
                     <div class="sidebar-group-label">MAIN</div>
 
                     <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/admin/dashboard">
-                        <span class="left">??쒕낫??/span>
+                        <span class="left">대시보드</span>
                     </a>
 
                     <div class="sidebar-group-label">CATALOG</div>
                     <a class="nav-link <%= active === 'products' ? 'active' : '' %>" href="/admin/products">
-                        <span class="left">?곹뭹 愿由?/span>
+                        <span class="left">상품 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'product_new' ? 'active' : '' %>" href="/admin/products/new">
-                        <span class="left">?곹뭹 ?깅줉</span>
+                        <span class="left">상품 등록</span>
                     </a>
 
                     <a class="nav-link <%= active === 'categories' ? 'active' : '' %>" href="/admin/categories">
-                        <span class="left">移댄뀒怨좊━</span>
+                        <span class="left">카테고리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'import' ? 'active' : '' %>" href="/admin/products/import">
-                        <span class="left">?묒? ?낅줈??/span>
+                        <span class="left">대량 등록</span>
                     </a>
 
                     <div class="sidebar-group-label">CUSTOMER</div>
                     <a class="nav-link <%= active === 'orders' ? 'active' : '' %>" href="/admin/orders">
-                        <span class="left">二쇰Ц 愿由?/span>
+                        <span class="left">주문 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'inquiries' ? 'active' : '' %>" href="/admin/inquiries">
-                        <span class="left">臾몄쓽 愿由?/span>
+                        <span class="left">문의 관리</span>
                     </a>
 
                     <a class="nav-link <%= active === 'notices' ? 'active' : '' %>" href="/admin/notices">
-                        <span class="left">怨듭? 愿由?/span>
+                        <span class="left">공지 관리</span>
                     </a>
                 </nav>
             </aside>
@@ -123,7 +123,7 @@
                             <% if (typeof backHref !=='undefined' && backHref) { %>
                                 <div class="mb-3 d-flex justify-content-end">
                                     <a href="<%= backHref %>" class="btn btn-outline-secondary btn-sm">
-                                        ?댁쟾?쇰줈
+                                        이전으로
                                     </a>
                                 </div>
                                 <% } %>

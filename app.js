@@ -156,7 +156,6 @@ app.use('/api', require('./routes/api'));
 // ✅ CSRF 에러는 500보다 먼저 처리해야 함
 app.use((err, req, res, next) => {
 	if (err && err.code === 'EBADCSRFTOKEN') {
-		// 필요하면 디버그
 		console.error('[CSRF]', {
 			path: req.originalUrl,
 			method: req.method,
@@ -165,8 +164,12 @@ app.use((err, req, res, next) => {
 			hasCsrfField: Boolean(req.body && req.body._csrf),
 		});
 
+		// 로그인 폼 전송 시 세션 만료/쿠키 없음 → 로그인 페이지로 리다이렉트
+		if (req.originalUrl.startsWith('/auth/login')) {
+			return res.redirect('/auth/login?csrf=1');
+		}
 		return res.status(403).render('403', {
-			message: 'CSRF 토큰이 유효하지 않습니다. 새로고침 후 다시 시도해주세요.',
+			message: 'CSRF 토큰이 유효하지 않습니다. 페이지를 새로고침 후 다시 시도해주세요.',
 		});
 	}
 	next(err);

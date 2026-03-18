@@ -1,24 +1,24 @@
-﻿<%- include('../layouts/shop-top', { title: 'SHOP', active: 'home' }) %>
+<%- include('../layouts/shop-top', { title: 'SHOP', active: 'home' }) %>
 
 <section class="shop-home">
     <section class="shop-home-hero">
         <div class="shop-home-hero-inner container">
             <p class="shop-home-hero-eyebrow">2026 SPRING CURATION</p>
-            <h1>?곸긽 ?몃꽕???ㅽ궓 紐⑥쓬??/h1>
-            <p>癒몃Т???쒓컙??留ㅼ텧???쒕떎, ?곸긽?쇰줈 ?쒖꽑???щ줈?≪쑝?몄슂.</p>
+            <h1>고객 맞춤형 세라믹 솔루션</h1>
+            <p>산업용 고성능 세라믹 부품을 공급합니다. 고객 요구에 최적화된 솔루션을 제공합니다.</p>
             <div class="shop-home-hero-actions">
-                <a href="/shop/products" class="shop-home-hero-btn is-primary">?꾩껜 ?곹뭹 蹂닿린</a>
-                <a href="/shop/cart" class="shop-home-hero-btn">?λ컮援щ땲</a>
+                <a href="/shop/products" class="shop-home-hero-btn is-primary">전체 상품 보기</a>
+                <a href="/shop/cart" class="shop-home-hero-btn">장바구니</a>
             </div>
         </div>
     </section>
 
     <section class="shop-home-catalog container">
         <header class="shop-home-catalog-head">
-            <p class="shop-home-count"><strong><%= Number((typeof totalCount !== 'undefined' ? totalCount : null) || (latest || []).length || 0).toLocaleString() %>媛?/strong> ?붿옄??/p>
+            <p class="shop-home-count"><strong><%= Number((typeof totalCount !== 'undefined' ? totalCount : null) || (latest || []).length || 0).toLocaleString() %>개</strong> 제품</p>
 
-            <div class="shop-home-category-row" aria-label="移댄뀒怨좊━">
-                <a class="shop-home-category-chip is-active" href="/shop/products?category=all">?꾩껜</a>
+            <div class="shop-home-category-row" aria-label="카테고리">
+                <a class="shop-home-category-chip is-active" href="/shop/products?category=all">전체</a>
                 <% (categories || []).slice(0, 8).forEach((category) => { %>
                     <a class="shop-home-category-chip" href="/shop/products?category=<%= category.slug %>"><%= category.name %></a>
                 <% }) %>
@@ -27,12 +27,12 @@
 
         <% if (!latest || latest.length === 0) { %>
             <div class="shop-home-empty">
-                ?꾩쭅 ?몄텧???곹뭹???놁뒿?덈떎. 愿由ъ옄?먯꽌 ?곹뭹???깅줉??二쇱꽭??
+                현재 등록된 상품이 없습니다. 관리자에서 상품을 등록해 주세요.
             </div>
         <% } else { %>
             <div class="shop-home-grid">
                 <% (latest || []).forEach((product) => { %>
-                    <% const thumb = product.image_thumb || product.image || 'https://via.placeholder.com/1200x900?text=No+Image'; %>
+                    <% const thumb = product.image_thumb || product.image || '/images/no-image.png'; %>
                     <article class="shop-home-card">
                         <a class="shop-home-thumb" href="/shop/products/<%= product.id %>">
                             <img src="<%= thumb %>" alt="<%= product.name %>" loading="lazy">
@@ -40,8 +40,8 @@
 
                         <div class="shop-home-card-body">
                             <div class="shop-home-badges">
-                                <span class="shop-home-badge">諛섏쓳??/span>
-                                <span class="shop-home-badge shop-home-badge-safe">?덉쟾嫄곕옒</span>
+                                <span class="shop-home-badge">신상품</span>
+                                <span class="shop-home-badge shop-home-badge-safe">전체공개</span>
                             </div>
 
                             <h2 class="shop-home-title">
@@ -53,10 +53,14 @@
                             <% } %>
 
                             <div class="shop-home-card-foot">
-                                <strong class="shop-home-price"><%= Number(product.price || 0).toLocaleString() %>??/strong>
+                                <strong class="shop-home-price"><%= Number(product.price || 0).toLocaleString() %>원</strong>
                                 <div class="shop-home-card-actions">
-                                    <a class="shop-home-like" href="<%= user ? '/shop/wishlist' : '/auth/login' %>" aria-label="李?>??/a>
-                                    <a class="shop-home-sample" href="/shop/products/<%= product.id %>">SAMPLE</a>
+                                    <a class="shop-home-like" href="<%= user ? '/shop/wishlist' : '/auth/login' %>" aria-label="찜하기">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </a>
+                                    <a class="shop-home-sample" href="/shop/products/<%= product.id %>">견적 문의</a>
                                 </div>
                             </div>
                         </div>
@@ -68,5 +72,3 @@
 </section>
 
 <%- include('../layouts/shop-bottom') %>
-
-
