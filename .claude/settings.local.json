@@ -1,7 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find c:/Users/pke03/company-site/public -type f \\\\\\(-name *.css -o -name *.js -o -name *.jpg -o -name *.png -o -name *.gif \\\\\\))"
+      "Bash(find c:/Users/pke03/company-site/public -type f \\\\\\(-name *.css -o -name *.js -o -name *.jpg -o -name *.png -o -name *.gif \\\\\\))",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "Read(//c/Users/pke03/company-site/**)",
+      "Bash(curl -s http://localhost:3000/shop/products)",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "Bash(curl -s \"http://localhost:3000/auth/login\")",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "Bash(node -e \"require\\(''http''\\).get\\(''http://localhost:3000/'', \\(r\\) => console.log\\(''Status:'', r.statusCode\\)\\).on\\(''error'', \\(e\\) => console.log\\(''Error:'', e.message\\)\\)\")",
+      "Bash(node -e \"require\\(''http''\\).get\\(''http://localhost:3001/'', \\(r\\) => console.log\\(''Status:'', r.statusCode\\)\\).on\\(''error'', \\(e\\) => console.log\\(''Error:'', e.message\\)\\)\")",
+      "Bash(git -C /c/Users/pke03/company-site/.claude/worktrees/epic-sammet status)",
+      "Bash(git -C /c/Users/pke03/company-site/.claude/worktrees/epic-sammet log --oneline -5)",
+      "Bash(git -C /c/Users/pke03/company-site/.claude/worktrees/epic-sammet diff --stat)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git -C /c/Users/pke03/company-site/.claude/worktrees/epic-sammet push -u origin claude/epic-sammet)",
+      "Bash(sshpass -p \"12\" ssh -o StrictHostKeyChecking=no ras@192.168.1.250 \"pm2 logs --lines 50 --nostream\")",
+      "mcp__Desktop_Commander__start_process",
+      "mcp__Desktop_Commander__read_process_output",
+      "Bash(ping -n 2 192.168.1.250)",
+      "Bash(where ssh:*)",
+      "mcp__Desktop_Commander__interact_with_process",
+      "Bash(git -C /c/Users/pke03/company-site pull origin master)",
+      "Bash(git -C /c/Users/pke03/company-site stash)",
+      "Bash(git -C /c/Users/pke03/company-site stash drop)",
+      "Bash(git -C /c/Users/pke03/company-site push origin master)"
     ]
   }
 }
