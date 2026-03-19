@@ -360,7 +360,7 @@
 	border-left: 1px solid var(--border) !important;
 }
 .shop-offcanvas .offcanvas-header {
-	padding: 16px 16px 12px;
+	padding: 18px 16px 14px;
 	border-bottom: 1px solid var(--border);
 }
 .shop-offcanvas-close {
@@ -378,6 +378,61 @@
 }
 .shop-offcanvas-close:hover { border-color: var(--brand); color: var(--brand); }
 
+/* Auth section (top) — login/register always first */
+.shop-offcanvas-auth { background: var(--bg); }
+.shop-offcanvas-user-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 15px;
+	color: var(--text);
+}
+
+/* Auth buttons — text:button size 1:1 (font-size:height match) */
+.shop-offcanvas-auth-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 44px;
+	font-size: 15px;
+	font-weight: 700;
+	border-radius: var(--radius);
+	border: 1.5px solid var(--border);
+	color: var(--text);
+	text-decoration: none;
+	text-align: center;
+	transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.shop-offcanvas-auth-btn:hover { border-color: var(--brand); color: var(--brand); }
+.shop-offcanvas-auth-btn-primary {
+	background: var(--brand);
+	border-color: var(--brand);
+	color: #fff !important;
+}
+.shop-offcanvas-auth-btn-primary:hover { background: #0d1f3c; border-color: #0d1f3c; }
+.shop-offcanvas-auth-btn-danger { border-color: #ef4444; color: #ef4444 !important; }
+.shop-offcanvas-auth-btn-danger:hover { background: #fef2f2; }
+
+.shop-offcanvas-divider { height: 1px; background: var(--border); }
+
+/* Search button */
+.shop-offcanvas-search-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border: 1.5px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	cursor: pointer;
+	flex-shrink: 0;
+	transition: border-color 0.15s, color 0.15s;
+}
+.shop-offcanvas-search-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+/* Nav links */
 .shop-offcanvas-nav {
 	display: flex;
 	flex-direction: column;
@@ -385,10 +440,10 @@
 .shop-offcanvas-link {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	padding: 12px 16px;
+	gap: 11px;
+	padding: 13px 16px;
 	border-radius: var(--radius);
-	font-size: 14px;
+	font-size: 15px;
 	font-weight: 600;
 	color: var(--text);
 	text-decoration: none;
@@ -402,6 +457,27 @@
 .shop-offcanvas-link svg { flex-shrink: 0; color: var(--muted); }
 .shop-offcanvas-link:hover svg,
 .shop-offcanvas-link.is-active svg { color: var(--accent); }
+
+/* Company back link at bottom */
+.shop-offcanvas-company-link {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 13px 14px;
+	border-radius: var(--radius);
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--text);
+	text-decoration: none;
+	border: 1.5px solid var(--border);
+	transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.shop-offcanvas-company-link:hover {
+	background: var(--bg);
+	border-color: var(--brand);
+	color: var(--brand);
+}
+.shop-offcanvas-company-link svg { flex-shrink: 0; }
 
 /* ============================================================
    MAIN CONTENT AREAS
@@ -863,12 +939,26 @@
 /* ============================================================
    RESPONSIVE HEADER SIZES
    ============================================================ */
+
+/* Prevent nav items from wrapping at any desktop width */
+.shop-site-header__inner { flex-wrap: nowrap; }
+.shop-main-nav { flex-wrap: nowrap; white-space: nowrap; }
+.shop-header-tools { flex-wrap: nowrap; white-space: nowrap; }
+
+/* Scroll-padding to prevent sticky header covering content */
+html { scroll-padding-top: 80px; }
+
 @media (max-width: 991px) {
 	.shop-site-header__inner { min-height: 62px; }
 	.shop-home-hero { padding: 64px 0 56px; margin-bottom: 28px; }
 }
+@media (max-width: 1400px) {
+	.shop-header-search { width: 160px; }
+	.shop-main-nav { gap: 2px; }
+	.shop-main-nav a { font-size: 13px; padding: 6px 8px; }
+}
 @media (max-width: 1200px) {
-	.shop-header-search { width: 180px; }
-	.shop-main-nav { gap: 4px; }
-	.shop-main-nav a { font-size: 13px; padding: 6px 10px; }
+	.shop-header-search { width: 140px; }
+	.shop-main-nav a { font-size: 12px; padding: 5px 7px; }
+	.shop-back-company { font-size: 11px; padding: 0 8px; }
 }

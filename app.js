@@ -199,10 +199,107 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
+// DB 스키마 자동 보정 (누락된 컬럼/테이블 안전하게 추가)
+// =====================
+async function runSchemaMigrations() {
+	const safeAlter = async (sql) => {
+		try {
+			await db.execute(sql);
+		} catch (err) {
+			// "Duplicate column" 오류는 이미 존재하므로 무시
+			if (!String(err?.message || '').toLowerCase().includes('duplicate column')) {
+				console.warn('[migration] 스키마 보정 오류 (무시됨):', err.message);
+			}
+		}
+	};
+
+	try {
+		// orders 테이블 컬럼 보정
+		await safeAlter(`CREATE TABLE IF NOT EXISTS orders (
+			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			order_number VARCHAR(32) NOT NULL DEFAULT '',
+			user_id BIGINT NULL,
+			guest_name VARCHAR(100) NULL,
+			guest_email VARCHAR(150) NULL,
+			guest_phone VARCHAR(30) NULL,
+			status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+			total_amount INT NOT NULL DEFAULT 0,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		)`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN order_number VARCHAR(32) NOT NULL DEFAULT ''`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN total_amount INT NOT NULL DEFAULT 0`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN guest_name VARCHAR(100) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN guest_email VARCHAR(150) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN guest_phone VARCHAR(30) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN delivery_status VARCHAR(30) DEFAULT 'READY'`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN shipping_name VARCHAR(100) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN shipping_phone VARCHAR(30) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN shipping_address VARCHAR(255) NULL`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN discount_amount INT NOT NULL DEFAULT 0`);
+		await safeAlter(`ALTER TABLE orders ADD COLUMN coupon_code VARCHAR(50) NULL`);
+
+		// order_payments 테이블 생성
+		await safeAlter(`CREATE TABLE IF NOT EXISTS order_payments (
+			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			order_id BIGINT NOT NULL,
+			provider VARCHAR(30) NOT NULL,
+			tid VARCHAR(100) NULL,
+			status VARCHAR(30) NOT NULL DEFAULT 'READY',
+			amount INT NOT NULL DEFAULT 0,
+			requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			approved_at DATETIME NULL
+		)`);
+
+		// inquiries 테이블 컬럼 보정
+		await safeAlter(`CREATE TABLE IF NOT EXISTS inquiries (
+			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			order_id BIGINT NULL,
+			user_id BIGINT NULL,
+			guest_name VARCHAR(100) NULL,
+			guest_email VARCHAR(150) NULL,
+			guest_phone VARCHAR(30) NULL,
+			title VARCHAR(200) NOT NULL DEFAULT '',
+			content TEXT NOT NULL,
+			status VARCHAR(30) NOT NULL DEFAULT 'NEW',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		)`);
+		await safeAlter(`ALTER TABLE inquiries ADD COLUMN answer_content TEXT NULL`);
+		await safeAlter(`ALTER TABLE inquiries ADD COLUMN answered_at DATETIME NULL`);
+		await safeAlter(`ALTER TABLE inquiries ADD COLUMN notification_channel VARCHAR(20) NULL`);
+		await safeAlter(`ALTER TABLE inquiries ADD COLUMN notification_status VARCHAR(20) NULL`);
+		await safeAlter(`ALTER TABLE inquiries ADD COLUMN notification_error TEXT NULL`);
+
+		// products 테이블 컬럼 보정
+		await safeAlter(`ALTER TABLE products ADD COLUMN stock_quantity INT DEFAULT 0`);
+		await safeAlter(`ALTER TABLE products ADD COLUMN visibility_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'`);
+
+		// notices 테이블
+		await safeAlter(`CREATE TABLE IF NOT EXISTS notices (
+			id INT AUTO_INCREMENT PRIMARY KEY,
+			title VARCHAR(200) NOT NULL,
+			content TEXT NOT NULL,
+			category VARCHAR(30) NOT NULL DEFAULT 'general',
+			views INT NOT NULL DEFAULT 0,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)`);
+		await safeAlter(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`);
+
+		console.log('[migration] 스키마 보정 완료');
+	} catch (err) {
+		console.error('[migration] 치명적 오류:', err);
+	}
+}
+
+// =====================
 // Start
 // =====================
-app.listen(PORT, () => {
-	console.log(`Server running at http://127.0.0.1:${PORT}`);
+runSchemaMigrations().then(() => {
+	app.listen(PORT, () => {
+		console.log(`Server running at http://127.0.0.1:${PORT}`);
+	});
 });
 // ===============================
 // 카카오페이 결제 (orders 기반)
