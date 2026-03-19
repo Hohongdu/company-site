@@ -1,4 +1,7 @@
 // routes/admin.js
+// ⚠️  DEPRECATED — 이 파일은 더 이상 사용되지 않습니다.
+// app.js는 routes/admin/index.js 를 사용합니다.
+// Phase 1 리팩토링 (2026-03-19): routes/admin/ 디렉토리로 분리됨.
 const express = require('express');
 const multer = require('multer');
 const path = require('path');

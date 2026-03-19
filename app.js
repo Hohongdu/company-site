@@ -16,8 +16,8 @@ const { requireLogin } = require('./middleware/auth');
 
 const companyRouter = require('./routes/company');
 const authRouter = require('./routes/auth');
-const shopRouter = require('./routes/shop');
-const adminRouter = require('./routes/admin');
+const shopRouter = require('./routes/shop/index');
+const adminRouter = require('./routes/admin/index');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
