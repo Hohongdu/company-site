@@ -214,43 +214,56 @@ router.get('/dashboard', async (req, res) => {
 		const [[orderCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM orders');
 		const [[inquiryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM inquiries');
 
-		const [recentOrders] = await db.execute(
-			`SELECT o.order_number, o.status, o.total_amount, o.created_at,
-        u.name AS user_name, o.guest_name
-       FROM orders o
-       LEFT JOIN users u ON u.id = o.user_id
-       ORDER BY o.created_at DESC
-       LIMIT 5`,
-		);
+		let recentOrders = [];
+		try {
+			[recentOrders] = await db.execute(
+				`SELECT o.id,
+                COALESCE(o.order_number, CONCAT('ORD-', o.id)) AS order_number,
+                o.status, o.total_amount, o.created_at,
+                u.name AS user_name, o.guest_name
+               FROM orders o
+               LEFT JOIN users u ON u.id = o.user_id
+               ORDER BY o.created_at DESC
+               LIMIT 5`,
+			);
+		} catch (_) {}
 
-		const [recentInquiries] = await db.execute(
-			`SELECT i.title, i.status, i.created_at, o.order_number,
-        u.name AS user_name, i.guest_name
-       FROM inquiries i
-       LEFT JOIN orders o ON o.id = i.order_id
-       LEFT JOIN users u ON u.id = i.user_id
-       ORDER BY i.created_at DESC
-       LIMIT 5`,
-		);
+		let recentInquiries = [];
+		try {
+			[recentInquiries] = await db.execute(
+				`SELECT i.title, i.status, i.created_at,
+                u.name AS user_name, i.guest_name
+               FROM inquiries i
+               LEFT JOIN users u ON u.id = i.user_id
+               ORDER BY i.created_at DESC
+               LIMIT 5`,
+			);
+		} catch (_) {}
 
-		const [monthlyOrders] = await db.execute(
-			`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
-        COUNT(*) AS cnt,
-        COALESCE(SUM(total_amount), 0) AS revenue
-       FROM orders
-       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
-       GROUP BY ym
-       ORDER BY ym ASC`,
-		);
+		let monthlyOrders = [];
+		try {
+			[monthlyOrders] = await db.execute(
+				`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
+                COUNT(*) AS cnt,
+                COALESCE(SUM(total_amount), 0) AS revenue
+               FROM orders
+               WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+               GROUP BY ym
+               ORDER BY ym ASC`,
+			);
+		} catch (_) {}
 
-		const [monthlyInquiries] = await db.execute(
-			`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
-        COUNT(*) AS cnt
-       FROM inquiries
-       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
-       GROUP BY ym
-       ORDER BY ym ASC`,
-		);
+		let monthlyInquiries = [];
+		try {
+			[monthlyInquiries] = await db.execute(
+				`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
+                COUNT(*) AS cnt
+               FROM inquiries
+               WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+               GROUP BY ym
+               ORDER BY ym ASC`,
+			);
+		} catch (_) {}
 
 		const monthLabels = [];
 		const now = new Date();

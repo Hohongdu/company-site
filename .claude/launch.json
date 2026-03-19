@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "company-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["app.js"],
+      "port": 3001,
+      "autoPort": true,
+      "env": {
+        "NODE_PATH": "C:\\Users\\pke03\\company-site\\node_modules"
+      }
+    }
+  ]
+}

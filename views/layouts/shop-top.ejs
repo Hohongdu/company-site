@@ -32,10 +32,20 @@
                 <span class="shop-brand-sub">SHOP</span>
             </a>
 
-            <button class="navbar-toggler shop-nav-toggle d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#shopMobileNav" aria-controls="shopMobileNav" aria-expanded="false" aria-label="모바일 메뉴">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- 모바일: 아이콘 + 햄버거 -->
+            <div class="d-flex align-items-center gap-2 d-lg-none">
+                <a class="shop-mobile-icon-btn" href="/shop/cart" aria-label="장바구니">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <% if (safeCartCount > 0) { %><span class="shop-cart-badge"><%= safeCartCount %></span><% } %>
+                </a>
+                <button class="shop-nav-toggle" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#shopOffcanvasNav"
+                    aria-controls="shopOffcanvasNav" aria-label="메뉴 열기">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
 
+            <!-- 데스크톱 nav -->
             <nav class="shop-main-nav d-none d-lg-flex" aria-label="쇼핑 내비게이션">
                 <a class="<%= isHome ? 'is-active' : '' %>" href="/shop">홈</a>
                 <a class="<%= isProducts ? 'is-active' : '' %>" href="/shop/products">전체 상품</a>
@@ -44,7 +54,13 @@
                 <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries">문의하기</a>
             </nav>
 
+            <!-- 데스크톱 도구 -->
             <div class="shop-header-tools d-none d-lg-flex">
+                <a class="shop-back-company" href="/">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    회사 홈
+                </a>
+
                 <form class="shop-header-search" action="/shop/products" method="get">
                     <input class="form-control form-control-sm" type="search" name="q" placeholder="상품 검색" value="<%= q %>">
                 </form>
@@ -67,32 +83,85 @@
                 <% } %>
             </div>
         </div>
+    </header>
 
-        <div class="collapse shop-mobile-nav d-lg-none" id="shopMobileNav">
-            <div class="container py-3">
-                <form class="shop-mobile-search" action="/shop/products" method="get">
+    <!-- ===== 모바일 Offcanvas (오른쪽 드로어) ===== -->
+    <div class="offcanvas offcanvas-end shop-offcanvas" tabindex="-1" id="shopOffcanvasNav" aria-labelledby="shopOffcanvasLabel">
+        <div class="offcanvas-header">
+            <div class="d-flex flex-column">
+                <span class="shop-brand-logo" id="shopOffcanvasLabel">ENERMADE</span>
+                <span class="shop-brand-sub">SHOP</span>
+            </div>
+            <button type="button" class="shop-offcanvas-close" data-bs-dismiss="offcanvas" aria-label="닫기">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <div class="offcanvas-body d-flex flex-column gap-0 p-0">
+            <!-- 검색 -->
+            <div class="px-4 py-3 border-bottom">
+                <form action="/shop/products" method="get" class="d-flex gap-2">
                     <input class="form-control" type="search" name="q" placeholder="상품 검색" value="<%= q %>">
-                    <button class="btn btn-dark" type="submit">검색</button>
+                    <button class="btn btn-dark px-3" type="submit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
                 </form>
+            </div>
 
-                <div class="shop-mobile-nav-grid">
-                    <a class="<%= isHome ? 'is-active' : '' %>" href="/shop">홈</a>
-                    <a class="<%= isProducts ? 'is-active' : '' %>" href="/shop/products">전체 상품</a>
-                    <a class="<%= isCart ? 'is-active' : '' %>" href="/shop/cart">장바구니<% if (safeCartCount > 0) { %> (<%= safeCartCount %>)<% } %></a>
-                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/orders/guest">주문 조회</a>
-                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries/guest">문의 조회</a>
-                    <a class="<%= isSupport ? 'is-active' : '' %>" href="/shop/inquiries">문의하기</a>
-                    <% if (user) { %>
-                        <a class="<%= isAccount ? 'is-active' : '' %>" href="/shop/account">내 정보</a>
-                        <a class="<%= isWishlist ? 'is-active' : '' %>" href="/shop/wishlist">찜한 상품</a>
-                        <a href="/auth/logout">로그아웃</a>
-                    <% } else { %>
-                        <a href="/auth/login">로그인</a>
-                        <a href="/auth/register">회원가입</a>
-                    <% } %>
-                </div>
+            <!-- 메뉴 링크 -->
+            <nav class="shop-offcanvas-nav px-3 py-2">
+                <a class="shop-offcanvas-link <%= isHome ? 'is-active' : '' %>" href="/shop" data-bs-dismiss="offcanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    홈
+                </a>
+                <a class="shop-offcanvas-link <%= isProducts ? 'is-active' : '' %>" href="/shop/products" data-bs-dismiss="offcanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    전체 상품
+                </a>
+                <a class="shop-offcanvas-link <%= isCart ? 'is-active' : '' %>" href="/shop/cart" data-bs-dismiss="offcanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    장바구니<% if (safeCartCount > 0) { %> <span class="shop-cart-badge ms-1"><%= safeCartCount %></span><% } %>
+                </a>
+                <a class="shop-offcanvas-link" href="/shop/orders/guest" data-bs-dismiss="offcanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    주문 조회
+                </a>
+                <a class="shop-offcanvas-link" href="/shop/inquiries/guest" data-bs-dismiss="offcanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    문의 조회
+                </a>
+                <a class="shop-offcanvas-link" href="/shop/inquiries" data-bs-dismiss="offcanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    문의하기
+                </a>
+                <% if (user) { %>
+                    <a class="shop-offcanvas-link <%= isWishlist ? 'is-active' : '' %>" href="/shop/wishlist" data-bs-dismiss="offcanvas">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                        찜한 상품
+                    </a>
+                    <a class="shop-offcanvas-link <%= isAccount ? 'is-active' : '' %>" href="/shop/account" data-bs-dismiss="offcanvas">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 21a8 8 0 10-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/></svg>
+                        내 정보
+                    </a>
+                <% } %>
+            </nav>
+
+            <!-- 회사 홈 / 인증 -->
+            <div class="mt-auto px-3 py-3 border-top d-flex flex-column gap-2">
+                <a class="btn btn-outline-secondary btn-sm w-100" href="/" data-bs-dismiss="offcanvas">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="me-1"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    회사 홈으로
+                </a>
+                <% if (user) { %>
+                    <a class="btn btn-outline-danger btn-sm w-100" href="/auth/logout">로그아웃 (<%= user.name %>)</a>
+                <% } else { %>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-outline-secondary btn-sm flex-fill" href="/auth/login" data-bs-dismiss="offcanvas">로그인</a>
+                        <a class="btn btn-primary btn-sm flex-fill" href="/auth/register" data-bs-dismiss="offcanvas">회원가입</a>
+                    </div>
+                <% } %>
             </div>
         </div>
-    </header>
+    </div>
 
     <main class="<%= isHome ? 'shop-main shop-main-home' : 'container py-4 shop-main' %>">

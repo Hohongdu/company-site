@@ -287,74 +287,121 @@
 }
 .shop-cta-btn:hover { background: #0d1f3c; color: #fff; }
 
-/* Mobile nav toggle */
+/* Mobile nav toggle (hamburger) */
 .shop-nav-toggle {
-	margin-left: auto;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 5px;
+	width: 40px;
+	height: 40px;
 	border: 1.5px solid var(--border);
 	border-radius: var(--radius);
+	background: var(--surface);
+	cursor: pointer;
+	padding: 0;
+	transition: border-color 0.15s;
+}
+.shop-nav-toggle:hover { border-color: var(--brand); }
+.shop-nav-toggle span {
+	display: block;
+	width: 18px;
+	height: 2px;
+	background: var(--text);
+	border-radius: 2px;
 }
 
-/* Mobile nav panel */
-.shop-mobile-nav {
-	border-top: 1px solid var(--border);
-	background: var(--surface);
-}
-.shop-mobile-search {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 8px;
-	margin-bottom: 12px;
-}
-.shop-mobile-nav-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 8px;
-}
-.shop-mobile-nav-grid a {
+/* Mobile cart icon button */
+.shop-mobile-icon-btn {
+	position: relative;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-height: 44px;
+	width: 40px;
+	height: 40px;
 	border: 1.5px solid var(--border);
 	border-radius: var(--radius);
-	text-decoration: none;
-	font-size: 14px;
-	font-weight: 700;
 	color: var(--text);
-	background: var(--surface);
+	text-decoration: none;
 	transition: border-color 0.15s, color 0.15s;
 }
-.shop-mobile-nav-grid a:hover { border-color: var(--brand); color: var(--brand); }
-.shop-mobile-nav-grid a.is-active {
-	border-color: var(--brand);
-	color: var(--surface);
-	background: var(--brand);
+.shop-mobile-icon-btn:hover { border-color: var(--brand); color: var(--brand); }
+.shop-mobile-icon-btn .shop-cart-badge {
+	position: absolute;
+	top: -5px;
+	right: -5px;
+	margin-left: 0;
 }
 
-@media (max-width: 575px) {
-	.shop-mobile-nav-grid { grid-template-columns: 1fr; }
-}
-
-/* Mobile more-grid (legacy) */
-.mobile-more-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 8px;
-}
-.mobile-more-item {
+/* Desktop "← 회사 홈" back link */
+.shop-back-company {
 	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	min-height: 46px;
-	border-radius: var(--radius);
+	gap: 4px;
+	height: 36px;
+	padding: 0 12px;
 	border: 1.5px solid var(--border);
-	background: var(--surface);
-	color: var(--text);
-	font-weight: 600;
+	border-radius: var(--radius-lg);
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--muted);
 	text-decoration: none;
+	white-space: nowrap;
+	transition: border-color 0.15s, color 0.15s;
 }
-.mobile-more-item.admin { border-color: var(--border-strong); background: var(--bg); }
-@media (max-width: 576px) { .mobile-more-grid { grid-template-columns: 1fr; } }
+.shop-back-company:hover { border-color: var(--brand); color: var(--brand); }
+
+/* ============================================================
+   MOBILE OFFCANVAS NAV (right drawer)
+   ============================================================ */
+.shop-offcanvas {
+	width: 300px !important;
+	border-left: 1px solid var(--border) !important;
+}
+.shop-offcanvas .offcanvas-header {
+	padding: 16px 16px 12px;
+	border-bottom: 1px solid var(--border);
+}
+.shop-offcanvas-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: 1.5px solid var(--border);
+	border-radius: var(--radius);
+	background: transparent;
+	cursor: pointer;
+	color: var(--muted);
+	transition: border-color 0.15s, color 0.15s;
+}
+.shop-offcanvas-close:hover { border-color: var(--brand); color: var(--brand); }
+
+.shop-offcanvas-nav {
+	display: flex;
+	flex-direction: column;
+}
+.shop-offcanvas-link {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 16px;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text);
+	text-decoration: none;
+	transition: background 0.15s, color 0.15s;
+}
+.shop-offcanvas-link:hover { background: var(--bg); color: var(--brand); }
+.shop-offcanvas-link.is-active {
+	background: var(--accent-light);
+	color: var(--brand);
+}
+.shop-offcanvas-link svg { flex-shrink: 0; color: var(--muted); }
+.shop-offcanvas-link:hover svg,
+.shop-offcanvas-link.is-active svg { color: var(--accent); }
 
 /* ============================================================
    MAIN CONTENT AREAS
