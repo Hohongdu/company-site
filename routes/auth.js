@@ -18,10 +18,10 @@ const sanitizeReturnTo = (value) => {
 router.get('/login', (req, res) => {
 	const returnTo = sanitizeReturnTo(req.query.redirect);
 
-	// csurf가 걸린 상태라면 req.csrfToken() 사용 가능
 	return res.render('auth/login', {
 		returnTo,
 		csrfToken: req.csrfToken(),
+		query: req.query,
 	});
 });
 router.get('/forgot', (req, res) => {
@@ -121,11 +121,23 @@ router.post('/login', async (req, res) => {
 
 		// ✅ is_admin 포함해서 가져오기
 		const [rows] = await db.execute('SELECT id, name, email, password, is_admin FROM users WHERE email = ? LIMIT 1', [email]);
-		if (rows.length === 0) return res.send('존재하지 않는 이메일입니다.');
+		if (rows.length === 0) {
+			return res.render('auth/login', {
+				returnTo: sanitizeReturnTo(req.body.returnTo),
+				csrfToken: req.csrfToken(),
+				error: '이메일 또는 비밀번호가 올바르지 않습니다.',
+			});
+		}
 
 		const user = rows[0];
 		const ok = await bcrypt.compare(password, user.password);
-		if (!ok) return res.send('비밀번호가 일치하지 않습니다.');
+		if (!ok) {
+			return res.render('auth/login', {
+				returnTo: sanitizeReturnTo(req.body.returnTo),
+				csrfToken: req.csrfToken(),
+				error: '이메일 또는 비밀번호가 올바르지 않습니다.',
+			});
+		}
 
 		req.session.user = {
 			id: user.id,
@@ -141,14 +153,18 @@ router.post('/login', async (req, res) => {
 		return res.redirect(returnTo || '/account');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('로그인 중 오류');
+		return res.render('auth/login', {
+			returnTo: sanitizeReturnTo(req.body.returnTo),
+			csrfToken: req.csrfToken(),
+			error: '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+		});
 	}
 });
 
 router.get('/logout', (req, res) => {
 	req.session.destroy((err) => {
 		if (err) console.error(err);
-		res.clearCookie('connect.sid');
+		res.clearCookie('sid');
 		return res.redirect('/');
 	});
 });

@@ -33,18 +33,18 @@
         <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
             <div class="container py-2">
 
-                <!-- ?쇱そ: 濡쒓퀬 -->
+                <!-- 왼쪽: 로고 -->
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge text-bg-primary">ADMIN</span>
                     <a class="navbar-brand fw-bold m-0" href="/admin/dashboard">Console</a>
                 </div>
 
-                <!-- 紐⑤컮?? ?대쫫/濡쒓렇?꾩썐(or 濡쒓렇?? + ?꾨쾭嫄?-->
+                <!-- 모바일 로그인/로그아웃 + 햄버거 -->
                 <div class="ms-auto d-flex align-items-center gap-2 d-lg-none">
                     <% if (user) { %>
-                        <a class="btn btn-outline-secondary btn-sm navbtn" href="/auth/logout">濡쒓렇?꾩썐</a>
+                        <a class="btn btn-outline-secondary btn-sm navbtn" href="/auth/logout">로그아웃</a>
                         <% } else { %>
-                            <a class="btn btn-outline-secondary btn-sm navbtn" href="/auth/login">濡쒓렇??/a>
+                            <a class="btn btn-outline-secondary btn-sm navbtn" href="/auth/login">로그인</a>
                                 <% } %>
 
                                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -55,28 +55,28 @@
 
                 <div class="collapse navbar-collapse" id="adminNav">
 
-                    <!-- ?곗뒪?ы깙: ?ㅻⅨ履?踰꾪듉 臾띠쓬 -->
+                    <!-- 데스크탑: 우측 버튼 모음 -->
                     <div class="ms-lg-auto d-none d-lg-flex align-items-center gap-2">
 
                         <a class="btn btn-sm navbtn <%= activeKey==='dashboard' ? 'btn-primary' : 'btn-outline-primary' %>"
-                            href="/admin/dashboard">??쒕낫??/a>
+                            href="/admin/dashboard">대시보드</a>
                             <a class="btn btn-sm navbtn <%= activeKey==='products' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                href="/admin/products">?곹뭹</a>
+                                href="/admin/products">상품</a>
                             <a class="btn btn-sm navbtn <%= activeKey==='categories' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                href="/admin/categories">移댄뀒怨좊━</a>
+                                href="/admin/categories">카테고리</a>
                             <a class="btn btn-sm navbtn <%= activeKey==='import' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                href="/admin/products/import">?묒? ?낅줈??/a>
+                                href="/admin/products/import">대량 등록</a>
                                 <a class="btn btn-sm navbtn <%= activeKey==='orders' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                    href="/admin/orders">二쇰Ц</a>
+                                    href="/admin/orders">주문</a>
                                 <a class="btn btn-sm navbtn <%= activeKey==='inquiries' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                    href="/admin/inquiries">臾몄쓽</a>
+                                    href="/admin/inquiries">문의</a>
 
-                                <a class="btn btn-sm btn-outline-secondary navbtn" href="/">?뚯궗</a>
-                                <a class="btn btn-sm btn-outline-secondary navbtn" href="/shop">?곹뭹紐?/a>
+                                <a class="btn btn-sm btn-outline-secondary navbtn" href="/">사이트</a>
+                                <a class="btn btn-sm btn-outline-secondary navbtn" href="/shop">상품몰</a>
 
                                     <% if (typeof backUrl !=='undefined' && backUrl) { %>
                                         <a class="btn btn-sm btn-outline-secondary navbtn"
-                                            href="<%= backUrl %>">???댁쟾</a>
+                                            href="<%= backUrl %>">이전</a>
                                         <% } %>
 
                                             <div class="vr mx-2"></div>
@@ -88,34 +88,34 @@
                                                     </strong>
                                                 </span>
                                                 <a class="btn btn-outline-secondary btn-sm navbtn"
-                                                    href="/auth/logout">濡쒓렇?꾩썐</a>
+                                                    href="/auth/logout">로그아웃</a>
                                                 <% } else { %>
                                                     <a class="btn btn-outline-secondary btn-sm navbtn"
-                                                        href="/auth/login">濡쒓렇??/a>
+                                                        href="/auth/login">로그인</a>
                                                         <% } %>
                     </div>
 
-                    <!-- 紐⑤컮?? 湲?踰꾪듉 硫붾돱 -->
+                    <!-- 모바일 전체 버튼 목록 -->
                     <div class="d-lg-none mt-2">
                         <div class="d-grid gap-2">
                             <a class="btn <%= activeKey==='dashboard' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                href="/admin/dashboard">??쒕낫??/a>
+                                href="/admin/dashboard">대시보드</a>
                                 <a class="btn <%= activeKey==='products' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                    href="/admin/products">?곹뭹</a>
+                                    href="/admin/products">상품</a>
                                 <a class="btn <%= activeKey==='categories' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                    href="/admin/categories">移댄뀒怨좊━</a>
+                                    href="/admin/categories">카테고리</a>
                                 <a class="btn <%= activeKey==='import' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                    href="/admin/products/import">?묒? ?낅줈??/a>
+                                    href="/admin/products/import">대량 등록</a>
                                     <a class="btn <%= activeKey==='orders' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                        href="/admin/orders">二쇰Ц</a>
+                                        href="/admin/orders">주문</a>
                                     <a class="btn <%= activeKey==='inquiries' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                        href="/admin/inquiries">臾몄쓽</a>
+                                        href="/admin/inquiries">문의</a>
 
-                                    <a class="btn btn-outline-secondary" href="/">?뚯궗</a>
-                                    <a class="btn btn-outline-secondary" href="/shop">?곹뭹紐?/a>
+                                    <a class="btn btn-outline-secondary" href="/">사이트</a>
+                                    <a class="btn btn-outline-secondary" href="/shop">상품몰</a>
 
                                         <% if (typeof backUrl !=='undefined' && backUrl) { %>
-                                            <a class="btn btn-outline-secondary" href="<%= backUrl %>">???댁쟾</a>
+                                            <a class="btn btn-outline-secondary" href="<%= backUrl %>">이전</a>
                                             <% } %>
                         </div>
                     </div>
