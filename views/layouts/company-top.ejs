@@ -1,4 +1,4 @@
-<% const pageTitle=(typeof title !=='undefined' && title) ? title : 'ENERMADE'; %>
+<% const pageTitle=(typeof title !=='undefined' && title) ? title+' | ENERMADE' : 'ENERMADE'; %>
 <% const activeKey=(typeof active !=='undefined' && active) ? active : ''; %>
 <% const returnTo=(typeof currentUrl !=='undefined' && currentUrl) ? currentUrl : (typeof currentPath !=='undefined' ? currentPath : '/'); %>
 <% const csrfTokenValue=(typeof csrfToken !=='undefined' && csrfToken) ? csrfToken : ''; %>
@@ -7,197 +7,85 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="<%= metaDesc %>" />
-  <meta property="og:title" content="<%= pageTitle %> | ENERMADE" />
-  <meta property="og:description" content="<%= metaDesc %>" />
-  <meta property="og:type" content="website" />
-  <title><%= pageTitle %> | ENERMADE</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/tokens.css" />
-  <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/company.css" />
+  <meta charset="UTF-8">
+  <title><%= pageTitle %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ENERMADE — 20년 이상의 기술력을 바탕으로 고성능 세라믹 소재를 생산하는 전문 제조기업입니다.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/company.css">
 </head>
 <body>
 
-<!-- ===== NAVBAR ===== -->
-<nav class="navbar em-navbar sticky-top" id="mainNav">
+<!-- ── Navigation ── -->
+<nav class="site-nav" id="siteNav">
   <div class="container">
-    <a class="navbar-brand" href="/">ENERMADE</a>
-
-    <!-- Desktop nav -->
-    <div class="d-none d-lg-flex flex-grow-1 justify-content-center">
-      <ul class="navbar-nav flex-row gap-1">
-        <li class="nav-item"><a class="nav-link <%= activeKey==='home'    ? 'active' : '' %>" href="/">홈</a></li>
-        <li class="nav-item"><a class="nav-link <%= activeKey==='about'   ? 'active' : '' %>" href="/about">회사 소개</a></li>
-        <li class="nav-item"><a class="nav-link <%= activeKey==='history' ? 'active' : '' %>" href="/history">연혁</a></li>
-        <li class="nav-item"><a class="nav-link <%= activeKey==='notices' ? 'active' : '' %>" href="/notices">공지사항</a></li>
-        <li class="nav-item"><a class="nav-link <%= activeKey==='contact' ? 'active' : '' %>" href="/contact">문의</a></li>
-      </ul>
-    </div>
-
-    <!-- Desktop actions -->
-    <div class="header-actions d-none d-lg-flex">
-      <a class="icon-btn" href="/shop" aria-label="쇼핑몰">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+    <div class="nav-inner">
+      <!-- Logo -->
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-mark">EN</div>
+        <span class="nav-logo-text">ERMADE</span>
       </a>
-      <% if (isLoggedIn) { %>
-        <a class="icon-btn" href="/account" aria-label="내 계정">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M20 21a8 8 0 00-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </a>
-        <% if (user && user.is_admin) { %>
-          <a class="icon-btn" href="/admin/dashboard" aria-label="관리자">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
-              <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2" rx="1"/>
-            </svg>
-          </a>
-        <% } %>
-      <% } else { %>
-        <button class="btn btn-primary btn-sm ms-2 js-open-login" type="button">로그인</button>
-      <% } %>
-    </div>
 
-    <!-- Mobile: 햄버거 버튼 (offcanvas-end 열기) -->
-    <button class="em-nav-toggle d-lg-none" type="button"
-      data-bs-toggle="offcanvas" data-bs-target="#companyOffcanvas"
-      aria-controls="companyOffcanvas" aria-label="메뉴 열기">
-      <span></span><span></span><span></span>
-    </button>
+      <!-- Desktop Links -->
+      <nav class="nav-links">
+        <a href="/" class="<%= activeKey==='home' ? 'active' : '' %>">홈</a>
+        <a href="/about" class="<%= activeKey==='about' ? 'active' : '' %>">회사소개</a>
+        <a href="/history" class="<%= activeKey==='history' ? 'active' : '' %>">연혁</a>
+        <a href="/notices" class="<%= activeKey==='notices' ? 'active' : '' %>">공지사항</a>
+        <a href="/contact" class="<%= activeKey==='contact' ? 'active' : '' %>">문의하기</a>
+        <a href="/shop">쇼핑몰</a>
+      </nav>
+
+      <!-- Actions -->
+      <div class="nav-actions">
+        <% if (isLoggedIn) { %>
+          <span class="nav-user-btn" style="cursor:default;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <%= user.name || user.email %>
+          </span>
+          <% if (user.is_admin) { %>
+            <a href="/admin" class="nav-user-btn">관리자</a>
+          <% } %>
+          <a href="/auth/logout" class="btn btn-sm btn-outline">로그아웃</a>
+        <% } else { %>
+          <a href="/auth/login?return=<%= encodeURIComponent(returnTo) %>" class="btn btn-sm btn-outline">로그인</a>
+          <a href="/auth/register" class="btn btn-sm btn-primary">회원가입</a>
+        <% } %>
+        <!-- Cart -->
+        <a href="/shop/cart" class="nav-cart-btn" title="장바구니">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg>
+          <% if (cartCount > 0) { %>
+            <span class="nav-cart-badge"><%= cartCount %></span>
+          <% } %>
+        </a>
+        <!-- Mobile toggle -->
+        <button class="nav-toggle" id="navToggle" aria-label="메뉴">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
   </div>
 </nav>
 
-<!-- ===== 모바일 Offcanvas (오른쪽 드로어) ===== -->
-<div class="offcanvas offcanvas-end em-offcanvas" tabindex="-1" id="companyOffcanvas" aria-labelledby="companyOffcanvasLabel">
-  <div class="offcanvas-header em-offcanvas-header">
-    <div class="d-flex flex-column">
-      <span class="em-offcanvas-brand" id="companyOffcanvasLabel">ENERMADE</span>
-      <span class="em-offcanvas-sub">세라믹 솔루션 전문기업</span>
-    </div>
-    <button type="button" class="em-offcanvas-close" data-bs-dismiss="offcanvas" aria-label="닫기">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
-
-  <div class="offcanvas-body d-flex flex-column p-0">
-
-    <!-- ① 로그인 / 회원가입 (항상 최상단) -->
-    <div class="em-offcanvas-auth px-4 py-3">
-      <% if (isLoggedIn) { %>
-        <div class="em-offcanvas-user-row mb-3">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="flex-shrink-0">
-            <path d="M20 21a8 8 0 00-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          <span><strong><%= user.name %></strong> 님</span>
-        </div>
-        <div class="d-flex gap-2">
-          <a class="em-offcanvas-btn flex-fill" href="/account" data-bs-dismiss="offcanvas">내 계정</a>
-          <a class="em-offcanvas-btn em-offcanvas-btn-danger flex-fill" href="/auth/logout">로그아웃</a>
-        </div>
-      <% } else { %>
-        <div class="d-flex gap-2">
-          <a class="em-offcanvas-btn em-offcanvas-btn-primary flex-fill js-open-login" href="#" data-bs-dismiss="offcanvas">로그인</a>
-          <a class="em-offcanvas-btn flex-fill" href="/auth/register" data-bs-dismiss="offcanvas">회원가입</a>
-        </div>
-      <% } %>
-    </div>
-
-    <!-- 구분선 -->
-    <div class="em-offcanvas-divider"></div>
-
-    <!-- ② 페이지 내비게이션 -->
-    <nav class="em-offcanvas-nav px-3 py-2">
-      <a class="em-offcanvas-link <%= activeKey==='home'    ? 'is-active' : '' %>" href="/" data-bs-dismiss="offcanvas">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-        홈
-      </a>
-      <a class="em-offcanvas-link <%= activeKey==='about'   ? 'is-active' : '' %>" href="/about" data-bs-dismiss="offcanvas">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        회사 소개
-      </a>
-      <a class="em-offcanvas-link <%= activeKey==='history' ? 'is-active' : '' %>" href="/history" data-bs-dismiss="offcanvas">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        연혁
-      </a>
-      <a class="em-offcanvas-link <%= activeKey==='notices' ? 'is-active' : '' %>" href="/notices" data-bs-dismiss="offcanvas">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M15 17H20L18.6 15.6A1.6 1.6 0 0118 14.5V11a6 6 0 10-12 0v3.5c0 .4-.2.8-.6 1.1L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        공지사항
-      </a>
-      <a class="em-offcanvas-link <%= activeKey==='contact' ? 'is-active' : '' %>" href="/contact" data-bs-dismiss="offcanvas">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-        문의하기
-      </a>
-    </nav>
-
-    <!-- 구분선 -->
-    <div class="em-offcanvas-divider"></div>
-
-    <!-- ③ 쇼핑몰 바로가기 -->
-    <div class="px-4 py-3">
-      <a class="em-offcanvas-shop-link" href="/shop" data-bs-dismiss="offcanvas">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        쇼핑몰 바로가기
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="ms-auto"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-    </div>
-
+<!-- Mobile Menu -->
+<div class="mobile-nav" id="mobileNav">
+  <a href="/" class="mobile-nav-link <%= activeKey==='home' ? 'active' : '' %>">홈</a>
+  <a href="/about" class="mobile-nav-link <%= activeKey==='about' ? 'active' : '' %>">회사소개</a>
+  <a href="/history" class="mobile-nav-link <%= activeKey==='history' ? 'active' : '' %>">연혁</a>
+  <a href="/notices" class="mobile-nav-link <%= activeKey==='notices' ? 'active' : '' %>">공지사항</a>
+  <a href="/contact" class="mobile-nav-link <%= activeKey==='contact' ? 'active' : '' %>">문의하기</a>
+  <a href="/shop" class="mobile-nav-link">쇼핑몰</a>
+  <div class="mobile-nav-actions">
+    <% if (isLoggedIn) { %>
+      <a href="/auth/logout" class="btn btn-sm btn-outline w-100">로그아웃</a>
+    <% } else { %>
+      <a href="/auth/login" class="btn btn-sm btn-outline" style="flex:1;">로그인</a>
+      <a href="/auth/register" class="btn btn-sm btn-primary" style="flex:1;">회원가입</a>
+    <% } %>
   </div>
 </div>
 
-<!-- ===== LOGIN MODAL ===== -->
-<div class="em-login-backdrop" id="loginBackdrop"></div>
-<div class="em-login-modal" id="loginModal" role="dialog" aria-modal="true" aria-label="로그인">
-  <div class="lm-header">
-    <span class="lm-title">로그인</span>
-    <button class="lm-close" id="btnLoginClose" aria-label="닫기" type="button">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
-  <div class="lm-body">
-    <p class="text-muted small mb-3">계정으로 로그인하여 더 많은 서비스를 이용하세요</p>
-    <form class="login-form" method="post" action="/auth/login">
-      <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
-      <input type="hidden" name="returnTo" value="<%= returnTo %>">
-      <div class="mb-3">
-        <input class="form-control" type="email" name="email" placeholder="이메일" autocomplete="email" required>
-      </div>
-      <div class="mb-1">
-        <input class="form-control" type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
-      </div>
-      <div class="lm-meta mt-2">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="keepLogin" checked>
-          <label class="form-check-label text-muted" for="keepLogin">로그인 상태 유지</label>
-        </div>
-        <a href="/auth/forgot">비밀번호 찾기</a>
-      </div>
-      <button class="btn btn-dark w-100 mb-2 mt-3" type="submit">로그인</button>
-      <a class="btn btn-outline-secondary w-100 btn-sm" href="/shop/orders/guest">비회원 주문 조회</a>
-    </form>
-    <p class="lm-footer">
-      아직 회원이 아니신가요?
-      <a href="/auth/register">회원가입 하기 →</a>
-    </p>
-  </div>
-</div>
-
+<!-- Page content begins -->
 <main>

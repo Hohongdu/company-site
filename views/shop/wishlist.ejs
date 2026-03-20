@@ -1,35 +1,54 @@
-<%- include('../layouts/shop-top', { title: '위시리스트', active: 'wishlist' }) %>
+<%- include('../layouts/shop-top', { title: '찜 목록', active: 'wishlist' }) %>
 
-<div class="shop-card p-4">
-    <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-            <h3 class="fw-bold mb-1">위시리스트</h3>
-            <p class="text-muted mb-0">찜한 상품을 확인할 수 있습니다.</p>
-        </div>
-        <a class="btn btn-outline-secondary" href="/shop/products">상품 보러가기</a>
-    </div>
-
-    <% if (!items || items.length === 0) { %>
-        <div class="alert alert-light border text-muted">찜한 상품이 없습니다.</div>
-    <% } else { %>
-        <div class="row g-3">
-            <% items.forEach(item => { %>
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="shop-card p-3 h-100">
-                        <div class="bg-light rounded-3 mb-2" style="height:160px; overflow:hidden;">
-                            <img src="<%= item.image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
-                                alt="<%= item.name %>" style="width:100%; height:100%; object-fit:cover;">
-                        </div>
-                        <div class="fw-semibold"><%= item.name %></div>
-                        <div class="text-muted small"><%= Number(item.price || 0).toLocaleString() %>원</div>
-                        <div class="mt-2">
-                            <a class="btn btn-sm btn-outline-primary" href="/shop/products/<%= item.id %>">상세보기</a>
-                        </div>
-                    </div>
-                </div>
-            <% }) %>
-        </div>
-    <% } %>
+<!-- Page heading -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.75rem;">
+  <div>
+    <h1 style="font-size:1.375rem;font-weight:800;letter-spacing:-.025em;margin-bottom:.25rem;">찜 목록</h1>
+    <p style="font-size:.8125rem;color:#888;margin:0;">관심 상품을 저장해 두세요.</p>
+  </div>
+  <a href="/shop/products" class="btn btn-outline btn-sm">상품 보러가기</a>
 </div>
+
+<% const _wishItems = (typeof items !== 'undefined' && Array.isArray(items)) ? items : []; %>
+
+<% if (_wishItems.length === 0) { %>
+  <div class="shop-empty">
+    <div class="shop-empty-icon">♡</div>
+    <div class="shop-empty-text">찜한 상품이 없습니다.</div>
+    <a href="/shop/products" class="btn btn-outline" style="margin-top:1rem;">상품 둘러보기</a>
+  </div>
+<% } else { %>
+  <div class="wishlist-grid">
+    <% _wishItems.forEach(function(item) { %>
+      <div class="product-card">
+        <a href="/shop/products/<%= item.id || item.product_id %>" class="product-thumb">
+          <% if (item.image) { %>
+            <img src="<%= item.image %>" alt="<%= item.name %>" loading="lazy">
+          <% } else { %>
+            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f2f2f2;color:#bbb;font-size:.75rem;">이미지 없음</div>
+          <% } %>
+        </a>
+        <div class="product-body">
+          <% if (item.category_name) { %><div class="product-cat"><%= item.category_name %></div><% } %>
+          <div class="product-name"><%= item.name %></div>
+          <% if (item.spec) { %><div class="product-spec"><%= item.spec %></div><% } %>
+        </div>
+        <div class="product-foot">
+          <div class="product-price">
+            <% if (item.price) { %>₩<%= Number(item.price).toLocaleString() %><% } else { %>문의 요망<% } %>
+          </div>
+          <!-- Toggle (remove) from wishlist -->
+          <form action="/shop/wishlist/toggle" method="POST" style="display:inline;">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            <input type="hidden" name="productId" value="<%= item.id || item.product_id %>">
+            <button type="submit" class="product-add-btn" title="찜 해제" style="color:#e74c3c;">
+              <svg width="13" height="13" fill="currentColor" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
 
 <%- include('../layouts/shop-bottom') %>

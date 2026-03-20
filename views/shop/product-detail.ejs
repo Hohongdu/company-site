@@ -1,203 +1,161 @@
-<%- include('../layouts/shop-top', { title: '상품 상세' , active: 'products' }) %>
+<%- include('../layouts/shop-top', { title: product.name, active: 'products' }) %>
 
-    <div class="mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <a href="/shop/products" class="btn btn-sm btn-outline-secondary" data-i18n data-i18n-ko="← 목록으로">← 목록으로</a>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="/shop/cart" class="btn btn-sm btn-outline-dark" data-i18n data-i18n-ko="장바구니">장바구니</a>
-            <% if (user) { %>
-                <form action="/shop/wishlist/toggle" method="post">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <input type="hidden" name="productId" value="<%= product.id %>">
-                    <button class="btn btn-sm <%= wished ? 'btn-danger' : 'btn-outline-danger' %>" data-i18n
-                        data-i18n-ko="<%= wished ? '찜 해제' : '찜하기' %>">
-                        <%= wished ? '찜 해제' : '찜하기' %>
-                    </button>
-                </form>
-                <% } %>
-        </div>
+<!-- Breadcrumb / top bar -->
+<div data-i18n-auto style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem;">
+  <a href="/shop/products" class="btn btn-outline btn-sm">← 목록으로</a>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+    <a href="/shop/cart" class="btn btn-outline btn-sm">장바구니</a>
+    <% if (user) { %>
+      <form action="/shop/wishlist/toggle" method="POST" style="display:inline;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="productId" value="<%= product.id %>">
+        <button type="submit" class="btn btn-sm <%= wished ? 'btn-dark' : 'btn-outline' %>">
+          <%= wished ? '♥ 찜 해제' : '♡ 찜하기' %>
+        </button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<!-- Product detail layout -->
+<div class="product-detail-layout">
+  <!-- Left: image -->
+  <div class="product-detail-image-wrap">
+    <% if (product.image) { %>
+      <img src="<%= product.image %>" alt="<%= product.name %>">
+    <% } else { %>
+      <div style="width:100%;height:360px;display:flex;align-items:center;justify-content:center;background:#f2f2f2;color:#bbb;border-radius:8px;">이미지 없음</div>
+    <% } %>
+  </div>
+
+  <!-- Right: info card -->
+  <div class="product-detail-info-card">
+    <% if (product.category_name) { %><div class="product-detail-cat"><%= product.category_name %></div><% } %>
+    <h1 class="product-detail-name"><%= product.name %></h1>
+    <% if (product.code) { %><div class="product-detail-code">제품 코드: <%= product.code %></div><% } %>
+
+    <div class="product-detail-price">
+      <% if (product.price) { %>₩<%= Number(product.price).toLocaleString() %><% } else { %>가격 문의<% } %>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-lg-6">
-            <div class="shop-card p-3">
-                <div class="bg-light rounded-3" style="height:320px; overflow:hidden;">
-                    <img src="<%= product.image || 'https://via.placeholder.com/900x700?text=No+Image' %>"
-                        alt="<%= product.name %>" style="width:100%; height:100%; object-fit:cover;">
-                </div>
-            </div>
-        </div>
+    <% if (reviewStats && reviewStats.review_count > 0) { %>
+      <div style="font-size:.8125rem;color:#888;margin-bottom:1rem;">
+        평균 평점 <strong><%= Number(reviewStats.avg_rating).toFixed(1) %></strong>점
+        (<%= reviewStats.review_count %>건)
+      </div>
+    <% } %>
 
-        <div class="col-12 col-lg-6">
-            <div class="shop-card p-4">
-                <div class="d-flex align-items-start justify-content-between gap-2">
-                    <div>
-                        <h3 class="fw-bold mb-1" data-i18n-auto>
-                            <%= product.name %>
-                        </h3>
-                        <% if (product.code) { %>
-                            <div class="text-muted small"><span data-i18n data-i18n-ko="코드:">코드:</span> <%= product.code %>
-                            </div>
-                            <% } %>
-                    </div>
-                    <span class="badge text-bg-light border">
-                        <span data-i18n-auto><%= product.category_name || '미분류' %></span>
-                    </span>
-                </div>
+    <!-- Spec section -->
+    <% if (product.spec) { %>
+      <div class="product-detail-spec">
+        <div class="product-detail-spec-label">규격 / 스펙</div>
+        <div class="product-detail-spec-value"><%= product.spec %></div>
+      </div>
+    <% } %>
 
-                <div class="price fs-3 mt-3">
-                    <%= Number(product.price || 0).toLocaleString() %>원
-                </div>
+    <!-- Description -->
+    <% if (product.description) { %>
+      <div style="margin-bottom:1.25rem;">
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#888;margin-bottom:.4rem;">제품 설명</div>
+        <div style="font-size:.875rem;line-height:1.65;color:#555;"><%= product.description %></div>
+      </div>
+    <% } %>
 
-                <div class="mt-2 text-muted small">
-                    <span data-i18n data-i18n-ko="평균 평점:">평균 평점:</span> <strong><%= reviewStats?.avg_rating ? Number(reviewStats.avg_rating).toFixed(1) : '0.0' %></strong>
-                    (<%= reviewStats?.review_count || 0 %><span data-i18n data-i18n-ko="건">건</span>)
-                </div>
+    <hr style="margin:1.25rem 0;border:none;border-top:1px solid #e8e8e8;">
 
-                <div class="mt-3">
-                    <div class="text-muted small mb-1" data-i18n data-i18n-ko="규격/스펙">규격/스펙</div>
-                    <div class="fw-semibold">
-                        <span data-i18n-auto><%= product.spec || '정보 없음' %></span>
-                    </div>
-                </div>
+    <!-- Add to cart form -->
+    <form action="/shop/cart/add" method="POST" class="product-detail-add-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+      <div class="product-detail-qty">
+        <label class="form-label" style="font-size:.8rem;margin-bottom:.35rem;">수량</label>
+        <input class="form-control" type="number" name="quantity" min="1" value="1" style="width:90px;">
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem;">
+        <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">장바구니 담기</button>
+      </div>
+    </form>
 
-                <% if (product.description) { %>
-                    <div class="mt-3">
-                        <div class="text-muted small mb-1" data-i18n data-i18n-ko="설명">설명</div>
-                        <div class="text-muted" data-i18n-auto>
-                            <%= product.description %>
-                        </div>
-                    </div>
-                    <% } %>
-
-                        <hr class="my-4">
-
-                        <form action="/shop/cart/add" method="post" class="d-flex gap-2 flex-wrap">
-                            <input type="hidden" name="productId" value="<%= product.id %>">
-                            <input type="number" name="quantity" min="1" value="1" class="form-control"
-                                style="max-width:110px;">
-                            <button class="btn btn-primary flex-grow-1" type="submit" data-i18n data-i18n-ko="장바구니 담기">장바구니 담기</button>
-                        </form>
-
-                        <div class="text-muted small mt-3" data-i18n
-                            data-i18n-ko="비회원도 장바구니 사용 가능(세션 종료 시 초기화)">
-                            비회원도 장바구니 사용 가능(세션 종료 시 초기화)
-                        </div>
-            </div>
-        </div>
+    <div style="font-size:.75rem;color:#aaa;margin-top:.75rem;">
+      비회원도 장바구니 이용 가능 (세션 종료 시 초기화)
     </div>
+  </div>
+</div>
 
-    <section class="mt-4" id="reviews">
-        <div class="shop-card p-4">
-            <h4 class="mb-3" data-i18n data-i18n-ko="리뷰/평점">리뷰/평점</h4>
-            <% if (user) { %>
-                <form class="row g-2 mb-3" method="post" action="/shop/products/<%= product.id %>/reviews">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="col-md-2">
-                        <select class="form-select" name="rating" required>
-                            <option value="" data-i18n data-i18n-ko="평점">평점</option>
-                            <option value="5" data-i18n data-i18n-ko="5점">5점</option>
-                            <option value="4" data-i18n data-i18n-ko="4점">4점</option>
-                            <option value="3" data-i18n data-i18n-ko="3점">3점</option>
-                            <option value="2" data-i18n data-i18n-ko="2점">2점</option>
-                            <option value="1" data-i18n data-i18n-ko="1점">1점</option>
-                        </select>
-                    </div>
-                    <div class="col-md-8">
-                        <input class="form-control" name="content" placeholder="리뷰 내용을 입력해주세요." required data-i18n-placeholder
-                            data-i18n-placeholder-ko="리뷰 내용을 입력해주세요.">
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100" data-i18n data-i18n-ko="등록">등록</button>
-                    </div>
-                </form>
-                <% } else { %>
-                    <div class="alert alert-light border text-muted" data-i18n
-                        data-i18n-ko="리뷰를 작성하려면 로그인해주세요.">리뷰를 작성하려면 로그인해주세요.</div>
-                    <% } %>
+<!-- Reviews section -->
+<section style="margin-top:2.5rem;">
+  <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:1.75rem;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">리뷰 / 평점</h3>
 
-                        <% if (!reviews || reviews.length === 0) { %>
-                            <div class="text-muted" data-i18n data-i18n-ko="등록된 리뷰가 없습니다.">등록된 리뷰가 없습니다.</div>
-                            <% } else { %>
-                                <div class="list-group">
-                                    <% reviews.forEach(review => { %>
-                                        <div class="list-group-item">
-                                            <div class="d-flex justify-content-between">
-                                                <strong data-i18n-auto><%= review.user_name || '고객' %></strong>
-                                                <span class="text-muted small"><%= review.rating %><span data-i18n data-i18n-ko="점">점</span></span>
-                                            </div>
-                                            <div class="text-muted small"><%= new Date(review.created_at).toLocaleString() %></div>
-                                            <div class="mt-2"><%= review.content %></div>
-                                        </div>
-                                        <% }) %>
-                                </div>
-                                <% } %>
-        </div>
-    </section>
+    <% if (user) { %>
+      <form action="/shop/products/<%= product.id %>/reviews" method="POST" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <select class="form-select" name="rating" required style="width:100px;">
+          <option value="">평점</option>
+          <option value="5">5점</option>
+          <option value="4">4점</option>
+          <option value="3">3점</option>
+          <option value="2">2점</option>
+          <option value="1">1점</option>
+        </select>
+        <input class="form-control" style="flex:1;min-width:200px;" name="content" placeholder="리뷰 내용을 입력해주세요." required>
+        <button class="btn btn-primary" type="submit">등록</button>
+      </form>
+    <% } else { %>
+      <div class="alert alert-success" style="font-size:.875rem;margin-bottom:1.25rem;">
+        리뷰를 작성하려면 <a href="/auth/login">로그인</a>해주세요.
+      </div>
+    <% } %>
 
-    <section class="mt-4">
-        <div class="shop-card p-4">
-            <h4 class="mb-3" data-i18n data-i18n-ko="FAQ">FAQ</h4>
-            <div class="accordion" id="faqAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" data-i18n
-                            data-i18n-ko="배송 기간은 얼마나 걸리나요?">
-                            배송 기간은 얼마나 걸리나요?
-                        </button>
-                    </h2>
-                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body" data-i18n data-i18n-ko="결제 후 평균 2~3영업일 내 발송됩니다.">결제 후 평균 2~3영업일 내 발송됩니다.</div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#faq2" data-i18n data-i18n-ko="교환/반품은 어떻게 하나요?">
-                            교환/반품은 어떻게 하나요?
-                        </button>
-                    </h2>
-                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body" data-i18n data-i18n-ko="마이페이지 또는 문의하기를 통해 접수해주세요.">마이페이지 또는 문의하기를 통해 접수해주세요.</div>
-                    </div>
-                </div>
+    <% const _reviews = (typeof reviews !== 'undefined' && Array.isArray(reviews)) ? reviews : []; %>
+    <% if (_reviews.length === 0) { %>
+      <p style="color:#aaa;font-size:.875rem;">등록된 리뷰가 없습니다.</p>
+    <% } else { %>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <% _reviews.forEach(function(review) { %>
+          <div style="border:1px solid #f0f0f0;border-radius:8px;padding:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+              <strong style="font-size:.875rem;"><%= review.user_name || '고객' %></strong>
+              <span style="font-size:.8rem;color:#888;"><%= review.rating %>점 &middot; <%= new Date(review.created_at).toLocaleDateString('ko-KR') %></span>
             </div>
-        </div>
-    </section>
+            <div style="font-size:.875rem;color:#555;"><%= review.content %></div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</section>
 
-    <section class="mt-4">
-        <div class="shop-card p-4">
-            <h4 class="mb-3" data-i18n data-i18n-ko="Q&amp;A">Q&amp;A</h4>
-            <p class="text-muted" data-i18n data-i18n-ko="제품 관련 질문은 문의하기 페이지에서 등록해주세요.">제품 관련 질문은 문의하기 페이지에서 등록해주세요.</p>
-            <a class="btn btn-outline-primary" href="/shop/inquiries" data-i18n data-i18n-ko="문의하기">문의하기</a>
+<!-- Related products -->
+<% const _related = (typeof related !== 'undefined' && Array.isArray(related)) ? related : []; %>
+<% if (_related.length > 0) { %>
+  <section style="margin-top:2.5rem;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">연관 상품</h3>
+    <div class="product-grid">
+      <% _related.forEach(function(item) { %>
+        <div class="product-card">
+          <a href="/shop/products/<%= item.id %>" class="product-thumb">
+            <% if (item.image) { %>
+              <img src="<%= item.image %>" alt="<%= item.name %>" loading="lazy">
+            <% } else { %>
+              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f2f2f2;color:#bbb;font-size:.75rem;">이미지 없음</div>
+            <% } %>
+          </a>
+          <div class="product-body">
+            <% if (item.category_name) { %><div class="product-cat"><%= item.category_name %></div><% } %>
+            <div class="product-name"><%= item.name %></div>
+            <% if (item.spec) { %><div class="product-spec"><%= item.spec %></div><% } %>
+          </div>
+          <div class="product-foot">
+            <div class="product-price">
+              <% if (item.price) { %>₩<%= Number(item.price).toLocaleString() %><% } else { %>문의 요망<% } %>
+            </div>
+            <a href="/shop/products/<%= item.id %>" class="btn btn-outline btn-sm">보기</a>
+          </div>
         </div>
-    </section>
+      <% }); %>
+    </div>
+  </section>
+<% } %>
 
-    <section class="mt-4">
-        <div class="shop-card p-4">
-            <h4 class="mb-3" data-i18n data-i18n-ko="연관 상품">연관 상품</h4>
-            <% if (!related || related.length === 0) { %>
-                <div class="text-muted" data-i18n data-i18n-ko="연관 상품이 없습니다.">연관 상품이 없습니다.</div>
-                <% } else { %>
-                    <div class="row g-3">
-                        <% related.forEach(item => { %>
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <div class="shop-card p-3 h-100">
-                                    <div class="bg-light rounded-3 mb-2" style="height:140px; overflow:hidden;">
-                                        <img src="<%= item.image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
-                                            alt="<%= item.name %>" style="width:100%; height:100%; object-fit:cover;">
-                                    </div>
-                                    <div class="fw-semibold"><%= item.name %></div>
-                                    <div class="text-muted small"><%= Number(item.price || 0).toLocaleString() %>원</div>
-                                    <div class="mt-2">
-                                        <a class="btn btn-sm btn-outline-primary" href="/shop/products/<%= item.id %>" data-i18n
-                                            data-i18n-ko="상세보기">상세보기</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <% }) %>
-                    </div>
-                    <% } %>
-        </div>
-    </section>
-
-    <%- include('../layouts/shop-bottom') %>
+<%- include('../layouts/shop-bottom') %>

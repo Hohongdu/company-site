@@ -1,67 +1,71 @@
-<%- include('../layouts/shop-top', { title: '주문 완료' , active: '' }) %>
+<%- include('../layouts/shop-top', { title: '주문 완료', active: '' }) %>
 
-<div class="shop-card p-4 mb-3">
-    <h3 class="fw-bold mb-2">주문이 완료되었습니다 🎉</h3>
-    <p class="text-muted mb-4">결제가 정상적으로 처리되었어요. 주문번호로 언제든 조회할 수 있습니다.</p>
+<!-- Order complete card (dark) -->
+<div class="order-complete-card">
+  <div class="order-complete-icon">✓</div>
+  <div class="order-complete-title">주문이 완료되었습니다</div>
+  <div class="order-complete-sub">결제가 정상적으로 처리되었습니다. 주문번호로 언제든지 조회하실 수 있습니다.</div>
 
-    <div class="border rounded-4 p-3 mb-3 bg-light">
-        <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">주문번호</span>
-            <strong><%= order?.order_number %></strong>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">결제 상태</span>
-            <strong><%= payment?.status || 'APPROVED' %></strong>
-        </div>
-        <div class="d-flex justify-content-between">
-            <span class="text-muted">결제 금액</span>
-            <strong><%= Number(order?.total_amount || 0).toLocaleString() %>원</strong>
-        </div>
-    </div>
+  <!-- Order info table -->
+  <table class="order-info-table">
+    <tbody>
+      <tr>
+        <th>주문번호</th>
+        <td><%= order && order.order_number ? order.order_number : '-' %></td>
+      </tr>
+      <tr>
+        <th>결제 상태</th>
+        <td><%= (typeof payment !== 'undefined' && payment && payment.status) ? payment.status : 'APPROVED' %></td>
+      </tr>
+      <tr>
+        <th>결제 금액</th>
+        <td>₩<%= Number((order && order.total_amount) ? order.total_amount : 0).toLocaleString() %></td>
+      </tr>
+      <% if (order && order.created_at) { %>
+        <tr>
+          <th>주문일시</th>
+          <td><%= new Date(order.created_at).toLocaleDateString('ko-KR') %></td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
 
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="/shop/products" class="btn btn-primary">계속 쇼핑하기</a>
-        <% if (order?.order_number && order?.user_id) { %>
-            <a href="/shop/orders/<%= order.order_number %>" class="btn btn-outline-secondary">주문 상세</a>
-            <% } %>
-            <a href="/shop/orders/guest" class="btn btn-outline-dark">비회원 주문 조회</a>
-    </div>
+  <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:1.75rem;">
+    <a href="/shop/products" class="btn btn-primary">계속 쇼핑하기</a>
+    <% if (order && order.order_number && order.user_id) { %>
+      <a href="/shop/orders/<%= order.order_number %>" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.35);">주문 상세</a>
+    <% } %>
+    <a href="/shop/orders/guest" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.35);">비회원 주문 조회</a>
+  </div>
 </div>
 
-<div class="shop-card p-3">
-    <h5 class="fw-bold mb-3">주문 상품</h5>
-    <% if (!items || items.length===0) { %>
-        <div class="text-muted">주문 상품이 없습니다.</div>
-        <% } else { %>
-            <% items.forEach(it=> { %>
-                <div class="d-flex gap-3 flex-wrap py-3 border-top">
-                    <div class="bg-light rounded-3 order-item-thumb">
-                        <img src="<%= it.product_image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
-                            alt="<%= it.product_name %>" class="order-item-thumb-img">
-                    </div>
-
-                    <div class="flex-grow-1 order-item-detail">
-                        <div class="d-flex justify-content-between flex-wrap gap-2">
-                            <div>
-                                <div class="fw-semibold">
-                                    <%= it.product_name %>
-                                </div>
-                                <div class="text-muted small">단가: <%= Number(it.unit_price || 0).toLocaleString() %>원 ·
-                                    수량: <%= it.quantity %>
-                                </div>
-                                <% if (it.product_spec) { %>
-                                    <div class="text-muted small">규격: <%= it.product_spec %>
-                                    </div>
-                                    <% } %>
-                            </div>
-                            <div class="fw-bold">
-                                <%= Number(it.total_price || 0).toLocaleString() %>원
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <% }) %>
-                    <% } %>
-</div>
+<!-- Items list -->
+<% const _compItems = (typeof items !== 'undefined' && Array.isArray(items)) ? items : []; %>
+<% if (_compItems.length > 0) { %>
+  <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:1.5rem;margin-top:1.5rem;">
+    <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:1rem;">주문 상품</h3>
+    <% _compItems.forEach(function(it) { %>
+      <div class="order-item-row">
+        <div class="order-item-thumb">
+          <% if (it.product_image) { %>
+            <img src="<%= it.product_image %>" alt="<%= it.product_name %>" style="width:100%;height:100%;object-fit:cover;">
+          <% } else { %>
+            <div style="width:100%;height:100%;background:#f2f2f2;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#bbb;">없음</div>
+          <% } %>
+        </div>
+        <div class="order-item-meta">
+          <div class="order-item-name"><%= it.product_name %></div>
+          <div style="font-size:.8rem;color:#888;margin-top:.25rem;">
+            단가: ₩<%= Number(it.unit_price || 0).toLocaleString() %> &middot; 수량: <%= it.quantity %>
+          </div>
+          <% if (it.product_spec) { %>
+            <div style="font-size:.8rem;color:#aaa;">규격: <%= it.product_spec %></div>
+          <% } %>
+        </div>
+        <div class="order-item-total">₩<%= Number(it.total_price || 0).toLocaleString() %></div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
 
 <%- include('../layouts/shop-bottom') %>

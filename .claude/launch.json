@@ -5,10 +5,10 @@
       "name": "company-site",
       "runtimeExecutable": "node",
       "runtimeArgs": ["app.js"],
-      "port": 3001,
+      "port": 3003,
       "autoPort": true,
       "env": {
-        "NODE_PATH": "C:\\Users\\pke03\\company-site\\node_modules"
+        "PORT": "3003"
       }
     }
   ]

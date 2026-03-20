@@ -1,101 +1,94 @@
 <%- include('../layouts/company-top', { title: '회원가입', active: '' }) %>
 
-<section class="em-auth-wrap">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-12 col-sm-10 col-md-7 col-lg-5">
-        <div class="em-auth-card">
-          <div class="em-auth-header">
-            <div class="em-auth-brand">ENERMADE</div>
-            <h1 class="em-auth-title">회원가입</h1>
-            <p class="em-auth-sub">회사와 상품몰을 함께 이용할 수 있는 계정을 만드세요</p>
-          </div>
-          <div class="em-auth-body">
-            <% if (locals.error) { %>
-              <div class="alert alert-danger mb-3" role="alert"><%= error %></div>
-            <% } %>
-            <form method="POST" action="/auth/register" class="d-grid gap-3">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<section class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-card-head">
+      <div class="auth-logo-mark">EN</div>
+      <h1 class="auth-card-title">회원가입</h1>
+      <p class="auth-card-sub">ENERMADE 계정을 만들어 보세요</p>
+    </div>
 
-              <div>
-                <label class="form-label" for="reg-name">이름</label>
-                <input type="text" id="reg-name" name="name" class="form-control"
-                  placeholder="이름을 입력하세요" required>
-              </div>
+    <div class="auth-card-body">
+      <% if (locals.error) { %>
+        <div class="alert alert-danger" role="alert"><%= error %></div>
+      <% } %>
 
-              <div>
-                <label class="form-label" for="reg-email">이메일</label>
-                <input type="email" id="reg-email" name="email" class="form-control"
-                  placeholder="example@company.com" required>
-              </div>
+      <form action="/auth/register" method="post" novalidate>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-              <div>
-                <label class="form-label" for="reg-pw">비밀번호</label>
-                <input type="password" id="reg-pw" name="password" class="form-control"
-                  placeholder="비밀번호를 입력하세요" required>
-              </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-name">이름</label>
+          <input
+            type="text"
+            id="reg-name"
+            name="name"
+            class="form-control"
+            placeholder="이름을 입력하세요"
+            value="<%= (typeof form !== 'undefined' && form && form.name) ? form.name : '' %>"
+            autocomplete="name"
+            required
+          >
+        </div>
 
-              <div>
-                <label class="form-label" for="reg-pw2">비밀번호 확인</label>
-                <div class="position-relative">
-                  <input type="password" id="reg-pw2" name="passwordConfirm" class="form-control"
-                    placeholder="비밀번호를 다시 입력하세요" required>
-                  <span id="pw-match-icon" class="position-absolute top-50 end-0 translate-middle-y pe-3 fs-5" aria-live="polite"></span>
-                </div>
-                <div id="pw-match-msg" class="form-text mt-1" aria-live="polite"></div>
-              </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-email">이메일</label>
+          <input
+            type="email"
+            id="reg-email"
+            name="email"
+            class="form-control"
+            placeholder="example@email.com"
+            value="<%= (typeof form !== 'undefined' && form && form.email) ? form.email : '' %>"
+            autocomplete="email"
+            required
+          >
+        </div>
 
-              <button type="submit" class="btn btn-dark btn-lg">회원가입 완료</button>
-            </form>
+        <div class="form-group">
+          <label class="form-label" for="reg-pw">비밀번호</label>
+          <input
+            type="password"
+            id="reg-pw"
+            name="password"
+            class="form-control"
+            placeholder="비밀번호를 입력하세요"
+            autocomplete="new-password"
+            required
+          >
+          <small style="display:block; margin-top:.375rem; font-size:.8125rem; color:var(--c-muted, #6b7280);">영문, 숫자 포함 8자 이상을 권장합니다</small>
+        </div>
 
-            <hr class="divider my-4">
-            <p class="text-center text-em-muted small mb-0">
-              이미 계정이 있으신가요?
-              <a href="/auth/login" class="fw-bold text-navy">로그인하기 →</a>
-            </p>
+        <div class="form-group">
+          <label class="form-label" for="reg-pw2">비밀번호 확인</label>
+          <input
+            type="password"
+            id="reg-pw2"
+            name="passwordConfirm"
+            class="form-control"
+            placeholder="비밀번호를 다시 입력하세요"
+            autocomplete="new-password"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="terms" name="terms" value="1" required>
+            <label class="form-check-label" for="terms">
+              <a href="/company/terms" target="_blank" style="color:#2563eb;">이용약관</a> 및
+              <a href="/company/privacy" target="_blank" style="color:#2563eb;">개인정보처리방침</a>에 동의합니다
+            </label>
           </div>
         </div>
-      </div>
+
+        <button type="submit" class="btn btn-primary w-100">회원가입</button>
+      </form>
+    </div>
+
+    <div class="auth-footer">
+      이미 계정이 있으신가요? <a href="/auth/login">로그인</a>
     </div>
   </div>
-</section>
-
-<script>
-(function () {
-  var pwField   = document.getElementById('reg-pw');
-  var pw2Field  = document.getElementById('reg-pw2');
-  var icon      = document.getElementById('pw-match-icon');
-  var msg       = document.getElementById('pw-match-msg');
-
-  function checkMatch() {
-    var pw  = pwField.value;
-    var pw2 = pw2Field.value;
-    if (!pw2) {
-      icon.textContent = '';
-      msg.textContent  = '';
-      pw2Field.classList.remove('is-valid', 'is-invalid');
-      return;
-    }
-    if (pw === pw2) {
-      icon.textContent = '✓';
-      icon.style.color = '#198754';
-      msg.textContent  = '비밀번호가 일치합니다.';
-      msg.style.color  = '#198754';
-      pw2Field.classList.remove('is-invalid');
-      pw2Field.classList.add('is-valid');
-    } else {
-      icon.textContent = '✗';
-      icon.style.color = '#dc3545';
-      msg.textContent  = '비밀번호가 일치하지 않습니다.';
-      msg.style.color  = '#dc3545';
-      pw2Field.classList.remove('is-valid');
-      pw2Field.classList.add('is-invalid');
-    }
-  }
-
-  pw2Field.addEventListener('input', checkMatch);
-  pwField.addEventListener('input', checkMatch);
-})();
-</script>
+</div>
 
 <%- include('../layouts/company-bottom') %>

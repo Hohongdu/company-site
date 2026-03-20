@@ -118,7 +118,7 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 		});
 	}
 });
-router.get('/register', (req, res) => res.render('auth/register'));
+router.get('/register', (req, res) => res.render('auth/register', { csrfToken: req.csrfToken() }));
 
 router.post('/register', asyncHandler(async (req, res) => {
 	const name = String(req.body.name || '').trim();

@@ -1,26 +1,37 @@
 <%- include('../layouts/company-top', { title: notice.title, active: 'notices' }) %>
 
-<section class="section">
-    <div class="container-wide">
-        <div class="card-soft">
-            <div class="d-flex justify-content-between flex-wrap gap-2">
-                <div>
-                    <span class="notice-tag mb-2 d-inline-flex">
-                        <%= notice.category === 'product' ? '제품' : notice.category === 'event' ? '이벤트' : '일반' %>
-                    </span>
-                    <h3 class="mb-0"><%= notice.title %></h3>
-                </div>
-                <span class="text-muted small"><%= new Date(notice.created_at).toLocaleDateString() %></span>
-            </div>
-            <div class="text-muted small mt-2">조회수 <%= notice.views || 0 %></div>
-            <hr class="my-3">
-            <div style="white-space:pre-wrap;"><%= notice.content %></div>
-        </div>
+<!-- Notice Detail Section -->
+<section class="notice-detail-section">
+  <div class="container">
 
-        <div class="mt-3">
-            <a class="btn-outline2" href="/notices">목록으로</a>
+    <div class="notice-detail-card">
+      <div class="notice-detail-header">
+        <h1 class="notice-detail-title"><%= notice.title %></h1>
+        <div class="notice-detail-meta">
+          <span>
+            <%= new Date(notice.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+          </span>
+          <% if (typeof notice.views !== 'undefined' && notice.views !== null) { %>
+          <span>조회수 <%= notice.views %></span>
+          <% } %>
         </div>
+      </div>
+
+      <div class="notice-detail-body">
+        <%- notice.content %>
+      </div>
     </div>
+
+    <div class="mt-4">
+      <a href="/notices" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.4rem; vertical-align: -2px;">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        목록으로 돌아가기
+      </a>
+    </div>
+
+  </div>
 </section>
 
 <%- include('../layouts/company-bottom') %>

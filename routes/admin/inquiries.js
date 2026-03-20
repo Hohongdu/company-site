@@ -37,7 +37,7 @@ router.get('/inquiries', asyncHandler(async (req, res) => {
 		);
 	}
 
-	return res.render('admin/inquiries', { inquiries });
+	return res.render('admin/inquiries', { inquiries, csrfToken: req.csrfToken() });
 }));
 
 router.post('/inquiries/:id/reply', csrfProtection, asyncHandler(async (req, res) => {

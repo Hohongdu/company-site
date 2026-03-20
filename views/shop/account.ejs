@@ -1,180 +1,135 @@
-<%- include('../layouts/shop-top', { title: '내 정보', active: 'account' }) %>
+<%- include('../layouts/shop-top', { title: '마이페이지', active: 'account' }) %>
 
-<div class="row g-4">
-    <div class="col-lg-3">
-        <div class="list-group shadow-sm">
-            <a class="list-group-item list-group-item-action active" href="/shop/account">프로필 관리</a>
-            <a class="list-group-item list-group-item-action" href="/shop/account/orders">주문 내역</a>
-            <a class="list-group-item list-group-item-action" href="/shop/account/inquiries">문의 내역</a>
-        </div>
+<div class="account-layout">
+  <!-- Sidebar -->
+  <aside class="account-sidebar">
+    <a href="/shop/account" class="account-nav-link active">프로필 관리</a>
+    <a href="/shop/account/orders" class="account-nav-link">주문 내역</a>
+    <a href="/shop/account/inquiries" class="account-nav-link">문의 내역</a>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <!-- Profile card -->
+    <div class="account-card">
+      <div class="account-card-head">
+        <div class="account-card-title">내 프로필</div>
+        <div class="account-card-sub">로그인 사용자 정보를 수정하거나 비밀번호를 변경할 수 있습니다.</div>
+      </div>
+      <div class="account-card-body">
+        <% if (typeof message !== 'undefined' && message) { %><div class="alert alert-success"><%= message %></div><% } %>
+        <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+        <form action="/shop/account/profile" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+            <div class="form-group">
+              <label class="form-label">이름</label>
+              <input class="form-control" name="name" value="<%= user.name %>" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">이메일</label>
+              <input class="form-control" name="email" type="email" value="<%= user.email %>" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">새 비밀번호</label>
+              <input class="form-control" name="password" type="password" placeholder="변경 시에만 입력">
+            </div>
+            <div class="form-group">
+              <label class="form-label">새 비밀번호 확인</label>
+              <input class="form-control" name="passwordConfirm" type="password" placeholder="비밀번호 확인">
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <button class="btn btn-primary" type="submit">저장하기</button>
+          </div>
+        </form>
+      </div>
     </div>
-    <div class="col-lg-9">
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
-                <h4 class="mb-3">내 프로필</h4>
-                <p class="text-muted mb-4">로그인 사용자 정보를 수정하거나 비밀번호를 변경할 수 있습니다.</p>
 
-                <% if (message) { %>
-                    <div class="alert alert-success"><%= message %></div>
-                <% } %>
-                <% if (error) { %>
-                    <div class="alert alert-danger"><%= error %></div>
-                <% } %>
-
-                <form action="/shop/account/profile" method="post" class="row g-3">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="col-md-6">
-                        <label class="form-label">이름</label>
-                        <input class="form-control" name="name" value="<%= user.name %>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">이메일</label>
-                        <input class="form-control" name="email" type="email" value="<%= user.email %>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">새 비밀번호</label>
-                        <input class="form-control" name="password" type="password" placeholder="변경 시에만 입력">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">새 비밀번호 확인</label>
-                        <input class="form-control" name="passwordConfirm" type="password" placeholder="비밀번호 확인">
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-primary">저장하기</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-body p-4">
-                <h5 class="mb-2 text-danger">회원 탈퇴</h5>
-                <p class="text-muted mb-3">탈퇴 시 계정 정보는 삭제되고, 주문/문의 내역은 비회원 정보로 보관됩니다.</p>
-                <form action="/shop/account/delete" method="post"
-                    onsubmit="return confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button class="btn btn-outline-danger">회원 탈퇴 진행</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-body p-4">
-                <h5 class="mb-2">알림 설정</h5>
-                <p class="text-muted mb-3">문의 답변 관련 이메일 알림 수신 여부를 설정할 수 있습니다.</p>
-                <form action="/shop/account/notifications" method="post">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="emailNotifications" id="emailNotifications"
-                            <%= emailNotificationEnabled ? 'checked' : '' %>>
-                        <label class="form-check-label" for="emailNotifications">
-                            이메일 알림 수신
-                        </label>
-                    </div>
-                    <button class="btn btn-outline-primary">설정 저장</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-body p-4">
-                <h5 class="mb-2">배송지 관리</h5>
-                <p class="text-muted mb-3">자주 사용하는 배송지를 등록할 수 있습니다.</p>
-
-                <% if (addresses && addresses.length) { %>
-                    <div class="list-group mb-3">
-                        <% addresses.forEach(address => { %>
-                            <div class="list-group-item d-flex justify-content-between flex-wrap gap-2">
-                                <div>
-                                    <div class="fw-semibold"><%= address.label || '기본 배송지' %></div>
-                                    <div class="text-muted small">
-                                        <%= address.recipient_name %> · <%= address.phone || '-' %>
-                                    </div>
-                                    <div class="text-muted small">
-                                        <%= address.address_line1 %> <%= address.address_line2 || '' %> (<%= address.postal_code || '-' %>)
-                                    </div>
-                                </div>
-                                <form method="post" action="/shop/account/addresses/<%= address.id %>/delete">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button class="btn btn-sm btn-outline-danger">삭제</button>
-                                </form>
-                            </div>
-                        <% }) %>
-                    </div>
-                <% } else { %>
-                    <div class="alert alert-light border text-muted">등록된 배송지가 없습니다.</div>
-                <% } %>
-
-                <form action="/shop/account/addresses" method="post" class="row g-2">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="col-md-3">
-                        <input class="form-control" name="label" placeholder="배송지 별칭">
-                    </div>
-                    <div class="col-md-3">
-                        <input class="form-control" name="recipientName" placeholder="수령인" required>
-                    </div>
-                    <div class="col-md-3">
-                        <input class="form-control" name="phone" placeholder="연락처">
-                    </div>
-                    <div class="col-md-3">
-                        <input class="form-control" name="postalCode" placeholder="우편번호">
-                    </div>
-                    <div class="col-md-6">
-                        <input class="form-control" name="addressLine1" placeholder="주소" required>
-                    </div>
-                    <div class="col-md-6">
-                        <input class="form-control" name="addressLine2" placeholder="상세주소">
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-outline-primary">배송지 추가</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="card border-0 shadow-sm mt-4">
-            <div class="card-body p-4">
-                <h5 class="mb-2">결제수단 관리</h5>
-                <p class="text-muted mb-3">카드/계좌 정보를 간단히 관리합니다.</p>
-
-                <% if (paymentMethods && paymentMethods.length) { %>
-                    <div class="list-group mb-3">
-                        <% paymentMethods.forEach(method => { %>
-                            <div class="list-group-item d-flex justify-content-between flex-wrap gap-2">
-                                <div>
-                                    <div class="fw-semibold"><%= method.label || method.provider %></div>
-                                    <div class="text-muted small"><%= method.provider %> · **** <%= method.last4 %></div>
-                                </div>
-                                <form method="post" action="/shop/account/payments/<%= method.id %>/delete">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button class="btn btn-sm btn-outline-danger">삭제</button>
-                                </form>
-                            </div>
-                        <% }) %>
-                    </div>
-                <% } else { %>
-                    <div class="alert alert-light border text-muted">등록된 결제수단이 없습니다.</div>
-                <% } %>
-
-                <form action="/shop/account/payments" method="post" class="row g-2">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="col-md-4">
-                        <input class="form-control" name="label" placeholder="결제수단 별칭">
-                    </div>
-                    <div class="col-md-4">
-                        <input class="form-control" name="provider" placeholder="카드사/은행" required>
-                    </div>
-                    <div class="col-md-4">
-                        <input class="form-control" name="last4" placeholder="마지막 4자리" required>
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-outline-primary">결제수단 추가</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
+    <!-- Notifications card -->
+    <div class="account-card" style="margin-top:1.25rem;">
+      <div class="account-card-head">
+        <div class="account-card-title">알림 설정</div>
+        <div class="account-card-sub">문의 답변 관련 이메일 알림 수신 여부를 설정할 수 있습니다.</div>
+      </div>
+      <div class="account-card-body">
+        <form action="/shop/account/notifications" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="form-check">
+            <input class="form-check" type="checkbox" name="emailNotifications" id="emailNotifications"
+              <%= (typeof emailNotificationEnabled !== 'undefined' && emailNotificationEnabled) ? 'checked' : '' %>>
+            <label for="emailNotifications" style="margin-left:.5rem;font-size:.875rem;">이메일 알림 수신</label>
+          </div>
+          <div style="margin-top:.75rem;">
+            <button class="btn btn-outline" type="submit">설정 저장</button>
+          </div>
+        </form>
+      </div>
     </div>
+
+    <!-- Addresses card -->
+    <div class="account-card" style="margin-top:1.25rem;">
+      <div class="account-card-head">
+        <div class="account-card-title">배송지 관리</div>
+        <div class="account-card-sub">자주 사용하는 배송지를 등록할 수 있습니다.</div>
+      </div>
+      <div class="account-card-body">
+        <% const _addresses = (typeof addresses !== 'undefined' && Array.isArray(addresses)) ? addresses : []; %>
+        <% if (_addresses.length > 0) { %>
+          <div style="margin-bottom:1rem;">
+            <% _addresses.forEach(function(addr) { %>
+              <div class="address-item">
+                <div>
+                  <div style="font-weight:600;font-size:.875rem;"><%= addr.label || '기본 배송지' %></div>
+                  <div style="font-size:.8rem;color:#888;margin-top:.2rem;">
+                    <%= addr.recipient_name %> &middot; <%= addr.phone || '-' %>
+                  </div>
+                  <div style="font-size:.8rem;color:#888;">
+                    <%= addr.address_line1 %> <%= addr.address_line2 || '' %> (<%= addr.postal_code || '-' %>)
+                  </div>
+                </div>
+                <form method="POST" action="/shop/account/addresses/<%= addr.id %>/delete" style="margin:0;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-sm" style="border-color:#e74c3c;color:#e74c3c;" type="submit">삭제</button>
+                </form>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <p style="color:#aaa;font-size:.875rem;margin-bottom:1rem;">등록된 배송지가 없습니다.</p>
+        <% } %>
+
+        <form action="/shop/account/addresses" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+            <input class="form-control" name="label" placeholder="배송지 별칭">
+            <input class="form-control" name="recipientName" placeholder="수령인" required>
+            <input class="form-control" name="phone" placeholder="연락처">
+            <input class="form-control" name="postalCode" placeholder="우편번호">
+            <input class="form-control" name="addressLine1" placeholder="주소" required style="grid-column:1/-1;">
+            <input class="form-control" name="addressLine2" placeholder="상세주소" style="grid-column:1/-1;">
+          </div>
+          <button class="btn btn-outline" type="submit">배송지 추가</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Danger zone card -->
+    <div class="account-card" style="margin-top:1.25rem;border-color:#fde8e8;">
+      <div class="account-card-head" style="background:#fff5f5;">
+        <div class="account-card-title" style="color:#c0392b;">회원 탈퇴</div>
+        <div class="account-card-sub">탈퇴 시 계정 정보는 삭제되고, 주문/문의 내역은 비회원 정보로 보관됩니다.</div>
+      </div>
+      <div class="account-card-body">
+        <form action="/shop/account/delete" method="POST"
+          onsubmit="return confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-sm" style="border-color:#e74c3c;color:#e74c3c;" type="submit">회원 탈퇴 진행</button>
+        </form>
+      </div>
+    </div>
+  </main>
 </div>
 
 <%- include('../layouts/shop-bottom') %>

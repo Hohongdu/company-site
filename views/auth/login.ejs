@@ -1,53 +1,67 @@
 <%- include('../layouts/company-top', { title: '로그인', active: '' }) %>
 
-<section class="em-auth-wrap">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
-        <div class="em-auth-card">
-          <div class="em-auth-header">
-            <div class="em-auth-brand">ENERMADE</div>
-            <h1 class="em-auth-title">로그인</h1>
-            <p class="em-auth-sub">회사 소식과 상품몰을 한 계정으로 이용하세요</p>
-          </div>
-          <div class="em-auth-body">
-            <% if (locals.error) { %>
-              <div class="alert alert-danger mb-3" role="alert"><%= error %></div>
-            <% } %>
-            <form method="POST" action="/auth/login">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <input type="hidden" name="returnTo" value="<%= returnTo || '' %>">
+<section class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-card-head">
+      <div class="auth-logo-mark">EN</div>
+      <h1 class="auth-card-title">로그인</h1>
+      <p class="auth-card-sub">ENERMADE에 오신 것을 환영합니다</p>
+    </div>
 
-              <div class="mb-3">
-                <label class="form-label" for="login-email">이메일</label>
-                <input type="email" id="login-email" name="email" class="form-control"
-                  placeholder="example@company.com" autocomplete="email" required>
-              </div>
+    <div class="auth-card-body">
+      <% if (locals.error) { %>
+        <div class="alert alert-danger" role="alert"><%= error %></div>
+      <% } %>
+      <% if (typeof message !== 'undefined' && message) { %>
+        <div class="alert alert-success" role="alert"><%= message %></div>
+      <% } %>
 
-              <div class="mb-2">
-                <label class="form-label" for="login-pw">비밀번호</label>
-                <input type="password" id="login-pw" name="password" class="form-control"
-                  placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
-              </div>
+      <form action="/auth/login" method="post" novalidate>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="returnTo" value="<%= returnTo || '/' %>">
 
-              <div class="d-flex justify-content-end mb-3">
-                <a href="/auth/forgot" class="small text-em-blue">비밀번호를 잊으셨나요?</a>
-              </div>
-
-              <button type="submit" class="btn btn-dark w-100 mb-2">로그인</button>
-              <a class="btn btn-outline-secondary w-100 btn-sm" href="/shop/orders/guest">비회원 주문 조회</a>
-            </form>
-
-            <hr class="divider my-4">
-            <p class="text-center text-em-muted small mb-0">
-              아직 회원이 아니신가요?
-              <a href="/auth/register" class="fw-bold text-navy">회원가입 하기 →</a>
-            </p>
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="login-email">이메일</label>
+          <input
+            type="email"
+            id="login-email"
+            name="email"
+            class="form-control"
+            placeholder="example@email.com"
+            autocomplete="email"
+            required
+          >
         </div>
-      </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-pw">비밀번호</label>
+          <input
+            type="password"
+            id="login-pw"
+            name="password"
+            class="form-control"
+            placeholder="비밀번호를 입력하세요"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+          <div class="form-check" style="margin-bottom:0;">
+            <input class="form-check-input" type="checkbox" id="remember" name="remember" value="1">
+            <label class="form-check-label" for="remember">로그인 상태 유지</label>
+          </div>
+          <a href="/auth/forgot" style="font-size:.875rem; color:#2563eb; text-decoration:none; font-weight:600;">비밀번호 찾기</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">로그인</button>
+      </form>
+    </div>
+
+    <div class="auth-footer">
+      계정이 없으신가요? <a href="/auth/register">회원가입</a>
     </div>
   </div>
-</section>
+</div>
 
 <%- include('../layouts/company-bottom') %>

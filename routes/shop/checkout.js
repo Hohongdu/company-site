@@ -1,12 +1,15 @@
 const express = require('express');
+const csurf = require('../../lib/csurf');
 const db = require('../../db');
 const kakaoPayService = require('../../services/kakaopay.service');
 const { getCartViewData, clearCart } = require('../../lib/cart');
 const { createOrderFromCart, fetchOrderDetailByNumber } = require('./helpers');
 
 const router = express.Router();
+const checkoutCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
-router.post('/checkout/kakao', async (req, res) => {
+// C-1: CSRF 보호 추가 — 주문 생성 엔드포인트
+router.post('/checkout/kakao', checkoutCsrf, async (req, res) => {
 	try {
 		if (!kakaoPayService.isConfigured()) {
 			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAO_ADMIN_KEY와 KAKAO_CID를 확인해주세요.');
