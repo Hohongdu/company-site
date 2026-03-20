@@ -63,8 +63,8 @@ router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 		return res.render('shop/account', {
 			user,
 			active: 'account',
-			message: req.query?.message || null,
-			error: req.query?.error || null,
+			message: null,
+			error: null,
 			csrfToken: req.csrfToken(),
 			emailNotificationEnabled: notificationRow ? Boolean(notificationRow.email_enabled) : true,
 			addresses,
@@ -86,22 +86,26 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 		const passwordConfirm = String(req.body.passwordConfirm || '').trim();
 
 		if (!name || !email) {
-			return res.redirect('/shop/account?error=이름과 이메일을 입력해주세요.');
+			req.flash('error', '이름과 이메일을 입력해주세요.');
+			return res.redirect('/shop/account');
 		}
 
 		// M-3: 이메일 형식 검증
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) {
-			return res.redirect('/shop/account?error=올바른 이메일 형식을 입력해주세요.');
+			req.flash('error', '올바른 이메일 형식을 입력해주세요.');
+			return res.redirect('/shop/account');
 		}
 
 		const [[existing]] = await db.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
 		if (existing && existing.id !== userId) {
-			return res.redirect('/shop/account?error=이미 사용 중인 이메일입니다.');
+			req.flash('error', '이미 사용 중인 이메일입니다.');
+			return res.redirect('/shop/account');
 		}
 
 		if (password && password !== passwordConfirm) {
-			return res.redirect('/shop/account?error=비밀번호가 일치하지 않습니다.');
+			req.flash('error', '비밀번호가 일치하지 않습니다.');
+			return res.redirect('/shop/account');
 		}
 
 		if (password) {
@@ -114,7 +118,8 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 		req.session.user.name = name;
 		req.session.user.email = email;
 
-		return res.redirect('/shop/account?message=내 정보가 업데이트되었습니다.');
+		req.flash('success', '내 정보가 업데이트되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('내 정보 수정 중 오류가 발생했습니다.');
@@ -134,7 +139,8 @@ router.post('/account/notifications', requireLogin, accountCsrf, async (req, res
 			[userId, emailEnabled],
 		);
 
-		return res.redirect('/shop/account?message=알림 설정이 저장되었습니다.');
+		req.flash('success', '알림 설정이 저장되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('알림 설정 저장 중 오류가 발생했습니다.');
@@ -152,7 +158,8 @@ router.post('/account/addresses', requireLogin, accountCsrf, async (req, res) =>
 		const postalCode = String(req.body.postalCode || '').trim();
 
 		if (!recipientName || !addressLine1) {
-			return res.redirect('/shop/account?error=배송지 정보를 입력해주세요.');
+			req.flash('error', '배송지 정보를 입력해주세요.');
+			return res.redirect('/shop/account');
 		}
 
 		await ensureAddressTable();
@@ -163,7 +170,8 @@ router.post('/account/addresses', requireLogin, accountCsrf, async (req, res) =>
 			[userId, label || null, recipientName, phone || null, addressLine1, addressLine2 || null, postalCode || null],
 		);
 
-		return res.redirect('/shop/account?message=배송지가 추가되었습니다.');
+		req.flash('success', '배송지가 추가되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('배송지 저장 중 오류가 발생했습니다.');
@@ -177,7 +185,8 @@ router.post('/account/addresses/:id/delete', requireLogin, accountCsrf, async (r
 		if (!addressId) return res.redirect('/shop/account');
 
 		await db.execute(`DELETE FROM user_addresses WHERE id = ? AND user_id = ?`, [addressId, userId]);
-		return res.redirect('/shop/account?message=배송지가 삭제되었습니다.');
+		req.flash('success', '배송지가 삭제되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('배송지 삭제 중 오류가 발생했습니다.');
@@ -192,7 +201,8 @@ router.post('/account/payments', requireLogin, accountCsrf, async (req, res) => 
 		const last4 = String(req.body.last4 || '').trim();
 
 		if (!provider || !last4) {
-			return res.redirect('/shop/account?error=결제수단 정보를 입력해주세요.');
+			req.flash('error', '결제수단 정보를 입력해주세요.');
+			return res.redirect('/shop/account');
 		}
 
 		await ensurePaymentMethodTable();
@@ -202,7 +212,8 @@ router.post('/account/payments', requireLogin, accountCsrf, async (req, res) => 
 			[userId, label || null, provider, last4],
 		);
 
-		return res.redirect('/shop/account?message=결제수단이 저장되었습니다.');
+		req.flash('success', '결제수단이 저장되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('결제수단 저장 중 오류가 발생했습니다.');
@@ -216,7 +227,8 @@ router.post('/account/payments/:id/delete', requireLogin, accountCsrf, async (re
 		if (!paymentId) return res.redirect('/shop/account');
 
 		await db.execute(`DELETE FROM user_payment_methods WHERE id = ? AND user_id = ?`, [paymentId, userId]);
-		return res.redirect('/shop/account?message=결제수단이 삭제되었습니다.');
+		req.flash('success', '결제수단이 삭제되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('결제수단 삭제 중 오류가 발생했습니다.');
@@ -234,7 +246,8 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 		const expiresAt = String(req.body.expiresAt || '').trim();
 
 		if (!code) {
-			return res.redirect('/shop/account?error=쿠폰 코드를 입력해주세요.');
+			req.flash('error', '쿠폰 코드를 입력해주세요.');
+			return res.redirect('/shop/account');
 		}
 
 		await ensureCouponTable();
@@ -244,7 +257,8 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 			[userId, code, description || null, discountPct, expiresAt || null],
 		);
 
-		return res.redirect('/shop/account?message=쿠폰이 등록되었습니다.');
+		req.flash('success', '쿠폰이 등록되었습니다.');
+		return res.redirect('/shop/account');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('쿠폰 등록 중 오류가 발생했습니다.');
@@ -318,12 +332,14 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 
 		const cancellable = ['PENDING', 'PAID'];
 		if (!cancellable.includes(order.status)) {
-			return res.redirect('/shop/account/orders?error=' + encodeURIComponent('이미 처리된 주문은 취소 요청할 수 없습니다.'));
+			req.flash('error', '이미 처리된 주문은 취소 요청할 수 없습니다.');
+			return res.redirect('/shop/account/orders');
 		}
 
 		await ensureOrderStatusEnum();
 		await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
-		return res.redirect('/shop/account/orders?notice=' + encodeURIComponent('취소 요청이 접수되었습니다.'));
+		req.flash('success', '취소 요청이 접수되었습니다.');
+		return res.redirect('/shop/account/orders');
 	} catch (err) {
 		console.error(err);
 		return renderShopError(res, '주문 취소 요청 중 오류가 발생했습니다.', 500);

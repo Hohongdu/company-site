@@ -295,3 +295,20 @@
 		applyLanguage(defaultLang).catch((err) => appendLog('init failed', { error: err.message }));
 	}
 })();
+
+// Form loading state
+document.addEventListener('DOMContentLoaded', () => {
+	document.querySelectorAll('form').forEach(form => {
+		form.addEventListener('submit', function(e) {
+			const btn = this.querySelector('[type="submit"]');
+			if (!btn || btn.dataset.noLoading) return;
+			setTimeout(() => {
+				btn.disabled = true;
+				const orig = btn.innerHTML;
+				btn.dataset.origText = orig;
+				btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>' + orig;
+				setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 8000);
+			}, 0);
+		});
+	});
+});

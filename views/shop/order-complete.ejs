@@ -35,12 +35,12 @@
         <% } else { %>
             <% items.forEach(it=> { %>
                 <div class="d-flex gap-3 flex-wrap py-3 border-top">
-                    <div class="bg-light rounded-3" style="width:120px; height:90px; overflow:hidden;">
+                    <div class="bg-light rounded-3 order-item-thumb">
                         <img src="<%= it.product_image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
-                            alt="<%= it.product_name %>" style="width:100%; height:100%; object-fit:cover;">
+                            alt="<%= it.product_name %>" class="order-item-thumb-img">
                     </div>
 
-                    <div class="flex-grow-1" style="min-width:220px;">
+                    <div class="flex-grow-1 order-item-detail">
                         <div class="d-flex justify-content-between flex-wrap gap-2">
                             <div>
                                 <div class="fw-semibold">

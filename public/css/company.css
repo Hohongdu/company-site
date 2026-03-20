@@ -553,3 +553,12 @@ html { scroll-padding-top: 80px; }
   .em-hero .hero-actions { flex-direction: column; }
   .em-hero .hero-actions .btn { width: 100%; justify-content: center; }
 }
+
+/* ── Contact page ── */
+.contact-section-title {
+  font-size: 1.4rem;
+}
+.contact-icon-circle {
+  width: 40px;
+  height: 40px;
+}

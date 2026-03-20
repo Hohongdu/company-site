@@ -9,6 +9,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const crypto = require('crypto');
 const csurf = require('./lib/csurf');
+const flash = require('./lib/flash');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
@@ -62,6 +63,11 @@ app.use(
 		},
 	}),
 );
+
+// =====================
+// Flash messages
+// =====================
+app.use(flash);
 
 // =====================
 // CSRF (admin/auth만)

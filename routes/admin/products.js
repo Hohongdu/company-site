@@ -301,7 +301,8 @@ router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
 			.filter((id) => Number.isFinite(id) && id > 0);
 
 		if (!productIds.length) {
-			return res.redirect('/admin/products?error=' + encodeURIComponent('삭제할 상품을 선택해주세요.'));
+			req.flash('error', '삭제할 상품을 선택해주세요.');
+			return res.redirect('/admin/products');
 		}
 
 		const placeholders = productIds.map(() => '?').join(',');
@@ -309,7 +310,8 @@ router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
 		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
 		await logAdminAction(req.session?.user?.id, 'product_bulk_delete', { productIds });
 
-		return res.redirect('/admin/products?notice=' + encodeURIComponent(`선택한 상품 ${productIds.length}개가 삭제되었습니다.`));
+		req.flash('success', `선택한 상품 ${productIds.length}개가 삭제되었습니다.`);
+		return res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('상품 선택 삭제 오류');
@@ -327,7 +329,8 @@ router.post('/products/:id/delete', csrfProtection, async (req, res) => {
 		await db.execute('DELETE FROM products WHERE id = ?', [productId]);
 		await logAdminAction(req.session?.user?.id, 'product_delete', { productId });
 
-		res.redirect('/admin/products?notice=' + encodeURIComponent('상품이 삭제되었습니다.'));
+		req.flash('success', '상품이 삭제되었습니다.');
+		res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
 		res.status(500).send('상품 삭제 오류');
@@ -342,14 +345,16 @@ router.post('/products/:id/status', csrfProtection, async (req, res) => {
 		const productId = Number(req.params.id);
 		const status = String(req.body.visibility_status || '').toUpperCase();
 		if (!productId) {
-			return res.redirect('/admin/products?error=' + encodeURIComponent('상품 정보가 올바르지 않습니다.'));
+			req.flash('error', '상품 정보가 올바르지 않습니다.');
+			return res.redirect('/admin/products');
 		}
 
 		const nextStatus = status === 'HIDDEN' ? 'HIDDEN' : 'ACTIVE';
 		await db.execute('UPDATE products SET visibility_status = ? WHERE id = ?', [nextStatus, productId]);
 		await logAdminAction(req.session?.user?.id, 'product_visibility_update', { productId, visibility_status: nextStatus });
 
-		return res.redirect('/admin/products?notice=' + encodeURIComponent('노출 상태가 변경되었습니다.'));
+		req.flash('success', '노출 상태가 변경되었습니다.');
+		return res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('상품 상태 변경 오류');
@@ -364,13 +369,15 @@ router.post('/products/:id/stock', csrfProtection, async (req, res) => {
 		const productId = Number(req.params.id);
 		const stockQty = Number(req.body.stock_quantity);
 		if (!productId || !Number.isFinite(stockQty) || stockQty < 0) {
-			return res.redirect('/admin/products?error=' + encodeURIComponent('재고 수량이 올바르지 않습니다.'));
+			req.flash('error', '재고 수량이 올바르지 않습니다.');
+			return res.redirect('/admin/products');
 		}
 
 		await db.execute('UPDATE products SET stock_quantity = ? WHERE id = ?', [stockQty, productId]);
 		await logAdminAction(req.session?.user?.id, 'product_stock_update', { productId, stock_quantity: stockQty });
 
-		return res.redirect('/admin/products?notice=' + encodeURIComponent('재고 수량이 저장되었습니다.'));
+		req.flash('success', '재고 수량이 저장되었습니다.');
+		return res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('재고 변경 오류');

@@ -14,8 +14,10 @@ const cartCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 router.get('/cart', asyncHandler(async (req, res) => {
 	const data = await getCartViewData(req);
 	const paymentEnabled = kakaoPayService.isConfigured();
-	const cartError = req.session.cartError || null;
+	// cartError: prefer flash (new), fall back to session (legacy), then clear both
+	const cartError = (res.locals.flash && res.locals.flash.error) || req.session.cartError || null;
 	req.session.cartError = null;
+	if (res.locals.flash && res.locals.flash.error) res.locals.flash.error = null;
 
 	const appliedCoupon = req.session.appliedCoupon || null;
 	const discountAmount = appliedCoupon ? Math.floor(data.totalAmount * (appliedCoupon.discount_pct / 100)) : 0;
@@ -36,7 +38,7 @@ router.post('/cart/coupon', requireLogin, cartCsrf, asyncHandler(async (req, res
 	await ensureCouponTable();
 	const code = String(req.body.couponCode || '').trim().toUpperCase();
 	if (!code) {
-		req.session.cartError = '쿠폰 코드를 입력해주세요.';
+		req.flash('error', '쿠폰 코드를 입력해주세요.');
 		return res.redirect('/shop/cart');
 	}
 
@@ -49,7 +51,7 @@ router.post('/cart/coupon', requireLogin, cartCsrf, asyncHandler(async (req, res
 	);
 
 	if (!coupon) {
-		req.session.cartError = '유효하지 않거나 만료된 쿠폰입니다.';
+		req.flash('error', '유효하지 않거나 만료된 쿠폰입니다.');
 		return res.redirect('/shop/cart');
 	}
 
