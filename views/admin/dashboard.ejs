@@ -1,288 +1,403 @@
-<%- include('partials/admin-header', { title: '관리자 대시보드' , subtitle: '관리자 기능 요약' , active: 'dashboard' }) %>
+<%- include('partials/admin-header', { title: '대시보드', subtitle: '운영 현황을 한눈에', active: 'dashboard', user }) %>
 
 <%
 const statsSafe = (typeof stats !== 'undefined' && stats) ? stats : {};
 const chartSafe = (typeof chartData !== 'undefined' && chartData) ? chartData : {};
-const totalProducts = Number(statsSafe.totalProducts || 0);
-const totalCategories = Number(statsSafe.totalCategories || 0);
-const totalOrders = Number(statsSafe.totalOrders || 0);
-const totalInquiries = Number(statsSafe.totalInquiries || 0);
-
-const orderGrowth = totalOrders > 0 ? Math.min(99, Math.max(8, Math.round((totalInquiries / Math.max(totalOrders, 1)) * 100))) : 12;
-const productHealth = totalProducts > 0 ? Math.min(100, Math.max(15, Math.round((totalProducts / Math.max(totalProducts + totalCategories, 1)) * 100))) : 28;
-const inquiryHealth = totalInquiries > 0 ? Math.min(100, Math.max(10, 100 - Math.round((totalInquiries / Math.max(totalOrders + totalInquiries, 1)) * 80))) : 88;
-
-const quickCards = [
-    { label: '총 상품', value: totalProducts, href: '/admin/products' },
-    { label: '총 카테고리', value: totalCategories, href: '/admin/categories' },
-    { label: '총 주문', value: totalOrders, href: '/admin/orders' },
-    { label: '총 문의', value: totalInquiries, href: '/admin/inquiries' }
-];
+const totalProducts   = Number(statsSafe.totalProducts   || 0);
+const totalOrders     = Number(statsSafe.totalOrders     || 0);
+const totalInquiries  = Number(statsSafe.totalInquiries  || 0);
+const pendingInquiries= Number(statsSafe.pendingInquiries|| 0);
+const thisMonthRevenue= Number(statsSafe.thisMonthRevenue|| 0);
 
 const chartPayload = {
-    labels: Array.isArray(chartSafe.labels) ? chartSafe.labels : [],
-    orders: Array.isArray(chartSafe.orders) ? chartSafe.orders : [],
+    labels:    Array.isArray(chartSafe.labels)    ? chartSafe.labels    : [],
+    orders:    Array.isArray(chartSafe.orders)    ? chartSafe.orders    : [],
     inquiries: Array.isArray(chartSafe.inquiries) ? chartSafe.inquiries : [],
-    revenue: Array.isArray(chartSafe.revenue) ? chartSafe.revenue : []
+    revenue:   Array.isArray(chartSafe.revenue)   ? chartSafe.revenue   : []
 };
 %>
 
-<div class="admin-dashboard">
-    <div class="dashboard-head">
-        <div>
-            <h3 class="mb-1">운영 대시보드</h3>
-            <p class="mb-0 text-muted">상단바 구분성을 높이고, 그래프는 실제 데이터로 동작하도록 개선했습니다.</p>
+<!-- KPI 카드 -->
+<div class="kpi-row mb-4">
+    <a class="kpi-card kpi-card--blue" href="/admin/products">
+        <div class="kpi-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-primary btn-sm" href="/admin/products/new"><i class="bi bi-plus-lg"></i> 새 상품</a>
-            <a class="btn btn-outline-primary btn-sm" href="/admin/products/import"><i class="bi bi-file-earmark-arrow-up"></i> 엑셀 업로드</a>
+        <div class="kpi-card__body">
+            <div class="kpi-card__value"><%= totalProducts.toLocaleString() %></div>
+            <div class="kpi-card__label">총 상품</div>
         </div>
-    </div>
-
-    <div class="dashboard-grid top-grid mb-3">
-        <section class="dashboard-card hero-card">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                    <div class="metric-title">관리 지표 합계</div>
-                    <div class="metric-value"><%= (totalProducts + totalOrders + totalInquiries).toLocaleString() %></div>
-                </div>
-                <span class="metric-chip">+<%= orderGrowth %>%</span>
+        <svg class="kpi-card__arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a class="kpi-card kpi-card--green" href="/admin/orders">
+        <div class="kpi-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+        </div>
+        <div class="kpi-card__body">
+            <div class="kpi-card__value"><%= totalOrders.toLocaleString() %></div>
+            <div class="kpi-card__label">총 주문</div>
+        </div>
+        <svg class="kpi-card__arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a class="kpi-card kpi-card--orange" href="/admin/inquiries">
+        <div class="kpi-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="kpi-card__body">
+            <div class="kpi-card__value">
+                <%= pendingInquiries.toLocaleString() %>
+                <% if (pendingInquiries > 0) { %><span class="kpi-badge">미처리</span><% } %>
             </div>
-            <div class="text-muted mb-2">최근 6개월 주문량 추이</div>
-            <canvas id="ordersTrendChart" class="dashboard-canvas sparkline-canvas" role="img" aria-label="주문량 추이"></canvas>
-        </section>
-
-        <section class="dashboard-card kpi-strip">
-            <% quickCards.forEach((item) => { %>
-                <a href="<%= item.href %>" class="kpi-item text-decoration-none">
-                    <strong><%= item.value.toLocaleString() %></strong>
-                    <small><%= item.label %></small>
-                </a>
-            <% }) %>
-        </section>
-    </div>
-
-    <div class="dashboard-grid body-grid mb-3">
-        <section class="dashboard-card mini-metric">
-            <div class="d-flex justify-content-between">
-                <h5>상품 활성도</h5>
-                <span class="text-muted small"><%= productHealth %>%</span>
-            </div>
-            <canvas id="revenueBarsChart" class="dashboard-canvas mini-canvas" role="img" aria-label="월별 매출 막대 차트"></canvas>
-            <p class="mb-0 text-muted">월별 매출(원) 실데이터 기반</p>
-        </section>
-
-        <section class="dashboard-card mini-metric">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5>고객응답 안정도</h5>
-                <span class="gauge-value"><%= inquiryHealth %>%</span>
-            </div>
-            <div class="gauge-track" role="img" aria-label="고객응답 안정도 <%= inquiryHealth %> 퍼센트">
-                <div class="gauge-fill" style="--value:<%= inquiryHealth %>"></div>
-            </div>
-            <p class="mb-0 text-muted">문의가 많을수록 응답 처리 집중도가 높아집니다.</p>
-        </section>
-
-        <section class="dashboard-card chart-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">운영 흐름 비교</h5>
-                <span class="text-muted small">Orders vs Inquiries (최근 6개월)</span>
-            </div>
-            <canvas id="flowCompareChart" class="dashboard-canvas compare-canvas" role="img" aria-label="주문과 문의 비교 그래프"></canvas>
-        </section>
-    </div>
-
-    <div class="dashboard-grid table-grid">
-        <section class="dashboard-card table-card">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h5 class="mb-0">최근 주문</h5>
-                <a class="btn btn-sm btn-outline-primary" href="/admin/orders">전체 보기</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead>
-                        <tr><th>주문번호</th><th>주문자</th><th class="text-end">금액</th></tr>
-                    </thead>
-                    <tbody>
-                        <% if (!recentOrders || recentOrders.length === 0) { %>
-                            <tr><td colspan="3" class="text-center text-muted py-3">주문이 없습니다.</td></tr>
-                        <% } else { %>
-                            <% recentOrders.forEach((order) => { %>
-                                <tr>
-                                    <td class="text-truncate" style="max-width:160px;"><%= order.order_number %></td>
-                                    <td><%= order.user_name || order.guest_name || '비회원' %></td>
-                                    <td class="text-end fw-semibold"><%= Number(order.total_amount || 0).toLocaleString() %>원</td>
-                                </tr>
-                            <% }) %>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="dashboard-card table-card">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h5 class="mb-0">최근 문의</h5>
-                <a class="btn btn-sm btn-outline-primary" href="/admin/inquiries">전체 보기</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead>
-                        <tr><th>제목</th><th>문의자</th><th>상태</th></tr>
-                    </thead>
-                    <tbody>
-                        <% if (!recentInquiries || recentInquiries.length === 0) { %>
-                            <tr><td colspan="3" class="text-center text-muted py-3">문의가 없습니다.</td></tr>
-                        <% } else { %>
-                            <% recentInquiries.forEach((inquiry) => { %>
-                                <tr>
-                                    <td class="text-truncate" style="max-width:180px;"><%= inquiry.title %></td>
-                                    <td><%= inquiry.user_name || inquiry.guest_name || '비회원' %></td>
-                                    <td>
-                                        <span class="badge text-bg-<%= inquiry.status === 'NEW' ? 'warning' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %>"><%= inquiry.status %></span>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-
-    <% if (typeof sys !== 'undefined' && sys) { %>
-    <div class="dashboard-card mt-3">
-        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
-            <div>
-                <div class="metric-title">서버 상태</div>
-                <strong>CPU <%= sys.cpuRatioPct %>% · MEM <%= sys.memUsedPct %>% · DISK <%= sys.diskUsedPct %>%</strong>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <span class="badge text-bg-<%= sys.cpuStatus.badge %>">CPU <%= sys.cpuStatus.text %></span>
-                <span class="badge text-bg-<%= sys.memStatus.badge %>">메모리 <%= sys.memStatus.text %></span>
-                <span class="badge text-bg-<%= sys.diskStatus.badge %>">디스크 <%= sys.diskStatus.text %></span>
-                <span class="badge text-bg-<%= sys.nginxStatus.badge %>">Nginx <%= sys.nginxStatus.text %></span>
-            </div>
+            <div class="kpi-card__label">미처리 문의</div>
+        </div>
+        <svg class="kpi-card__arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <div class="kpi-card kpi-card--purple">
+        <div class="kpi-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="kpi-card__body">
+            <div class="kpi-card__value"><%= thisMonthRevenue.toLocaleString() %>원</div>
+            <div class="kpi-card__label">이달 매출</div>
         </div>
     </div>
-    <% } %>
 </div>
+
+<!-- 차트 + 빠른 액션 -->
+<div class="dash-grid mb-4">
+    <div class="dash-card">
+        <div class="dash-card__head">
+            <h6 class="dash-card__title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                최근 6개월 주문 추이
+            </h6>
+        </div>
+        <canvas id="ordersTrendChart" class="dash-chart" style="height:140px;" role="img" aria-label="주문량 추이 차트"></canvas>
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card__head">
+            <h6 class="dash-card__title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                월별 매출 (원)
+            </h6>
+        </div>
+        <canvas id="revenueBarsChart" class="dash-chart" style="height:140px;" role="img" aria-label="월별 매출 차트"></canvas>
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card__head">
+            <h6 class="dash-card__title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                빠른 작업
+            </h6>
+        </div>
+        <div class="d-flex flex-column gap-2 mt-1">
+            <a href="/admin/products/new" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>새 상품 등록
+            </a>
+            <a href="/admin/products/import" class="btn btn-outline-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>엑셀 업로드
+            </a>
+            <a href="/admin/orders" class="btn btn-outline-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-2px;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>주문 목록
+            </a>
+            <a href="/admin/inquiries" class="btn btn-outline-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>문의 목록
+            </a>
+            <a href="/admin/notices" class="btn btn-outline-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:-2px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>공지 관리
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 최근 데이터 테이블 -->
+<div class="dash-tables mb-4">
+    <div class="dash-card">
+        <div class="dash-card__head">
+            <h6 class="dash-card__title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+                최근 주문
+            </h6>
+            <a class="btn btn-sm btn-outline-primary" href="/admin/orders">전체 보기</a>
+        </div>
+        <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle mb-0 adm-table">
+                <thead>
+                    <tr>
+                        <th>주문번호</th>
+                        <th>주문자</th>
+                        <th>상태</th>
+                        <th class="text-end">금액</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!recentOrders || recentOrders.length === 0) { %>
+                        <tr><td colspan="4" class="text-center text-muted py-4">주문이 없습니다.</td></tr>
+                    <% } else { %>
+                        <% recentOrders.forEach(order => { %>
+                        <tr>
+                            <td>
+                                <a class="text-decoration-none fw-semibold small" href="/admin/orders/<%= order.order_number %>">
+                                    <%= order.order_number.slice(-8) %>...
+                                </a>
+                            </td>
+                            <td class="text-muted small"><%= order.user_name || order.guest_name || '비회원' %></td>
+                            <td>
+                                <span class="adm-status-badge adm-status-badge--<%= (order.status || 'PENDING').toLowerCase() %>">
+                                    <%= order.status || 'PENDING' %>
+                                </span>
+                            </td>
+                            <td class="text-end fw-semibold small"><%= Number(order.total_amount || 0).toLocaleString() %>원</td>
+                        </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="dash-card__head">
+            <h6 class="dash-card__title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                최근 문의
+            </h6>
+            <a class="btn btn-sm btn-outline-primary" href="/admin/inquiries">전체 보기</a>
+        </div>
+        <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle mb-0 adm-table">
+                <thead>
+                    <tr>
+                        <th>제목</th>
+                        <th>문의자</th>
+                        <th>상태</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!recentInquiries || recentInquiries.length === 0) { %>
+                        <tr><td colspan="3" class="text-center text-muted py-4">문의가 없습니다.</td></tr>
+                    <% } else { %>
+                        <% recentInquiries.forEach(inq => { %>
+                        <tr>
+                            <td class="text-truncate" style="max-width:200px;">
+                                <a class="text-decoration-none fw-semibold" href="/admin/inquiries">
+                                    <%= inq.title %>
+                                </a>
+                            </td>
+                            <td class="text-muted small"><%= inq.user_name || inq.guest_name || '비회원' %></td>
+                            <td>
+                                <% const statusMap = { NEW: 'warning', ANSWERED: 'success', CLOSED: 'secondary' }; %>
+                                <span class="badge text-bg-<%= statusMap[inq.status] || 'secondary' %>">
+                                    <%= inq.status === 'NEW' ? '미답변' : inq.status === 'ANSWERED' ? '답변완료' : inq.status %>
+                                </span>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 재고 부족 경고 -->
+<% if (typeof lowStockProducts !== 'undefined' && lowStockProducts && lowStockProducts.length > 0) { %>
+<div class="dash-card dash-card--danger mb-4">
+    <div class="dash-card__head">
+        <h6 class="dash-card__title" style="color:#dc2626;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            재고 부족 상품
+            <span class="badge bg-danger ms-1"><%= lowStockProducts.length %></span>
+        </h6>
+        <a class="btn btn-sm btn-outline-danger" href="/admin/products">상품 관리</a>
+    </div>
+    <div class="table-responsive mt-2">
+        <table class="table table-sm align-middle mb-0 adm-table">
+            <thead>
+                <tr>
+                    <th>상품명</th>
+                    <th>코드</th>
+                    <th class="text-end">재고</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% lowStockProducts.forEach(p => { %>
+                <tr>
+                    <td class="fw-semibold"><%= p.name %></td>
+                    <td class="text-muted small"><%= p.code || '-' %></td>
+                    <td class="text-end">
+                        <span class="badge bg-<%= p.stock_quantity === 0 ? 'danger' : 'warning' %>">
+                            <%= p.stock_quantity %>개
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" href="/admin/products/<%= p.id %>/edit">수정</a>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<!-- 서버 상태 -->
+<% if (typeof sys !== 'undefined' && sys) { %>
+<div class="dash-card">
+    <div class="dash-card__head">
+        <h6 class="dash-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            서버 상태
+        </h6>
+        <span class="text-muted small">실시간</span>
+    </div>
+    <div class="sys-stat-row mt-2">
+        <div class="sys-stat">
+            <span class="sys-stat__label">CPU</span>
+            <div class="sys-stat__bar">
+                <div class="sys-stat__fill" style="width:<%= sys.cpuRatioPct %>%;background:<%= sys.cpuRatioPct > 80 ? '#ef4444' : sys.cpuRatioPct > 50 ? '#f59e0b' : '#10b981' %>"></div>
+            </div>
+            <span class="sys-stat__val"><%= sys.cpuRatioPct %>%</span>
+        </div>
+        <div class="sys-stat">
+            <span class="sys-stat__label">메모리</span>
+            <div class="sys-stat__bar">
+                <div class="sys-stat__fill" style="width:<%= sys.memUsedPct %>%;background:<%= sys.memUsedPct > 80 ? '#ef4444' : sys.memUsedPct > 60 ? '#f59e0b' : '#10b981' %>"></div>
+            </div>
+            <span class="sys-stat__val"><%= sys.memUsedPct %>%</span>
+        </div>
+        <div class="sys-stat">
+            <span class="sys-stat__label">디스크</span>
+            <div class="sys-stat__bar">
+                <div class="sys-stat__fill" style="width:<%= sys.diskUsedPct %>%;background:<%= sys.diskUsedPct > 85 ? '#ef4444' : sys.diskUsedPct > 70 ? '#f59e0b' : '#10b981' %>"></div>
+            </div>
+            <span class="sys-stat__val"><%= sys.diskUsedPct %>%</span>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap mt-2">
+        <span class="badge text-bg-<%= sys.cpuStatus.badge %>">CPU <%= sys.cpuStatus.text %></span>
+        <span class="badge text-bg-<%= sys.memStatus.badge %>">메모리 <%= sys.memStatus.text %></span>
+        <span class="badge text-bg-<%= sys.diskStatus.badge %>">디스크 <%= sys.diskStatus.text %></span>
+        <span class="badge text-bg-<%= sys.nginxStatus.badge %>">Nginx <%= sys.nginxStatus.text %></span>
+    </div>
+</div>
+<% } %>
 
 <script>
 (function () {
     const data = <%- JSON.stringify(chartPayload) %>;
 
-    function drawLineChart(canvas, labels, values, color) {
-        if (!canvas || !labels.length || !values.length) return;
+    function drawLine(canvas, labels, values, color) {
+        if (!canvas || !labels.length) return;
         const ctx = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
-        const width = canvas.clientWidth || 360;
-        const height = canvas.clientHeight || 120;
-        canvas.width = Math.floor(width * dpr);
-        canvas.height = Math.floor(height * dpr);
+        const w = canvas.clientWidth || 400;
+        const h = canvas.clientHeight || 140;
+        canvas.width  = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
         ctx.scale(dpr, dpr);
 
         const max = Math.max(...values, 1);
         const min = Math.min(...values, 0);
-        const padX = 12;
-        const padY = 10;
-        const drawW = width - padX * 2;
-        const drawH = height - padY * 2;
+        const px = 16, py = 10;
+        const dw = w - px * 2, dh = h - py * 2;
 
-        ctx.clearRect(0, 0, width, height);
+        ctx.clearRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+            const y = py + dh * (i / 4);
+            ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(w - px, y); ctx.stroke();
+        }
+
+        const grad = ctx.createLinearGradient(0, py, 0, h);
+        grad.addColorStop(0, color.replace(')', ',0.18)').replace('rgb', 'rgba'));
+        grad.addColorStop(1, color.replace(')', ',0)').replace('rgb', 'rgba'));
+
         ctx.beginPath();
         values.forEach((v, i) => {
-            const x = padX + (drawW * i) / Math.max(values.length - 1, 1);
-            const y = padY + drawH - ((v - min) / Math.max(max - min, 1)) * drawH;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+            const x = px + (dw * i) / Math.max(values.length - 1, 1);
+            const y = py + dh - ((v - min) / Math.max(max - min, 1)) * dh;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
-        ctx.lineWidth = 2;
+        ctx.lineTo(px + dw, h - py);
+        ctx.lineTo(px, h - py);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        values.forEach((v, i) => {
+            const x = px + (dw * i) / Math.max(values.length - 1, 1);
+            const y = py + dh - ((v - min) / Math.max(max - min, 1)) * dh;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.lineWidth = 2.5;
         ctx.strokeStyle = color;
         ctx.stroke();
 
-        ctx.globalAlpha = 0.12;
-        ctx.lineTo(width - padX, height - padY);
-        ctx.lineTo(padX, height - padY);
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    }
-
-    function drawBarChart(canvas, labels, values, color) {
-        if (!canvas || !labels.length || !values.length) return;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const width = canvas.clientWidth || 360;
-        const height = canvas.clientHeight || 120;
-        canvas.width = Math.floor(width * dpr);
-        canvas.height = Math.floor(height * dpr);
-        ctx.scale(dpr, dpr);
-
-        const max = Math.max(...values, 1);
-        const padX = 10;
-        const padY = 14;
-        const drawW = width - padX * 2;
-        const drawH = height - padY * 2;
-        const barW = drawW / Math.max(values.length * 1.6, 1);
-
-        ctx.clearRect(0, 0, width, height);
         values.forEach((v, i) => {
-            const x = padX + i * (barW * 1.6);
-            const h = (v / max) * drawH;
-            const y = padY + drawH - h;
+            const x = px + (dw * i) / Math.max(values.length - 1, 1);
+            const y = py + dh - ((v - min) / Math.max(max - min, 1)) * dh;
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
             ctx.fillStyle = color;
-            ctx.fillRect(x, y, barW, h);
+            ctx.fill();
+        });
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        labels.forEach((label, i) => {
+            const x = px + (dw * i) / Math.max(labels.length - 1, 1);
+            ctx.fillText(label, x, h - 2);
         });
     }
 
-    function drawDualBarChart(canvas, labels, leftValues, rightValues) {
+    function drawBars(canvas, labels, values, color) {
         if (!canvas || !labels.length) return;
         const ctx = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
-        const width = canvas.clientWidth || 520;
-        const height = canvas.clientHeight || 220;
-        canvas.width = Math.floor(width * dpr);
-        canvas.height = Math.floor(height * dpr);
+        const w = canvas.clientWidth || 400;
+        const h = canvas.clientHeight || 140;
+        canvas.width  = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
         ctx.scale(dpr, dpr);
 
-        const max = Math.max(...leftValues, ...rightValues, 1);
-        const padX = 24;
-        const padTop = 16;
-        const padBottom = 30;
-        const drawW = width - padX * 2;
-        const drawH = height - padTop - padBottom;
-        const groupW = drawW / Math.max(labels.length, 1);
-        const barW = Math.max(8, groupW * 0.22);
+        const max = Math.max(...values, 1);
+        const px = 12, py = 10, labelH = 16;
+        const dw = w - px * 2, dh = h - py - labelH;
+        const barW = Math.max(8, (dw / values.length) * 0.55);
 
-        ctx.clearRect(0, 0, width, height);
-        labels.forEach((label, i) => {
-            const baseX = padX + i * groupW + groupW * 0.2;
-            const leftH = (Number(leftValues[i] || 0) / max) * drawH;
-            const rightH = (Number(rightValues[i] || 0) / max) * drawH;
-
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(baseX, padTop + drawH - leftH, barW, leftH);
-
-            ctx.fillStyle = '#8b5cf6';
-            ctx.fillRect(baseX + barW + 6, padTop + drawH - rightH, barW, rightH);
-
-            ctx.fillStyle = '#64748b';
-            ctx.font = '12px sans-serif';
+        ctx.clearRect(0, 0, w, h);
+        values.forEach((v, i) => {
+            const x = px + i * (dw / values.length) + (dw / values.length - barW) / 2;
+            const barH = (v / max) * dh;
+            const y = py + dh - barH;
+            const grad = ctx.createLinearGradient(x, y, x, py + dh);
+            grad.addColorStop(0, color);
+            grad.addColorStop(1, color.replace(')', ',0.5)').replace('rgb', 'rgba'));
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(x, y, barW, barH, 4) : ctx.rect(x, y, barW, barH);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(label, baseX + barW, height - 10);
+            ctx.fillText(labels[i], x + barW / 2, h - 2);
         });
     }
 
-    function redrawAll() {
-        drawLineChart(document.getElementById('ordersTrendChart'), data.labels, data.orders, '#10b981');
-        drawBarChart(document.getElementById('revenueBarsChart'), data.labels, data.revenue, '#f43f5e');
-        drawDualBarChart(document.getElementById('flowCompareChart'), data.labels, data.orders, data.inquiries);
+    function redraw() {
+        drawLine(document.getElementById('ordersTrendChart'), data.labels, data.orders, 'rgb(234,88,12)');
+        drawBars(document.getElementById('revenueBarsChart'), data.labels, data.revenue, 'rgb(16,185,129)');
     }
 
-    redrawAll();
-    window.addEventListener('resize', redrawAll);
+    redraw();
+    window.addEventListener('resize', redraw);
 })();
 </script>
 
