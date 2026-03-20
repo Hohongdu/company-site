@@ -1,80 +1,78 @@
 </main>
 
-<!-- ===== FOOTER ===== -->
-<footer class="em-footer">
+<!-- ── Footer ── -->
+<footer class="site-footer">
   <div class="container">
-    <div class="row g-5">
-      <div class="col-12 col-md-4">
-        <div class="footer-brand">ENERMADE</div>
-        <p class="footer-desc">고객 맞춤형 세라믹 솔루션 제공업체.<br>첨단 기술과 풍부한 경험을 바탕으로<br>최고의 제품을 제공합니다.</p>
+    <div class="footer-inner">
+      <!-- Brand -->
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-mark">EN</div>
+          <span class="footer-logo-text">ERMADE</span>
+        </div>
+        <p class="footer-brand-desc">고성능 세라믹 소재의 새로운 기준.<br>20년 이상의 기술력과 품질로 산업을 이끕니다.</p>
       </div>
-      <div class="col-6 col-md-2">
-        <div class="footer-heading">회사</div>
+      <!-- Company -->
+      <div>
+        <div class="footer-col-title">회사</div>
         <div class="footer-links">
-          <a href="/">홈</a>
-          <a href="/about">회사 소개</a>
+          <a href="/about">회사소개</a>
           <a href="/history">연혁</a>
-          <a href="/contact">문의</a>
+          <a href="/contact">문의하기</a>
         </div>
       </div>
-      <div class="col-6 col-md-2">
-        <div class="footer-heading">제품</div>
+      <!-- Products -->
+      <div>
+        <div class="footer-col-title">제품</div>
         <div class="footer-links">
-          <a href="/shop">상품몰</a>
-          <a href="/shop/products">전체 상품</a>
+          <a href="/shop">쇼핑몰</a>
+          <a href="/shop/products">제품목록</a>
+          <a href="/shop/cart">장바구니</a>
+        </div>
+      </div>
+      <!-- Info -->
+      <div>
+        <div class="footer-col-title">정보</div>
+        <div class="footer-links">
           <a href="/notices">공지사항</a>
-        </div>
-      </div>
-      <div class="col-6 col-md-2">
-        <div class="footer-heading">고객지원</div>
-        <div class="footer-links">
           <a href="/shop/inquiries">문의하기</a>
-          <a href="/shop/orders/guest">주문 조회</a>
-          <a href="/auth/login">로그인</a>
-          <a href="/auth/register">회원가입</a>
+          <% if (user && user.is_admin) { %>
+            <a href="/admin">관리자</a>
+          <% } %>
         </div>
       </div>
     </div>
+    <!-- Bottom bar -->
     <div class="footer-bottom">
-      <span>© <%= new Date().getFullYear() %> ENERMADE. All rights reserved.</span>
-      <span>세라믹 가공 솔루션 전문기업</span>
+      <span class="footer-copy">&copy; <%= new Date().getFullYear() %> ENERMADE. All rights reserved.</span>
+      <nav class="footer-legal">
+        <a href="#">개인정보처리방침</a>
+        <a href="#">이용약관</a>
+      </nav>
     </div>
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/company.js"></script>
-<script src="/js/main.js"></script>
-
-<!-- Login modal JS -->
 <script>
-(function () {
-  const backdrop = document.getElementById('loginBackdrop');
-  const modal    = document.getElementById('loginModal');
-  const closeBtn = document.getElementById('btnLoginClose');
-  if (!modal) return;
-
-  function openLogin() {
-    backdrop.classList.add('open');
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+(function() {
+  // Nav scroll effect
+  const nav = document.getElementById('siteNav');
+  function onScroll() {
+    nav.classList.toggle('scrolled', window.scrollY > 10);
   }
-  function closeLogin() {
-    backdrop.classList.remove('open');
-    modal.classList.remove('open');
-    document.body.style.overflow = '';
-  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 
-  document.querySelectorAll('.js-open-login').forEach(el => {
-    el.addEventListener('click', function (e) {
-      e.preventDefault();
-      openLogin();
+  // Mobile nav toggle
+  const toggle = document.getElementById('navToggle');
+  const mobileNav = document.getElementById('mobileNav');
+  if (toggle && mobileNav) {
+    toggle.addEventListener('click', function() {
+      const open = mobileNav.classList.toggle('open');
+      toggle.classList.toggle('open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
     });
-  });
-
-  if (closeBtn)  closeBtn.addEventListener('click', closeLogin);
-  if (backdrop)  backdrop.addEventListener('click', closeLogin);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
+  }
 })();
 </script>
 </body>
