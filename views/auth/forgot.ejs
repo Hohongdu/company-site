@@ -1,48 +1,47 @@
 <%- include('../layouts/company-top', { title: '비밀번호 찾기', active: '' }) %>
 
-<div class="auth-page">
-  <div style="width:100%;max-width:420px;margin:0 auto;">
-    <a href="/" class="auth-logo" style="margin-bottom:32px;">ENER<span>MADE</span></a>
+<section class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-card-head">
+      <div class="auth-logo-mark">EN</div>
+      <h1 class="auth-card-title">비밀번호 찾기</h1>
+      <p class="auth-card-sub">가입 시 사용한 이메일로 재설정 링크를 보내드립니다</p>
+    </div>
 
-    <div class="auth-card">
-      <div style="width:48px;height:48px;background:var(--c-accent-lt);color:var(--c-accent);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-          <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="auth-title">비밀번호 찾기</div>
-      <p class="auth-sub">가입 이메일로 임시 비밀번호를 받아 로그인할 수 있습니다</p>
-
-      <% if (message) { %>
-        <div class="alert alert-<%= messageType === 'success' ? 'success' : (messageType === 'error' ? 'danger' : 'info') %> mb-3" role="alert">
-          <%= message %>
-        </div>
+    <div class="auth-card-body">
+      <% if (locals.error) { %>
+        <div class="alert alert-danger" role="alert"><%= error %></div>
+      <% } %>
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success" role="alert"><%= success %></div>
       <% } %>
 
-      <form method="POST" action="/auth/forgot" class="d-grid gap-3">
+      <form action="/auth/forgot" method="post" novalidate>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <div>
-          <label class="form-label" for="forgotEmail">가입 이메일</label>
-          <input type="email" id="forgotEmail" name="email" class="form-control"
-            placeholder="example@company.com" required>
+
+        <div class="form-group">
+          <label class="form-label" for="forgot-email">이메일</label>
+          <input
+            type="email"
+            id="forgot-email"
+            name="email"
+            class="form-control"
+            placeholder="가입 시 사용한 이메일을 입력하세요"
+            autocomplete="email"
+            required
+          >
         </div>
-        <button type="submit" class="btn btn-primary" style="padding:12px;">임시 비밀번호 발급</button>
+
+        <button type="submit" class="btn btn-primary w-100">재설정 링크 발송</button>
       </form>
 
-      <hr class="my-4">
+      <div class="auth-divider">또는</div>
 
-      <div style="background:var(--c-bg-2);border-radius:var(--r-lg);padding:16px;margin-bottom:20px;">
-        <ul style="font-size:13px;color:var(--c-muted);padding-left:16px;margin:0;display:grid;gap:6px;">
-          <li>가입된 이메일이 맞다면 임시 비밀번호가 전송됩니다.</li>
-          <li>이메일 전송은 서버 설정(SMTP)에 따라 동작합니다.</li>
-        </ul>
-      </div>
+      <a href="/auth/login" class="btn btn-outline w-100">로그인 페이지로 이동</a>
+    </div>
 
-      <div class="d-flex gap-2">
-        <a href="/auth/login" class="btn btn-outline-dark btn-sm flex-fill text-center">로그인 페이지로</a>
-        <a href="/auth/register" class="btn btn-outline-secondary btn-sm flex-fill text-center">회원가입 하기</a>
-      </div>
+    <div class="auth-footer">
+      <a href="/auth/login">← 로그인으로 돌아가기</a>
     </div>
   </div>
 </div>

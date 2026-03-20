@@ -1,59 +1,36 @@
 <%- include('../layouts/company-top', { title: notice.title, active: 'notices' }) %>
 
-<div class="page-banner">
+<!-- Notice Detail Section -->
+<section class="notice-detail-section">
   <div class="container">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">홈</a></li>
-        <li class="breadcrumb-item"><a href="/notices">공지사항</a></li>
-        <li class="breadcrumb-item active">공지 상세</li>
-      </ol>
-    </nav>
-    <h1 style="font-size:clamp(1.4rem,3vw,2rem);">공지사항</h1>
-  </div>
-</div>
 
-<section class="sec-py">
-  <div class="container">
-    <div class="notice-detail">
-      <div class="notice-detail__head">
-        <div style="margin-bottom:14px;">
-          <span style="display:inline-block;font-family:var(--font-head);font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--r-2xl);
-            background:<%= notice.category === 'product' ? 'var(--c-accent-lt)' : 'var(--c-bg-2)' %>;
-            color:<%= notice.category === 'product' ? 'var(--c-accent)' : 'var(--c-muted)' %>;">
-            <%= notice.category === 'product' ? '제품공지' : '일반공지' %>
-          </span>
-        </div>
-        <h2 class="notice-detail__title"><%= notice.title %></h2>
-        <div class="notice-detail__meta">
+    <div class="notice-detail-card">
+      <div class="notice-detail-header">
+        <h1 class="notice-detail-title"><%= notice.title %></h1>
+        <div class="notice-detail-meta">
           <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:4px;">
-              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <%= new Date(notice.created_at).toLocaleDateString('ko-KR') %>
+            <%= new Date(notice.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) %>
           </span>
-          <span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:4px;">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            조회 <%= notice.views || 0 %>
-          </span>
+          <% if (typeof notice.views !== 'undefined' && notice.views !== null) { %>
+          <span>조회수 <%= notice.views %></span>
+          <% } %>
         </div>
       </div>
 
-      <div class="notice-detail__body"><%= notice.content %></div>
-
-      <div class="notice-detail__nav">
-        <a href="/notices" class="btn btn-outline-dark">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:6px;">
-            <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          목록으로
-        </a>
+      <div class="notice-detail-body">
+        <%- notice.content %>
       </div>
     </div>
+
+    <div class="mt-4">
+      <a href="/notices" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.4rem; vertical-align: -2px;">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        목록으로 돌아가기
+      </a>
+    </div>
+
   </div>
 </section>
 

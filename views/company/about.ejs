@@ -1,51 +1,65 @@
 <%- include('../layouts/company-top', { title: '회사 소개', active: 'about' }) %>
 
-<div class="page-banner">
+<!-- About Hero Banner -->
+<section class="about-hero-banner">
   <div class="container">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="/">홈</a></li>
-        <li class="breadcrumb-item active">회사 소개</li>
-      </ol>
-    </nav>
-    <h1>회사 소개</h1>
-    <p>고객 맞춤형 세라믹 솔루션 전문기업 ENERMADE를 소개합니다</p>
+    <p class="page-banner-eyebrow">ABOUT ENERMADE</p>
+    <h1 class="page-banner-title">고성능 세라믹 소재의 선도 기업</h1>
+    <p class="page-banner-sub">에너메이드는 20년 이상의 기술력을 바탕으로 산업용 고기능성 세라믹 소재를 연구·개발·공급합니다.</p>
   </div>
-</div>
+</section>
 
-<!-- Vision & Mission -->
-<section class="sec-py">
+<!-- Vision / Mission -->
+<section class="py-5" style="background: var(--c-bg);">
   <div class="container">
-    <div class="row align-items-center g-5">
-      <div class="col-12 col-lg-6">
-        <span class="sec-label">비전 &amp; 미션</span>
-        <h2 style="font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:20px;">
-          기술로 신뢰를,<br>품질로 미래를
-        </h2>
-        <p class="txt-muted" style="font-size:15px;line-height:1.8;margin-bottom:32px;">
-          ENERMADE는 세라믹 가공 분야의 선도주자로서, 다양한 소재를 활용한 고품질 제품을 제공합니다.
-          첨단 기술과 풍부한 경험을 바탕으로 고객 맞춤형 솔루션을 제공하며,
-          산업용 세라믹부터 생활용품까지 폭넓은 제품 라인업을 보유하고 있습니다.
-        </p>
-        <div class="row g-3">
-          <div class="col-6">
-            <div style="background:var(--c-bg-2);border:1px solid var(--c-border);border-radius:var(--r-xl);padding:24px;">
-              <div style="font-family:var(--font-head);font-size:2rem;font-weight:800;color:var(--c-accent);line-height:1;margin-bottom:6px;">20<sup style="font-size:60%;font-weight:700;">+</sup></div>
-              <div style="font-size:13px;color:var(--c-muted);font-weight:600;">년 이상의 경험</div>
+    <div class="row g-5 align-items-start">
+      <!-- Left: text + mission/vision cards -->
+      <div class="col-lg-6">
+        <p class="sec-eyebrow">OUR VISION & MISSION</p>
+        <h2 class="sec-title">더 나은 소재로<br>더 나은 세상을 만듭니다</h2>
+        <p class="sec-sub mt-3">우리는 첨단 세라믹 기술을 통해 반도체, 항공우주, 에너지, 의료 산업의 한계를 넘어섭니다.</p>
+        <div class="mt-4 d-flex flex-column gap-3">
+          <div class="p-4 rounded-3" style="background: var(--c-surface); border: 1px solid var(--c-border);">
+            <div class="mb-2">
+              <span style="color: var(--c-blue); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">VISION</span>
             </div>
+            <p class="mb-0" style="color: var(--c-ink); font-weight: 600;">세라믹 소재 분야의 글로벌 리더로서, 지속가능한 산업 발전을 선도합니다.</p>
           </div>
-          <div class="col-6">
-            <div style="background:var(--c-bg-2);border:1px solid var(--c-border);border-radius:var(--r-xl);padding:24px;">
-              <div style="font-family:var(--font-head);font-size:2rem;font-weight:800;color:var(--c-accent);line-height:1;margin-bottom:6px;">500<sup style="font-size:60%;font-weight:700;">+</sup></div>
-              <div style="font-size:13px;color:var(--c-muted);font-weight:600;">납품 거래처</div>
+          <div class="p-4 rounded-3" style="background: var(--c-surface); border: 1px solid var(--c-border);">
+            <div class="mb-2">
+              <span style="color: var(--c-blue); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">MISSION</span>
             </div>
+            <p class="mb-0" style="color: var(--c-ink); font-weight: 600;">최고의 기술력과 품질로 고객의 성공을 지원하고, 혁신적인 소재 솔루션을 제공합니다.</p>
           </div>
         </div>
       </div>
-      <div class="col-12 col-lg-6">
-        <div style="border-radius:var(--r-xl);overflow:hidden;aspect-ratio:4/3;">
-          <img src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1400&q=80"
-            alt="첨단 기술" style="width:100%;height:100%;object-fit:cover;display:block;" />
+      <!-- Right: stat cards -->
+      <div class="col-lg-6">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="p-4 text-center rounded-3 h-100" style="background: var(--c-dark); color: #fff;">
+              <div style="font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1;">20+</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.65); margin-top: 0.5rem;">년 업력</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-4 text-center rounded-3 h-100" style="background: var(--c-blue); color: #fff;">
+              <div style="font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1;">500+</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.65); margin-top: 0.5rem;">제품 라인업</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-4 text-center rounded-3 h-100" style="background: var(--c-surface); border: 1px solid var(--c-border);">
+              <div style="font-size: 2.5rem; font-weight: 800; color: var(--c-ink); line-height: 1;">50+</div>
+              <div style="font-size: 0.85rem; color: var(--c-muted); margin-top: 0.5rem;">글로벌 파트너</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-4 text-center rounded-3 h-100" style="background: var(--c-surface); border: 1px solid var(--c-border);">
+              <div style="font-size: 1.4rem; font-weight: 800; color: var(--c-ink); line-height: 1.2;">ISO<br>9001</div>
+              <div style="font-size: 0.85rem; color: var(--c-muted); margin-top: 0.5rem;">품질 인증</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -53,103 +67,77 @@
 </section>
 
 <!-- Core Values -->
-<section class="sec-py-sm" style="background:var(--c-bg-2);">
+<section class="py-5" style="background: var(--c-surface);">
   <div class="container">
     <div class="text-center mb-5">
-      <span class="sec-label mx-auto justify-content-center" style="display:flex;">핵심 가치</span>
-      <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:10px;">ENERMADE가 추구하는 가치</h2>
-      <p class="txt-muted">혁신·품질·고객·신속 — 4가지 핵심 가치로 성장합니다</p>
+      <p class="sec-eyebrow">CORE VALUES</p>
+      <h2 class="sec-title">에너메이드의 핵심 가치</h2>
+      <p class="sec-sub">우리의 모든 활동은 다음 여섯 가지 핵심 가치를 기반으로 합니다.</p>
     </div>
-    <div class="row g-4">
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card text-center">
-          <div class="feat-card__icon mx-auto" style="margin-bottom:18px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="feat-card__title">기술 혁신</div>
-          <p class="feat-card__desc">끊임없는 연구개발로 세라믹 가공 기술의 한계를 넓혀갑니다.</p>
-        </div>
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon">🎯</div>
+        <div class="value-title">정밀성</div>
+        <div class="value-desc">마이크로미터 단위의 정밀 제조 공정으로 일관된 품질을 보장합니다.</div>
       </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card text-center">
-          <div class="feat-card__icon mx-auto" style="margin-bottom:18px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="feat-card__title">품질 우선</div>
-          <p class="feat-card__desc">ISO 9001 인증 품질 관리 시스템으로 일관된 품질을 보장합니다.</p>
-        </div>
+      <div class="value-card">
+        <div class="value-icon">💡</div>
+        <div class="value-title">혁신</div>
+        <div class="value-desc">끊임없는 R&amp;D 투자로 소재 기술의 새로운 가능성을 개척합니다.</div>
       </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card text-center">
-          <div class="feat-card__icon mx-auto" style="margin-bottom:18px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>
-          </div>
-          <div class="feat-card__title">고객 중심</div>
-          <p class="feat-card__desc">고객의 요구에 귀 기울이며 맞춤형 솔루션을 제안합니다.</p>
-        </div>
+      <div class="value-card">
+        <div class="value-icon">🤝</div>
+        <div class="value-title">신뢰</div>
+        <div class="value-desc">고객과의 약속을 최우선으로, 장기적인 신뢰 관계를 구축합니다.</div>
       </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card text-center">
-          <div class="feat-card__icon mx-auto" style="margin-bottom:18px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </div>
-          <div class="feat-card__title">신속 대응</div>
-          <p class="feat-card__desc">빠른 납기와 안정적 공급으로 고객의 신뢰를 쌓아갑니다.</p>
-        </div>
+      <div class="value-card">
+        <div class="value-icon">🌱</div>
+        <div class="value-title">지속가능성</div>
+        <div class="value-desc">친환경 공정과 자원 효율화로 지속가능한 미래를 추구합니다.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">⭐</div>
+        <div class="value-title">품질</div>
+        <div class="value-desc">국제 규격을 초과하는 엄격한 품질 관리 체계를 운영합니다.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🌍</div>
+        <div class="value-title">글로벌</div>
+        <div class="value-desc">세계 50개국 이상의 파트너와 함께 글로벌 시장을 선도합니다.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Materials -->
-<section class="sec-py">
+<!-- Materials Section -->
+<section class="py-5" style="background: var(--c-bg);">
   <div class="container">
     <div class="text-center mb-5">
-      <span class="sec-label mx-auto justify-content-center" style="display:flex;">취급 소재</span>
-      <h2 style="font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:10px;">다양한 세라믹 소재</h2>
-      <p class="txt-muted">고객의 요구에 맞는 최적의 소재를 선택하여 가공합니다</p>
+      <p class="sec-eyebrow">MATERIALS</p>
+      <h2 class="sec-title">주요 취급 소재</h2>
+      <p class="sec-sub">에너메이드가 연구하고 공급하는 대표적인 고성능 세라믹 소재입니다.</p>
     </div>
-    <div class="row g-4">
-      <div class="col-12 col-md-6">
-        <div class="material-card">
-          <div class="material-code">Al₂O₃</div>
-          <div class="material-name">알루미나 (Alumina)</div>
-          <p class="material-desc">내열성·내마모성이 우수한 범용 세라믹. 반도체, 전자, 기계 부품에 폭넓게 사용됩니다.</p>
-        </div>
+    <div class="specs-grid">
+      <div class="spec-item">
+        <div class="spec-formula">Al₂O₃</div>
+        <div class="spec-name">알루미나</div>
+        <div class="spec-desc">우수한 내마모성과 전기 절연성을 갖춘 범용 산화물 세라믹. 반도체, 전자, 기계 부품에 광범위하게 사용됩니다.</div>
       </div>
-      <div class="col-12 col-md-6">
-        <div class="material-card">
-          <div class="material-code">ZrO₂</div>
-          <div class="material-name">지르코니아 (Zirconia)</div>
-          <p class="material-desc">고강도·고인성 세라믹. 정밀 부품, 의료기기, 절삭 공구 등에 활용됩니다.</p>
-        </div>
+      <div class="spec-item">
+        <div class="spec-formula">ZrO₂</div>
+        <div class="spec-name">지르코니아</div>
+        <div class="spec-desc">높은 인성과 내열 충격성을 지닌 고성능 세라믹. 의료용 임플란트, 절삭 공구, 연료전지에 활용됩니다.</div>
       </div>
-      <div class="col-12 col-md-6">
-        <div class="material-card">
-          <div class="material-code">SiC</div>
-          <div class="material-name">탄화규소 (Silicon Carbide)</div>
-          <p class="material-desc">극한의 고온·고압 환경에서도 안정적인 특성. 반도체 장비, 산업용 히터에 사용됩니다.</p>
-        </div>
+      <div class="spec-item">
+        <div class="spec-formula">SiC</div>
+        <div class="spec-name">탄화규소</div>
+        <div class="spec-desc">극한 환경에서도 뛰어난 강도와 열전도성을 유지하는 소재. 반도체 공정 장비 및 방위 산업에 사용됩니다.</div>
       </div>
-      <div class="col-12 col-md-6">
-        <div class="material-card">
-          <div class="material-code">Si₃N₄</div>
-          <div class="material-name">질화규소 (Silicon Nitride)</div>
-          <p class="material-desc">내충격성과 열충격 저항성이 뛰어난 구조용 세라믹. 엔진 부품에 적합합니다.</p>
-        </div>
+      <div class="spec-item">
+        <div class="spec-formula">Si₃N₄</div>
+        <div class="spec-name">질화규소</div>
+        <div class="spec-desc">고온 강도와 내산화성이 탁월한 엔지니어링 세라믹. 터빈 블레이드, 베어링, 절삭 인서트에 적용됩니다.</div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="cta-section">
-  <div class="container text-center">
-    <h2>함께 성장하겠습니다</h2>
-    <p>ENERMADE의 전문 솔루션으로 귀사의 경쟁력을 높여보세요</p>
-    <div class="d-flex gap-3 justify-content-center flex-wrap">
-      <a href="/contact" class="btn btn-dark btn-lg">견적 문의하기</a>
-      <a href="/history" class="btn btn-outline-light btn-lg">연혁 보기</a>
     </div>
   </div>
 </section>
