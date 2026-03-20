@@ -291,6 +291,32 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 });
 
 /* =========================
+   상품 선택 삭제 — bulk (/:id/delete보다 먼저 등록해야 라우트 매칭 정상 동작)
+========================= */
+router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
+	try {
+		const productIds = []
+			.concat(req.body.productIds || [])
+			.map((id) => Number(id))
+			.filter((id) => Number.isFinite(id) && id > 0);
+
+		if (!productIds.length) {
+			return res.redirect('/admin/products?error=' + encodeURIComponent('삭제할 상품을 선택해주세요.'));
+		}
+
+		const placeholders = productIds.map(() => '?').join(',');
+		await db.execute(`DELETE FROM cart_items WHERE product_id IN (${placeholders})`, productIds);
+		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
+		await logAdminAction(req.session?.user?.id, 'product_bulk_delete', { productIds });
+
+		return res.redirect('/admin/products?notice=' + encodeURIComponent(`선택한 상품 ${productIds.length}개가 삭제되었습니다.`));
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('상품 선택 삭제 오류');
+	}
+});
+
+/* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
 router.post('/products/:id/delete', csrfProtection, async (req, res) => {
@@ -348,32 +374,6 @@ router.post('/products/:id/stock', csrfProtection, async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('재고 변경 오류');
-	}
-});
-
-/* =========================
-   상품 선택 삭제 (장바구니 정리 포함)
-========================= */
-router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
-	try {
-		const productIds = []
-			.concat(req.body.productIds || [])
-			.map((id) => Number(id))
-			.filter((id) => Number.isFinite(id) && id > 0);
-
-		if (!productIds.length) {
-			return res.redirect('/admin/products?error=' + encodeURIComponent('삭제할 상품을 선택해주세요.'));
-		}
-
-		const placeholders = productIds.map(() => '?').join(',');
-		await db.execute(`DELETE FROM cart_items WHERE product_id IN (${placeholders})`, productIds);
-		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
-		await logAdminAction(req.session?.user?.id, 'product_bulk_delete', { productIds });
-
-		return res.redirect('/admin/products?notice=' + encodeURIComponent(`선택한 상품 ${productIds.length}개가 삭제되었습니다.`));
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('상품 선택 삭제 오류');
 	}
 });
 

@@ -25,6 +25,12 @@ router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 		await ensurePaymentMethodTable();
 		await ensureCouponTable();
 		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+
+		// 세션 유효하나 DB에서 사용자 삭제된 경우 조기 반환
+		if (!user) {
+			return res.status(404).render('404', { message: '사용자 정보를 찾을 수 없습니다.' });
+		}
+
 		const [[notificationRow]] = await db.execute(
 			`SELECT email_enabled
        FROM user_notification_settings
@@ -53,10 +59,6 @@ router.get('/account', requireLogin, accountCsrf, async (req, res) => {
        ORDER BY id DESC`,
 			[userId],
 		);
-
-		if (!user) {
-			return res.status(404).render('404', { message: '사용자 정보를 찾을 수 없습니다.' });
-		}
 
 		return res.render('shop/account', {
 			user,

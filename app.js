@@ -21,9 +21,6 @@ const adminRouter = require('./routes/admin/index');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const BASE_URL = process.env.BASE_URL;
-const KAKAO_ADMIN_KEY = process.env.KAKAO_ADMIN_KEY;
-const KAKAO_CID = process.env.KAKAO_CID || 'TC0ONETIME';
 
 
 
@@ -183,15 +180,29 @@ app.use((req, res) => {
 	});
 });
 
-// 500 (맨 마지막)
+// 429 / general errors (맨 마지막)
 app.use((err, req, res, next) => {
-	console.error('SERVER ERROR:', err);
-
-	const errorId = `E-${Date.now()}`;
 	if (res.headersSent) return next(err);
 
-	res.status(500).render('500', {
-		message: '서버 오류가 발생했습니다.',
+	// Rate limit errors
+	if (err.status === 429 || err.statusCode === 429) {
+		return res.status(429).render('500', {
+			message: '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.',
+			errorId: null,
+			currentPath: req.path,
+			currentUrl: req.originalUrl,
+			user: req.session?.user || null,
+		});
+	}
+
+	console.error('[server error]', err);
+
+	const status = err.status || err.statusCode || 500;
+	const errorId = `E-${Date.now()}`;
+	const message = status < 500 ? err.message : '서버 오류가 발생했습니다.';
+
+	res.status(status).render('500', {
+		message,
 		errorId,
 		currentPath: req.path,
 		currentUrl: req.originalUrl,

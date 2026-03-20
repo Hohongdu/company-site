@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { requireLogin } = require('../middleware/auth');
 const { sendMail } = require('../services/email.service');
+const asyncHandler = require('../lib/asyncHandler');
 
 const router = express.Router();
 
@@ -92,56 +93,46 @@ router.post('/contact', async (req, res) => {
 	return res.redirect('/contact?ok=1');
 });
 
-router.get('/notices', async (req, res) => {
-	try {
-		const q = String(req.query.q || '').trim();
-		const typeParam = String(req.query.type || 'all');
-		const allowedTypes = new Set(['all', 'general', 'product']);
-		const type = allowedTypes.has(typeParam) ? typeParam : 'all';
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
-		const [notices] = await db.execute(
-			`SELECT id, title, category, created_at, views
+router.get('/notices', asyncHandler(async (req, res) => {
+	const q = String(req.query.q || '').trim();
+	const typeParam = String(req.query.type || 'all');
+	const allowedTypes = new Set(['all', 'general', 'product']);
+	const type = allowedTypes.has(typeParam) ? typeParam : 'all';
+	await ensureNoticesTable();
+	await ensureNoticeCategoryColumn();
+	const [notices] = await db.execute(
+		`SELECT id, title, category, created_at, views
        FROM notices
        WHERE (? = '' OR title LIKE ?)
          AND category IN ('general', 'product')
          AND (? = 'all' OR category = ?)
        ORDER BY created_at DESC`,
-			[q, `%${q}%`, type, type],
-		);
-		return res.render('company/notices', { notices, query: q, type });
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('공지 목록 로딩 오류');
-	}
-});
+		[q, `%${q}%`, type, type],
+	);
+	return res.render('company/notices', { notices, query: q, type });
+}));
 
-router.get('/notices/:id', async (req, res) => {
-	try {
-		const noticeId = Number(req.params.id);
-		if (!noticeId) return res.status(404).render('404', { message: '공지 없음' });
+router.get('/notices/:id', asyncHandler(async (req, res) => {
+	const noticeId = Number(req.params.id);
+	if (!noticeId) return res.status(404).render('404', { message: '공지 없음' });
 
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
+	await ensureNoticesTable();
+	await ensureNoticeCategoryColumn();
 
-		// H-9: 존재 확인 먼저, 이후 조회수 증가 (없는 공지에 조회수 올라가는 현상 방지)
-		const [[notice]] = await db.execute(
-			`SELECT id, title, content, category, created_at, views
+	// H-9: 존재 확인 먼저, 이후 조회수 증가 (없는 공지에 조회수 올라가는 현상 방지)
+	const [[notice]] = await db.execute(
+		`SELECT id, title, content, category, created_at, views
        FROM notices
        WHERE id = ?
        LIMIT 1`,
-			[noticeId],
-		);
+		[noticeId],
+	);
 
-		if (!notice) return res.status(404).render('404', { message: '공지 없음' });
+	if (!notice) return res.status(404).render('404', { message: '공지 없음' });
 
-		await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
-		return res.render('company/notice-detail', { notice });
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('공지 상세 로딩 오류');
-	}
-});
+	await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
+	return res.render('company/notice-detail', { notice });
+}));
 
 router.get('/account', requireLogin, (req, res) =>
 	res.render('company/account', { user: req.session.user }),

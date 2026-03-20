@@ -14,6 +14,7 @@
         <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-sm btn-outline-secondary" href="/shop/products">상품 더 보기</a>
             <form action="/shop/cart/clear" method="post" class="m-0" onsubmit="return confirm('장바구니를 비울까요?');">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button class="btn btn-sm btn-outline-danger" type="submit">장바구니 전체 비우기</button>
             </form>
         </div>
@@ -43,6 +44,7 @@
                                 <div class="cart-sub">단가: <%= Number(it.price || 0).toLocaleString() %>원</div>
                                 <div class="cart-actions">
                                     <form action="/shop/cart/update" method="post" class="d-flex gap-2 flex-wrap">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <% if (!isGuest) { %>
                                             <input type="hidden" name="cartItemId" value="<%= it.cart_item_id %>">
                                         <% } %>
@@ -52,6 +54,7 @@
                                         <button class="btn btn-sm btn-outline-primary" type="submit">수량 변경</button>
                                     </form>
                                     <form action="/shop/cart/remove" method="post" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <% if (!isGuest) { %>
                                             <input type="hidden" name="cartItemId" value="<%= it.cart_item_id %>">
                                         <% } %>
@@ -96,11 +99,13 @@
                                 <div class="d-flex align-items-center gap-2 p-2 rounded-3 bg-light border border-success mb-2">
                                     <span class="text-success small fw-semibold flex-grow-1">✓ <%= appliedCoupon.code %> (<%= appliedCoupon.discount_pct %>% 할인 적용)</span>
                                     <form action="/shop/cart/coupon/remove" method="post" class="m-0">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2">제거</button>
                                     </form>
                                 </div>
                             <% } else { %>
                                 <form action="/shop/cart/coupon" method="post" class="d-flex gap-2">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <input class="form-control form-control-sm" name="couponCode" placeholder="쿠폰 코드 입력" maxlength="50">
                                     <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">적용</button>
                                 </form>
@@ -110,6 +115,7 @@
 
                         <% if (paymentEnabled) { %>
                             <form action="/shop/checkout/kakao" method="post" class="m-0">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <% if (isGuest) { %>
                                     <div class="border rounded-3 p-3 mt-3 bg-light">
                                         <div class="fw-semibold mb-2">비회원 주문 정보</div>

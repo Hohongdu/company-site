@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
 const { sendTemporaryPasswordEmail } = require('../services/notification.service');
+const asyncHandler = require('../lib/asyncHandler');
 
 const router = express.Router();
 
@@ -81,11 +82,11 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 			});
 		}
 
-		// 2) 임시 비밀번호 생성 (숫자+영문 대소문자 10자리)
+		// 2) 임시 비밀번호 생성 (CSPRNG 사용 — Math.random() 금지)
 		const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 		const tempPassword = Array.from(
 			{ length: 10 },
-			() => chars[Math.floor(Math.random() * chars.length)],
+			() => chars[crypto.randomInt(0, chars.length)],
 		).join('');
 
 		// 3) bcrypt 해싱 후 DB 업데이트
@@ -119,80 +120,70 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 });
 router.get('/register', (req, res) => res.render('auth/register'));
 
-router.post('/register', async (req, res) => {
-	try {
-		const name = String(req.body.name || '').trim();
-		const email = String(req.body.email || '').trim().toLowerCase();
-		const password = String(req.body.password || '');
-		const passwordConfirm = String(req.body.passwordConfirm || '');
+router.post('/register', asyncHandler(async (req, res) => {
+	const name = String(req.body.name || '').trim();
+	const email = String(req.body.email || '').trim().toLowerCase();
+	const password = String(req.body.password || '');
+	const passwordConfirm = String(req.body.passwordConfirm || '');
 
-		// M-1: 빈 값 검증
-		if (!name || !email || !password) {
-			return res.status(400).render('auth/register', { error: '모든 항목을 입력해주세요.' });
-		}
-
-		// H-6: 비밀번호 최소 길이
-		if (password.length < MIN_PASSWORD_LENGTH) {
-			return res.status(400).render('auth/register', { error: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.` });
-		}
-
-		if (password !== passwordConfirm) {
-			return res.status(400).render('auth/register', { error: '비밀번호가 일치하지 않습니다.' });
-		}
-
-		const hashedPw = await bcrypt.hash(password, 10);
-
-		// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
-		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
-
-		return res.redirect('/auth/login');
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('회원가입 중 오류 발생');
+	// M-1: 빈 값 검증
+	if (!name || !email || !password) {
+		return res.status(400).render('auth/register', { error: '모든 항목을 입력해주세요.' });
 	}
-});
 
-router.post('/login', loginLimiter, async (req, res) => {
-	try {
-		const email = String(req.body.email || '').trim().toLowerCase();
-		const password = String(req.body.password || '');
-
-		const renderLoginError = (msg) =>
-			res.status(401).render('auth/login', {
-				returnTo: req.body.returnTo || '',
-				csrfToken: req.csrfToken(),
-				error: msg,
-			});
-
-		// ✅ is_admin 포함해서 가져오기
-		const [rows] = await db.execute('SELECT id, name, email, password, is_admin FROM users WHERE email = ? LIMIT 1', [email]);
-
-		// M-2: User Enumeration 방지 — 동일 메시지로 통일
-		if (rows.length === 0) {
-			return renderLoginError('이메일 또는 비밀번호가 올바르지 않습니다.');
-		}
-
-		const user = rows[0];
-		const ok = await bcrypt.compare(password, user.password);
-		if (!ok) return renderLoginError('이메일 또는 비밀번호가 올바르지 않습니다.');
-
-		req.session.user = {
-			id: user.id,
-			name: user.name,
-			email: user.email,
-			is_admin: Number(user.is_admin) || 0,
-		};
-
-		// 게스트 장바구니 병합
-		await mergeGuestCartToUserCart(req);
-
-		const returnTo = sanitizeReturnTo(req.body.returnTo);
-		return res.redirect(returnTo || '/account');
-	} catch (err) {
-		console.error(err);
-		return res.status(500).send('로그인 중 오류');
+	// H-6: 비밀번호 최소 길이
+	if (password.length < MIN_PASSWORD_LENGTH) {
+		return res.status(400).render('auth/register', { error: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.` });
 	}
-});
+
+	if (password !== passwordConfirm) {
+		return res.status(400).render('auth/register', { error: '비밀번호가 일치하지 않습니다.' });
+	}
+
+	const hashedPw = await bcrypt.hash(password, 10);
+
+	// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
+	await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
+
+	return res.redirect('/auth/login');
+}));
+
+router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
+	const email = String(req.body.email || '').trim().toLowerCase();
+	const password = String(req.body.password || '');
+
+	const renderLoginError = (msg) =>
+		res.status(401).render('auth/login', {
+			returnTo: req.body.returnTo || '',
+			csrfToken: req.csrfToken(),
+			error: msg,
+		});
+
+	// ✅ is_admin 포함해서 가져오기
+	const [rows] = await db.execute('SELECT id, name, email, password, is_admin FROM users WHERE email = ? LIMIT 1', [email]);
+
+	// M-2: User Enumeration 방지 — 동일 메시지로 통일
+	if (rows.length === 0) {
+		return renderLoginError('이메일 또는 비밀번호가 올바르지 않습니다.');
+	}
+
+	const user = rows[0];
+	const ok = await bcrypt.compare(password, user.password);
+	if (!ok) return renderLoginError('이메일 또는 비밀번호가 올바르지 않습니다.');
+
+	req.session.user = {
+		id: user.id,
+		name: user.name,
+		email: user.email,
+		is_admin: Number(user.is_admin) || 0,
+	};
+
+	// 게스트 장바구니 병합
+	await mergeGuestCartToUserCart(req);
+
+	const returnTo = sanitizeReturnTo(req.body.returnTo);
+	return res.redirect(returnTo || '/account');
+}));
 
 router.get('/logout', (req, res) => {
 	req.session.destroy((err) => {
