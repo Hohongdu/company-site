@@ -92,7 +92,7 @@
 
   /* Login overlay */
   const overlay = document.getElementById('loginOverlay');
-  const closeBtn = document.getElementById('loginClose');
+  const loginCloseBtn = document.getElementById('loginClose');
   if (!overlay) return;
 
   function openLogin() {
@@ -107,7 +107,7 @@
   document.querySelectorAll('.js-open-login').forEach(function (el) {
     el.addEventListener('click', function (e) { e.preventDefault(); openLogin(); });
   });
-  if (closeBtn) closeBtn.addEventListener('click', closeLogin);
+  if (loginCloseBtn) loginCloseBtn.addEventListener('click', closeLogin);
   overlay.addEventListener('click', function (e) { if (e.target === overlay) closeLogin(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLogin(); });
 })();
