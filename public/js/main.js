@@ -278,41 +278,59 @@
 		const root = document.createElement('div');
 		root.className = 'lang-widget';
 		root.id = 'langWidget';
-		root.style.position = 'fixed';
-		root.style.right = '16px';
-		root.style.bottom = '20px';
-		root.style.zIndex = '2147483647';
 
 		const showLog = isAdminUser();
 		root.innerHTML = `
-			<div class="lang-actions">
-				<button class="lang-toggle" type="button" aria-label="언어 선택">🌐</button>
-				${showLog ? '<button class="lang-log-toggle" type="button" aria-label="번역 로그">🧾</button>' : ''}
+			<div class="lang-trigger">
+				<button class="lang-toggle" type="button" aria-expanded="false" aria-haspopup="listbox">
+					<span class="lang-flag">🌐</span>
+					<span class="lang-label">언어</span>
+					<svg class="lang-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+						<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</button>
+				${showLog ? '<button class="lang-log-btn" type="button" title="번역 로그"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v5h5M9 12h6M9 16h6" stroke-linecap="round"/></svg></button>' : ''}
 			</div>
-			<div class="lang-menu" hidden></div>
+			<div class="lang-menu" role="listbox" hidden></div>
 		`;
 		document.body.appendChild(root);
 
 		const logPanel = showLog ? createI18nLogPanel() : null;
 		const btn = root.querySelector('.lang-toggle');
-		const logBtn = root.querySelector('.lang-log-toggle');
+		const logBtn = root.querySelector('.lang-log-btn');
 		const menu = root.querySelector('.lang-menu');
+
+		function updateLabel(lang) {
+			const item = supportedLanguages.find((l) => l.code === lang) || supportedLanguages[0];
+			const flagEl = root.querySelector('.lang-flag');
+			const labelEl = root.querySelector('.lang-label');
+			if (flagEl) flagEl.textContent = item.emoji;
+			if (labelEl) labelEl.textContent = item.label;
+			root.querySelectorAll('.lang-option').forEach((opt) => {
+				opt.classList.toggle('is-active', opt.dataset.lang === lang);
+			});
+		}
 
 		supportedLanguages.forEach((item) => {
 			const option = document.createElement('button');
 			option.type = 'button';
 			option.className = 'lang-option';
-			option.textContent = `${item.emoji} ${item.label}`;
+			option.role = 'option';
 			option.dataset.lang = item.code;
+			option.innerHTML = `<span class="lang-option__flag">${item.emoji}</span><span class="lang-option__label">${item.label}</span><svg class="lang-option__check" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 			option.addEventListener('click', async () => {
 				menu.hidden = true;
+				btn.setAttribute('aria-expanded', 'false');
+				updateLabel(item.code);
 				await applyLanguage(item.code);
 			});
 			menu.appendChild(option);
 		});
 
 		btn.addEventListener('click', () => {
-			menu.hidden = !menu.hidden;
+			const isOpen = !menu.hidden;
+			menu.hidden = isOpen;
+			btn.setAttribute('aria-expanded', String(!isOpen));
 		});
 
 		if (logBtn && logPanel) {
@@ -325,13 +343,18 @@
 			const isInLog = logPanel && !logPanel.hidden && logPanel.contains(event.target);
 			if (!root.contains(event.target) && !isInLog) {
 				menu.hidden = true;
+				btn.setAttribute('aria-expanded', 'false');
 			}
 		});
+
+		root._updateLabel = updateLabel;
 	}
 
 	if (document.body) {
 		createLanguageWidget();
 		const defaultLang = localStorage.getItem(storageLangKey) || 'ko';
+		const widget = document.getElementById('langWidget');
+		if (widget && widget._updateLabel) widget._updateLabel(defaultLang);
 		applyLanguage(defaultLang).catch((err) => appendLog('init failed', { error: err.message }));
 	}
 })();

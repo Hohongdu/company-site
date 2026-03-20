@@ -298,3 +298,116 @@ hr { border-color: var(--c-border); opacity: 1; }
   :root { --section-py: 60px; --section-py-sm: 40px; }
   .btn-lg { padding: 11px 24px; font-size: 14px; }
 }
+
+/* ── Language Widget (bottom-right floating dropdown) ── */
+.lang-widget {
+  position: fixed;
+  right: 16px;
+  bottom: 20px;
+  z-index: 2147483647;
+  font-family: var(--font-body);
+}
+.lang-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--c-navy);
+  color: rgba(255,255,255,.9);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 24px;
+  padding: 8px 13px 8px 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,.35);
+  transition: background .18s, box-shadow .18s;
+  white-space: nowrap;
+}
+.lang-toggle:hover {
+  background: var(--c-navy-2);
+  box-shadow: 0 6px 28px rgba(0,0,0,.45);
+}
+.lang-flag { font-size: 15px; line-height: 1; }
+.lang-label { font-size: 13px; }
+.lang-chevron {
+  transition: transform .2s;
+  color: rgba(255,255,255,.45);
+  flex-shrink: 0;
+}
+.lang-toggle[aria-expanded="true"] .lang-chevron { transform: rotate(180deg); }
+.lang-log-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-navy);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.55);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  transition: background .18s, color .18s;
+  flex-shrink: 0;
+}
+.lang-log-btn:hover {
+  background: var(--c-navy-2);
+  color: rgba(255,255,255,.9);
+}
+.lang-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  background: var(--c-navy);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  overflow: hidden;
+  min-width: 164px;
+  box-shadow: 0 8px 36px rgba(0,0,0,.5);
+  animation: langMenuIn .15s ease;
+}
+@keyframes langMenuIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.65);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  text-align: left;
+}
+.lang-option + .lang-option { border-top: 1px solid rgba(255,255,255,.05); }
+.lang-option:hover {
+  background: rgba(255,255,255,.06);
+  color: #fff;
+}
+.lang-option.is-active {
+  background: rgba(234,88,12,.14);
+  color: var(--c-accent);
+  font-weight: 700;
+}
+.lang-option__flag { font-size: 16px; line-height: 1; flex-shrink: 0; }
+.lang-option__label { flex: 1; }
+.lang-option__check {
+  color: var(--c-accent);
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+.lang-option.is-active .lang-option__check { opacity: 1; }
