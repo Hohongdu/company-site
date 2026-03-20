@@ -1,70 +1,78 @@
-<%- include('partials/admin-header', { title: '주문 상세' , subtitle: '주문과 결제 상세 내역을 확인합니다.' , active: 'orders' , backHref: '/admin/orders' }) %>
+<%- include('partials/admin-header', { title: '주문 상세', subtitle: '주문과 결제 상세 내역을 확인합니다.', active: 'orders', backHref: '/admin/orders' }) %>
 
-<div class="row g-3">
-    <div class="col-12 col-lg-4">
+<!-- 주문 번호 배너 -->
+<div class="admin-order-banner mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <div class="admin-order-banner__label">주문번호</div>
+            <div class="admin-order-banner__num"><%= order.order_number %></div>
+        </div>
+        <span class="badge fs-6 bg-<%= order.status === 'PAID' ? 'success' : order.status === 'PENDING' ? 'warning text-dark' : 'secondary' %> px-3 py-2">
+            <%= order.status === 'PAID' ? '✓ 결제완료' : order.status === 'PENDING' ? '⏳ 대기중' : order.status %>
+        </span>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <!-- 주문 정보 -->
+    <div class="col-12 col-md-6">
         <div class="admin-card card h-100">
             <div class="card-body">
-                <h5 class="fw-semibold mb-3">주문 정보</h5>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">주문번호</span>
-                    <span class="fw-semibold"><%= order.order_number %></span>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 21a8 8 0 00-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/></svg>
+                    <h5 class="fw-semibold mb-0">주문 정보</h5>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">상태</span>
-                    <span class="badge bg-<%= order.status === 'PAID' ? 'success' : order.status === 'PENDING' ? 'warning' : 'secondary' %>">
-                        <%= order.status %>
-                    </span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">주문자</span>
-                    <span><%= order.user_name || order.guest_name || '비회원' %></span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">연락처</span>
-                    <span><%= order.user_email || order.guest_email || order.guest_phone || '-' %></span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="admin-muted">총 금액</span>
-                    <span class="fw-semibold"><%= Number(order.total_amount || 0).toLocaleString() %>원</span>
-                </div>
+                <dl class="admin-detail-list">
+                    <dt>주문자</dt>
+                    <dd><%= order.user_name || order.guest_name || '비회원' %></dd>
+                    <dt>연락처</dt>
+                    <dd class="text-break"><%= order.user_email || order.guest_email || order.guest_phone || '-' %></dd>
+                    <dt>총 금액</dt>
+                    <dd class="fw-bold" style="color:var(--accent);"><%= Number(order.total_amount || 0).toLocaleString() %>원</dd>
+                    <dt>주문일시</dt>
+                    <dd class="text-muted small"><%= order.created_at ? new Date(order.created_at).toLocaleString('ko-KR') : '-' %></dd>
+                </dl>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-lg-8">
+    <!-- 결제 정보 -->
+    <div class="col-12 col-md-6">
         <div class="admin-card card h-100">
             <div class="card-body">
-                <h5 class="fw-semibold mb-3">결제 정보</h5>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">결제수단</span>
-                    <span><%= payment?.provider || '-' %></span>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="2"/><line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="2"/></svg>
+                    <h5 class="fw-semibold mb-0">결제 정보</h5>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">결제상태</span>
-                    <span><%= payment?.status || '미결제' %></span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="admin-muted">TID</span>
-                    <span class="text-break"><%= payment?.tid || '-' %></span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="admin-muted">승인시각</span>
-                    <span><%= payment?.approved_at ? new Date(payment.approved_at).toLocaleString() : '-' %></span>
-                </div>
+                <dl class="admin-detail-list">
+                    <dt>결제수단</dt>
+                    <dd><%= payment?.provider || '-' %></dd>
+                    <dt>결제상태</dt>
+                    <dd><%= payment?.status || '미결제' %></dd>
+                    <dt>TID</dt>
+                    <dd class="text-muted small text-break" style="font-family:monospace;font-size:11px;"><%= payment?.tid || '-' %></dd>
+                    <dt>승인시각</dt>
+                    <dd class="text-muted small"><%= payment?.approved_at ? new Date(payment.approved_at).toLocaleString('ko-KR') : '-' %></dd>
+                </dl>
             </div>
         </div>
     </div>
 </div>
 
-<div class="admin-card card mt-3">
+<!-- 주문 상품 -->
+<div class="admin-card card">
     <div class="card-body">
-        <h5 class="fw-semibold mb-3">주문 상품</h5>
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/></svg>
+            <h5 class="fw-semibold mb-0">주문 상품</h5>
+        </div>
         <div class="table-responsive">
-            <table class="table table-dark align-middle mb-0">
-                <thead>
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th>상품</th>
-                        <th>규격</th>
+                        <th>#</th>
+                        <th>상품명</th>
+                        <th class="d-none d-sm-table-cell">규격</th>
                         <th class="text-end">단가</th>
                         <th class="text-end">수량</th>
                         <th class="text-end">금액</th>
@@ -72,24 +80,44 @@
                 </thead>
                 <tbody>
                     <% if (!items || items.length === 0) { %>
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">주문 상품이 없습니다.</td>
+                        <tr><td colspan="6" class="text-center text-muted py-4">주문 상품이 없습니다.</td></tr>
+                    <% } else { %>
+                        <% items.forEach((it, idx) => { %>
+                            <tr>
+                                <td class="text-muted small"><%= idx + 1 %></td>
+                                <td class="fw-semibold" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= it.product_name %></td>
+                                <td class="text-muted small d-none d-sm-table-cell" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= it.product_spec || '-' %></td>
+                                <td class="text-end small" style="white-space:nowrap;"><%= Number(it.unit_price || 0).toLocaleString() %>원</td>
+                                <td class="text-end"><%= it.quantity %></td>
+                                <td class="text-end fw-semibold" style="white-space:nowrap;color:var(--accent);"><%= Number(it.total_price || 0).toLocaleString() %>원</td>
+                            </tr>
+                        <% }) %>
+                        <tr class="table-light fw-bold">
+                            <td colspan="4" class="text-end text-muted small">합계</td>
+                            <td class="text-end"><%= items.reduce((s,it) => s + (it.quantity||0), 0) %></td>
+                            <td class="text-end" style="color:var(--accent);">
+                                <%= Number(order.total_amount || 0).toLocaleString() %>원
+                            </td>
                         </tr>
-                        <% } else { %>
-                            <% items.forEach(it => { %>
-                                <tr>
-                                    <td class="fw-semibold"><%= it.product_name %></td>
-                                    <td class="admin-muted small"><%= it.product_spec || '-' %></td>
-                                    <td class="text-end"><%= Number(it.unit_price || 0).toLocaleString() %>원</td>
-                                    <td class="text-end"><%= it.quantity %></td>
-                                    <td class="text-end"><%= Number(it.total_price || 0).toLocaleString() %>원</td>
-                                </tr>
-                                <% }) %>
-                                    <% } %>
+                    <% } %>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<style>
+.admin-order-banner {
+    background: linear-gradient(135deg, #fff7ed 0%, #fff 100%);
+    border: 1px solid #fed7aa;
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+}
+.admin-order-banner__label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.admin-order-banner__num { font-family: monospace; font-size: 15px; font-weight: 700; color: var(--text); word-break: break-all; }
+.admin-detail-list { display: grid; grid-template-columns: 80px 1fr; gap: 8px 12px; margin: 0; font-size: 14px; }
+.admin-detail-list dt { font-weight: 600; color: var(--muted); font-size: 12px; display: flex; align-items: center; }
+.admin-detail-list dd { margin: 0; }
+</style>
 
 <%- include('partials/admin-footer') %>

@@ -112,27 +112,52 @@
 (function () {
   const form = document.getElementById('inquiryForm');
   const resultBox = document.getElementById('resultBox');
-  const contactEmail = '<%= typeof contactEmail !== "undefined" ? contactEmail : "" %>';
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  const originalBtnHtml = submitBtn?.innerHTML;
 
-  form?.addEventListener('submit', (e) => {
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     resultBox.className = 'alert mt-3 d-none';
-    const payload = Object.fromEntries(new FormData(form).entries());
-    const subject = `[문의] ${payload.name || '고객'}`;
-    const body = ['안녕하세요, 웹사이트를 통해 문의드립니다.', '',
-      `이름: ${payload.name || ''}`, `이메일: ${payload.email || ''}`, '', '[문의 내용]', payload.message || ''].join('\n');
 
-    if (!contactEmail) {
-      resultBox.textContent = '현재 이메일 문의가 설정되지 않았습니다. 전화로 문의해 주세요.';
-      resultBox.className = 'alert alert-warning mt-3';
-      return;
+    const payload = Object.fromEntries(new FormData(form).entries());
+
+    // 로딩 상태
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;animation:spin .7s linear infinite;margin-right:6px;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-dasharray="31" stroke-dashoffset="8"/></svg>전송 중...`;
     }
-    window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    resultBox.textContent = '메일 앱이 열렸습니다. 내용을 확인하고 전송 버튼을 눌러주세요.';
-    resultBox.className = 'alert alert-success mt-3';
-    form.reset();
+
+    try {
+      const res = await fetch('/api/inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: payload.name, email: payload.email, message: payload.message }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        resultBox.textContent = '문의가 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.';
+        resultBox.className = 'alert alert-success mt-3';
+        form.reset();
+      } else {
+        resultBox.textContent = data.message || '문의 전송에 실패했습니다. 잠시 후 다시 시도해주세요.';
+        resultBox.className = 'alert alert-danger mt-3';
+      }
+    } catch (err) {
+      resultBox.textContent = '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      resultBox.className = 'alert alert-danger mt-3';
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    }
   });
 })();
 </script>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin-icon { display:inline-block; }
+</style>
 
 <%- include('../layouts/company-bottom') %>

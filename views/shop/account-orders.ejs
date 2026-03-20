@@ -42,7 +42,7 @@
           <table class="table align-middle mb-0">
             <thead>
               <tr>
-                <th>주문번호</th>
+                <th style="width:60px;">#</th>
                 <th>상태</th>
                 <th>결제금액</th>
                 <th>주문일</th>
@@ -50,9 +50,9 @@
               </tr>
             </thead>
             <tbody>
-              <% orders.forEach(order => { %>
+              <% orders.forEach((order, idx) => { %>
                 <tr>
-                  <td class="fw-semibold"><%= order.order_number %></td>
+                  <td class="fw-semibold text-muted small"><%= orders.length - idx %></td>
                   <td>
                     <span class="acct-status-badge acct-status-badge--<%= order.status === 'PENDING' ? 'pending' : order.status === 'COMPLETED' ? 'done' : 'default' %>">
                       <%= order.status %>

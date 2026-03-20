@@ -1,27 +1,329 @@
 <%- include('../layouts/company-top', { title: '내 정보', active: 'account' }) %>
 
-<section class="section">
-    <div class="container-wide">
-        <h2 class="section-title">내 정보</h2>
-        <p class="section-sub">회사 페이지 스타일을 유지한 계정 요약 화면입니다.</p>
+<div class="page-banner" style="background:var(--c-navy);color:#fff;padding:40px 0;">
+  <div class="container">
+    <h1 style="font-size:2rem;font-weight:800;margin-bottom:6px;">내 정보</h1>
+    <p style="color:rgba(255,255,255,.7);font-size:14px;margin:0;">계정 정보 및 환경 설정을 관리합니다.</p>
+  </div>
+</div>
 
-        <div class="two-cards">
-            <div class="card-soft">
-                <h4>기본 정보</h4>
-                <p class="text-muted mb-2">로그인 사용자 정보</p>
-                <div class="fw-semibold"><%= user.name %></div>
-                <div class="text-muted small"><%= user.email %></div>
-            </div>
-            <div class="card-soft">
-                <h4>바로가기</h4>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a class="btn-outline2" href="/shop/account">쇼핑몰 내 정보</a>
-                    <a class="btn-outline2" href="/shop/account/orders">주문 내역</a>
-                    <a class="btn-outline2" href="/shop/account/inquiries">문의 내역</a>
-                </div>
-            </div>
+<section class="sec-py">
+  <div class="container">
+    <div class="company-account-wrap">
+
+      <!-- 사이드바 -->
+      <aside class="company-acct-sidebar">
+        <div class="company-acct-avatar-block">
+          <div class="company-acct-avatar"><%= user.name.charAt(0).toUpperCase() %></div>
+          <div class="company-acct-name"><%= user.name %></div>
+          <div class="company-acct-email"><%= user.email %></div>
+          <% if (user.is_admin) { %>
+            <span class="company-acct-role">관리자</span>
+          <% } %>
         </div>
+        <nav class="company-acct-nav">
+          <a class="company-acct-navlink is-active" href="/account">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            내 정보
+          </a>
+          <a class="company-acct-navlink" href="/shop/account">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+            쇼핑몰 내 정보
+          </a>
+          <a class="company-acct-navlink" href="/shop/account/orders">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            주문 내역
+          </a>
+          <a class="company-acct-navlink" href="/shop/account/inquiries">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            문의 내역
+          </a>
+          <% if (user.is_admin) { %>
+            <div class="company-acct-nav-divider"></div>
+            <a class="company-acct-navlink company-acct-navlink--admin" href="/admin/dashboard">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              관리자 대시보드
+            </a>
+          <% } %>
+        </nav>
+      </aside>
+
+      <!-- 메인 콘텐츠 -->
+      <div class="company-acct-main">
+
+        <!-- 기본 정보 -->
+        <div class="company-acct-card">
+          <div class="company-acct-card__head">
+            <h4>기본 정보</h4>
+          </div>
+          <div class="company-acct-info-row">
+            <div class="company-acct-info-label">이름</div>
+            <div class="company-acct-info-value fw-semibold"><%= user.name %></div>
+          </div>
+          <div class="company-acct-info-row">
+            <div class="company-acct-info-label">이메일</div>
+            <div class="company-acct-info-value"><%= user.email %></div>
+          </div>
+          <div class="company-acct-info-row">
+            <div class="company-acct-info-label">계정 구분</div>
+            <div class="company-acct-info-value">
+              <% if (user.is_admin) { %>
+                <span class="badge" style="background:var(--c-accent);color:#fff;padding:4px 10px;border-radius:20px;">관리자</span>
+              <% } else { %>
+                <span class="badge" style="background:var(--c-bg-2);color:var(--c-text-2);border:1px solid var(--c-border);padding:4px 10px;border-radius:20px;">일반 회원</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- 빠른 이동 -->
+        <div class="company-acct-card">
+          <div class="company-acct-card__head">
+            <h4>빠른 이동</h4>
+          </div>
+          <div class="company-acct-shortcuts">
+            <a class="company-acct-shortcut" href="/shop/account">
+              <div class="company-acct-shortcut__icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 00-16 0"/><circle cx="12" cy="8" r="4"/></svg>
+              </div>
+              <div class="company-acct-shortcut__label">쇼핑몰 내 정보</div>
+            </a>
+            <a class="company-acct-shortcut" href="/shop/account/orders">
+              <div class="company-acct-shortcut__icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              </div>
+              <div class="company-acct-shortcut__label">주문 내역</div>
+            </a>
+            <a class="company-acct-shortcut" href="/shop/account/inquiries">
+              <div class="company-acct-shortcut__icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              </div>
+              <div class="company-acct-shortcut__label">문의 내역</div>
+            </a>
+            <a class="company-acct-shortcut" href="/shop/wishlist">
+              <div class="company-acct-shortcut__icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              </div>
+              <div class="company-acct-shortcut__label">찜한 상품</div>
+            </a>
+          </div>
+        </div>
+
+        <!-- 환경 설정 -->
+        <div class="company-acct-card">
+          <div class="company-acct-card__head">
+            <h4>환경 설정</h4>
+          </div>
+
+          <!-- 언어 설정 -->
+          <div class="company-acct-setting-row">
+            <div>
+              <div class="company-acct-setting-label">사이트 언어</div>
+              <div class="company-acct-setting-desc">사이트 번역 언어를 설정합니다.</div>
+            </div>
+            <div class="company-acct-setting-ctrl">
+              <select class="form-select form-select-sm" id="langSelectAcct" style="min-width:130px;">
+                <option value="ko">🇰🇷 한국어</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="zh-CN">🇨🇳 中文(简体)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 다크모드 토글 (UI preference only) -->
+          <div class="company-acct-setting-row">
+            <div>
+              <div class="company-acct-setting-label">테마</div>
+              <div class="company-acct-setting-desc">밝은 테마 / 어두운 테마 (브라우저 설정 따름)</div>
+            </div>
+            <div class="company-acct-setting-ctrl">
+              <div class="company-theme-display">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span id="themeLabel">밝은 테마</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 번역 캐시 초기화 -->
+          <div class="company-acct-setting-row">
+            <div>
+              <div class="company-acct-setting-label">번역 캐시 초기화</div>
+              <div class="company-acct-setting-desc">저장된 번역 데이터를 지웁니다.</div>
+            </div>
+            <div class="company-acct-setting-ctrl">
+              <button class="btn btn-outline-secondary btn-sm" id="clearCacheBtn">초기화</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 로그아웃 -->
+        <div class="company-acct-card" style="border-color:var(--c-border);">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="fw-semibold" style="margin-bottom:2px;">로그아웃</div>
+              <div style="font-size:13px;color:var(--c-muted);">계정에서 로그아웃합니다.</div>
+            </div>
+            <a class="btn btn-outline-dark btn-sm" href="/auth/logout">로그아웃</a>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </div>
 </section>
+
+<style>
+.company-account-wrap {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 767px) {
+  .company-account-wrap { grid-template-columns: 1fr; }
+}
+
+/* 사이드바 */
+.company-acct-sidebar {
+  background: #fff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  position: sticky;
+  top: 80px;
+}
+.company-acct-avatar-block {
+  background: var(--c-navy);
+  padding: 24px 20px;
+  text-align: center;
+}
+.company-acct-avatar {
+  width: 56px; height: 56px;
+  background: var(--c-accent);
+  border-radius: 50%;
+  color: #fff; font-size: 22px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+}
+.company-acct-name { color: #fff; font-weight: 700; font-size: 15px; }
+.company-acct-email { color: rgba(255,255,255,.6); font-size: 12px; margin-top: 2px; }
+.company-acct-role { display: inline-block; background: var(--c-accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-top: 8px; }
+.company-acct-nav { padding: 8px; }
+.company-acct-navlink {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: var(--r);
+  font-size: 14px; font-weight: 600;
+  color: var(--c-text-2); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.company-acct-navlink:hover { background: var(--c-bg-2); color: var(--c-navy); }
+.company-acct-navlink.is-active { background: var(--c-accent-lt); color: var(--c-accent); }
+.company-acct-navlink--admin { color: var(--c-accent); }
+.company-acct-navlink--admin:hover { background: var(--c-accent-lt); }
+.company-acct-nav-divider { height: 1px; background: var(--c-border); margin: 6px 8px; }
+
+/* 메인 카드 */
+.company-acct-main { display: flex; flex-direction: column; gap: 20px; }
+.company-acct-card {
+  background: #fff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 24px;
+}
+.company-acct-card__head { margin-bottom: 16px; }
+.company-acct-card__head h4 { font-size: 16px; font-weight: 700; color: var(--c-navy); margin: 0; }
+
+/* 정보 행 */
+.company-acct-info-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid var(--c-border);
+}
+.company-acct-info-row:last-child { border-bottom: none; }
+.company-acct-info-label { font-size: 13px; color: var(--c-muted); width: 80px; flex-shrink: 0; }
+.company-acct-info-value { font-size: 14px; color: var(--c-text); }
+
+/* 빠른 이동 */
+.company-acct-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+.company-acct-shortcut {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 18px 12px;
+  background: var(--c-bg-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  color: var(--c-text-2);
+  font-size: 12px; font-weight: 600;
+  transition: all .2s;
+  text-align: center;
+}
+.company-acct-shortcut:hover {
+  background: var(--c-accent-lt);
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(234,88,12,.15);
+}
+.company-acct-shortcut__icon {
+  width: 40px; height: 40px;
+  background: #fff;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--sh-sm);
+}
+.company-acct-shortcut__label { line-height: 1.3; }
+
+/* 환경설정 행 */
+.company-acct-setting-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 0; border-bottom: 1px solid var(--c-border);
+}
+.company-acct-setting-row:last-child { border-bottom: none; }
+.company-acct-setting-label { font-size: 14px; font-weight: 600; color: var(--c-text); margin-bottom: 2px; }
+.company-acct-setting-desc { font-size: 12px; color: var(--c-muted); }
+.company-acct-setting-ctrl { flex-shrink: 0; }
+.company-theme-display { font-size: 13px; color: var(--c-muted); }
+</style>
+
+<script>
+(function () {
+  // 언어 설정 동기화
+  const langSelect = document.getElementById('langSelectAcct');
+  if (langSelect) {
+    const saved = localStorage.getItem('site_lang') || 'ko';
+    langSelect.value = saved;
+    langSelect.addEventListener('change', function () {
+      localStorage.setItem('site_lang', this.value);
+      // 페이지 새로고침해서 번역 적용
+      window.location.reload();
+    });
+  }
+
+  // 테마 표시
+  const themeLabel = document.getElementById('themeLabel');
+  if (themeLabel) {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    themeLabel.textContent = isDark ? '어두운 테마 (시스템)' : '밝은 테마 (시스템)';
+  }
+
+  // 번역 캐시 초기화
+  const clearBtn = document.getElementById('clearCacheBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      localStorage.removeItem('site_i18n_cache_v1');
+      clearBtn.textContent = '완료!';
+      clearBtn.disabled = true;
+      setTimeout(function () {
+        clearBtn.textContent = '초기화';
+        clearBtn.disabled = false;
+      }, 2000);
+    });
+  }
+})();
+</script>
 
 <%- include('../layouts/company-bottom') %>

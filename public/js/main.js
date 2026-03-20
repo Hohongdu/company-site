@@ -209,25 +209,48 @@
 	}
 
 	function createI18nLogPanel() {
+		// 팝업 오버레이 방식 (footer 위에 뜨는 독립 창)
+		const overlay = document.createElement('div');
+		overlay.className = 'i18n-log-overlay';
+		overlay.hidden = true;
+		overlay.style.cssText = [
+			'position:fixed', 'inset:0', 'z-index:2147483640',
+			'background:rgba(0,0,0,.45)', 'display:flex',
+			'align-items:center', 'justify-content:center',
+			'padding:20px',
+		].join(';');
+
 		const panel = document.createElement('div');
 		panel.className = 'i18n-log-panel';
-		panel.hidden = true;
+		panel.style.cssText = [
+			'background:#0f172a', 'color:#e2e8f0',
+			'border-radius:12px', 'width:min(720px,95vw)',
+			'max-height:80vh', 'display:flex', 'flex-direction:column',
+			'box-shadow:0 20px 60px rgba(0,0,0,.5)',
+			'overflow:hidden',
+		].join(';');
+
 		panel.innerHTML = `
-			<div class="i18n-log-header">
-				<strong>I18N LOG</strong>
-				<div>
-					<button type="button" class="i18n-log-probe">probe</button>
-					<button type="button" class="i18n-log-clear">clear</button>
-					<button type="button" class="i18n-log-close">×</button>
+			<div class="i18n-log-header" style="padding:14px 18px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+				<strong style="font-size:13px;letter-spacing:.06em;color:#94a3b8;">🧾 I18N TRANSLATION LOG <span style="font-weight:400;font-size:11px;color:#475569;">(관리자 전용)</span></strong>
+				<div style="display:flex;gap:8px;">
+					<button type="button" class="i18n-log-probe" style="background:#1e40af;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">probe</button>
+					<button type="button" class="i18n-log-clear" style="background:#374151;color:#d1d5db;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">clear</button>
+					<button type="button" class="i18n-log-close" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ 닫기</button>
 				</div>
 			</div>
-			<ul class="i18n-log-list"></ul>
+			<ul class="i18n-log-list" style="list-style:none;margin:0;padding:12px;overflow-y:auto;flex:1;font-size:11px;font-family:monospace;line-height:1.6;"></ul>
 		`;
-		document.body.appendChild(panel);
+
+		overlay.appendChild(panel);
+		document.body.appendChild(overlay);
 		logListEl = panel.querySelector('.i18n-log-list');
 
 		panel.querySelector('.i18n-log-close').addEventListener('click', () => {
-			panel.hidden = true;
+			overlay.hidden = true;
+		});
+		overlay.addEventListener('click', (e) => {
+			if (e.target === overlay) overlay.hidden = true;
 		});
 		panel.querySelector('.i18n-log-probe').addEventListener('click', runStatusProbe);
 		panel.querySelector('.i18n-log-clear').addEventListener('click', () => {
@@ -236,7 +259,19 @@
 			logListEl.innerHTML = '';
 		});
 
-		return panel;
+		// li 스타일 주입
+		const style = document.createElement('style');
+		style.textContent = `.i18n-log-item{padding:3px 6px;border-bottom:1px solid #1e293b;color:#94a3b8;} .i18n-log-item:last-child{border-bottom:none;}`;
+		document.head.appendChild(style);
+
+		// overlay.hidden을 toggle하도록 panel 참조 반환
+		overlay._panel = panel;
+		return overlay;
+	}
+
+	function isAdminUser() {
+		// EJS layouts inject window.__SITE_USER_IS_ADMIN = true/false
+		return Boolean(window.__SITE_USER_IS_ADMIN);
 	}
 
 	function createLanguageWidget() {
@@ -247,16 +282,18 @@
 		root.style.right = '16px';
 		root.style.bottom = '20px';
 		root.style.zIndex = '2147483647';
+
+		const showLog = isAdminUser();
 		root.innerHTML = `
 			<div class="lang-actions">
 				<button class="lang-toggle" type="button" aria-label="언어 선택">🌐</button>
-				<button class="lang-log-toggle" type="button" aria-label="번역 로그">🧾</button>
+				${showLog ? '<button class="lang-log-toggle" type="button" aria-label="번역 로그">🧾</button>' : ''}
 			</div>
 			<div class="lang-menu" hidden></div>
 		`;
 		document.body.appendChild(root);
 
-		const logPanel = createI18nLogPanel();
+		const logPanel = showLog ? createI18nLogPanel() : null;
 		const btn = root.querySelector('.lang-toggle');
 		const logBtn = root.querySelector('.lang-log-toggle');
 		const menu = root.querySelector('.lang-menu');
@@ -278,12 +315,15 @@
 			menu.hidden = !menu.hidden;
 		});
 
-		logBtn.addEventListener('click', () => {
-			logPanel.hidden = !logPanel.hidden;
-		});
+		if (logBtn && logPanel) {
+			logBtn.addEventListener('click', () => {
+				logPanel.hidden = !logPanel.hidden;
+			});
+		}
 
 		document.addEventListener('click', (event) => {
-			if (!root.contains(event.target) && !logPanel.contains(event.target)) {
+			const isInLog = logPanel && !logPanel.hidden && logPanel.contains(event.target);
+			if (!root.contains(event.target) && !isInLog) {
 				menu.hidden = true;
 			}
 		});

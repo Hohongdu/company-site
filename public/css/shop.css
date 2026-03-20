@@ -198,14 +198,149 @@
 }
 .shop-mobile-toggle:hover { background: rgba(255,255,255,.08); }
 
-/* Mobile menu */
-.shop-mobile-menu {
+/* ══════════════════════════════════════
+   SHOP 모바일 슬라이드 드로어
+══════════════════════════════════════ */
+/* 좌우 스크롤 방지 */
+html, body { overflow-x: hidden; max-width: 100%; }
+
+.shop-mob-backdrop {
   display: none;
-  background: var(--c-navy-2);
-  border-top: 1px solid rgba(255,255,255,.06);
-  padding: 16px;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1049;
+  backdrop-filter: blur(2px);
 }
-.shop-mobile-menu.open { display: block; }
+.shop-mob-backdrop.open { display: block; }
+
+.shop-mob-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  max-width: 88vw;
+  height: 100dvh;
+  background: var(--c-navy-2);
+  color: #fff;
+  z-index: 1050;
+  transform: translateX(-100%);
+  transition: transform .28s cubic-bezier(.22,1,.36,1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: 4px 0 24px rgba(0,0,0,.25);
+}
+.shop-mob-drawer.open { transform: translateX(0); }
+
+.shop-mob-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.shop-mob-drawer__brand {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: -.03em;
+}
+.shop-mob-drawer__brand span { color: #fff; }
+.shop-mob-drawer__brand small { color: var(--c-accent); font-size: 12px; font-weight: 600; margin-left: 4px; }
+.shop-mob-drawer__close {
+  background: rgba(255,255,255,.08);
+  border: none;
+  border-radius: 8px;
+  color: rgba(255,255,255,.7);
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .15s;
+}
+.shop-mob-drawer__close:hover { background: rgba(255,255,255,.15); }
+
+.shop-mob-search {
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.shop-mob-search input {
+  flex: 1;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--r);
+  padding: 9px 12px;
+  color: #fff;
+  font-size: 14px;
+}
+.shop-mob-search input::placeholder { color: rgba(255,255,255,.35); }
+.shop-mob-search input:focus { outline: none; border-color: var(--c-accent); }
+
+.shop-mob-auth {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.shop-mob-user {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.shop-mob-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  color: #fff; font-weight: 700; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.shop-mob-user__name { font-weight: 700; font-size: 14px; color: #fff; }
+.shop-mob-user__email { font-size: 11px; color: rgba(255,255,255,.5); }
+.shop-mob-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.shop-mob-btn-outline, .shop-mob-btn-primary, .shop-mob-btn-dark, .shop-mob-btn-admin {
+  padding: 8px 12px; border-radius: var(--r);
+  font-size: 12px; font-weight: 600;
+  text-decoration: none; text-align: center;
+  transition: all .15s; flex: 1;
+}
+.shop-mob-btn-outline {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.85);
+  border: 1px solid rgba(255,255,255,.15);
+}
+.shop-mob-btn-outline:hover { background: rgba(255,255,255,.15); color: #fff; }
+.shop-mob-btn-primary { background: var(--c-accent); color: #fff; border: none; }
+.shop-mob-btn-primary:hover { background: #c2410c; }
+.shop-mob-btn-dark { background: rgba(255,255,255,.12); color: #fff; border: none; }
+.shop-mob-btn-dark:hover { background: rgba(255,255,255,.2); }
+.shop-mob-btn-admin { background: rgba(234,88,12,.25); color: var(--c-accent); border: 1px solid rgba(234,88,12,.4); }
+.shop-mob-btn-admin:hover { background: var(--c-accent); color: #fff; }
+
+.shop-mob-nav { display: flex; flex-direction: column; padding: 8px; flex: 1; }
+.shop-mob-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 14px;
+  font-family: var(--font-head); font-size: 14px; font-weight: 600;
+  color: rgba(255,255,255,.7);
+  text-decoration: none;
+  border-radius: var(--r);
+  transition: background .15s, color .15s;
+}
+.shop-mob-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+.shop-mob-link.is-active { background: rgba(234,88,12,.2); color: var(--c-accent); }
+.shop-mob-badge {
+  background: var(--c-accent); color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 1px 6px; border-radius: 20px; margin-left: auto;
+}
+
+/* 기존 shop-mobile-menu는 숨김 */
+.shop-mobile-menu { display: none !important; }
+/* Mobile menu (숨김 처리 - 구버전) */
 
 .shop-mobile-search {
   display: flex;

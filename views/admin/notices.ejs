@@ -1,63 +1,91 @@
-<%- include('partials/admin-header', { title: '공지 관리' , subtitle: '회사 공지를 등록/관리합니다.' , active: 'notices' }) %>
+<%- include('partials/admin-header', { title: '공지 관리', subtitle: '회사 공지를 등록/관리합니다.', active: 'notices' }) %>
 
+<!-- 새 공지 등록 -->
 <div class="admin-card p-4 mb-4">
-    <h5 class="mb-3">새 공지 등록</h5>
-    <form action="/admin/notices" method="post" class="row g-3">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <h5 class="fw-semibold mb-0">새 공지 등록</h5>
+    </div>
+    <form action="/admin/notices" method="post">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <div class="col-12 col-lg-6">
-            <label class="form-label">제목</label>
-            <input class="form-control" name="title" required>
-        </div>
-        <div class="col-12 col-lg-3">
-            <label class="form-label">구분</label>
-            <select class="form-select" name="category" required>
-                <option value="general">일반공지</option>
-                <option value="product">제품공지</option>
-            </select>
-        </div>
-        <div class="col-12">
-            <label class="form-label">내용</label>
-            <textarea class="form-control" name="content" rows="4" required></textarea>
-        </div>
-        <div class="col-12">
-            <button class="btn btn-admin">등록하기</button>
+        <div class="row g-3">
+            <div class="col-12 col-sm-7">
+                <label class="form-label small fw-semibold">제목 <span style="color:var(--danger)">*</span></label>
+                <input class="form-control" name="title" required placeholder="공지 제목을 입력해주세요">
+            </div>
+            <div class="col-12 col-sm-3">
+                <label class="form-label small fw-semibold">구분 <span style="color:var(--danger)">*</span></label>
+                <select class="form-select" name="category" required>
+                    <option value="general">일반공지</option>
+                    <option value="product">제품공지</option>
+                </select>
+            </div>
+            <div class="col-12 col-sm-2 d-flex align-items-end">
+                <button class="btn btn-admin w-100">등록</button>
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">내용 <span style="color:var(--danger)">*</span></label>
+                <textarea class="form-control" name="content" rows="4" required placeholder="공지 내용을 입력해주세요..."></textarea>
+            </div>
         </div>
     </form>
 </div>
 
-<div class="admin-card p-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="mb-0">공지 목록</h5>
+<!-- 공지 목록 -->
+<div class="admin-card p-0 overflow-hidden">
+    <div class="d-flex align-items-center justify-content-between px-4 py-3" style="border-bottom:1px solid var(--border);">
+        <div class="d-flex align-items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <h5 class="fw-semibold mb-0">공지 목록</h5>
+            <% if (notices && notices.length > 0) { %>
+                <span class="badge bg-light text-muted border"><%= notices.length %>건</span>
+            <% } %>
+        </div>
     </div>
 
     <% if (!notices || notices.length === 0) { %>
-        <div class="alert alert-light border text-muted">등록된 공지가 없습니다.</div>
+        <div class="text-center text-muted py-5">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style="margin-bottom:12px;color:var(--border-strong);">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <p>등록된 공지가 없습니다.</p>
+        </div>
     <% } else { %>
         <div class="table-responsive">
-            <table class="table align-middle">
-                <thead class="table-light">
+            <table class="table align-middle mb-0">
+                <thead style="background:var(--bg);">
                     <tr>
-                        <th>제목</th>
-                        <th>구분</th>
-                        <th>등록일</th>
-                        <th>조회수</th>
-                        <th class="text-end">관리</th>
+                        <th class="ps-4">제목</th>
+                        <th style="width:100px;">구분</th>
+                        <th class="d-none d-sm-table-cell" style="width:110px;">등록일</th>
+                        <th class="d-none d-md-table-cell" style="width:80px;">조회수</th>
+                        <th class="text-end pe-4" style="width:80px;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% notices.forEach(notice => { %>
                         <tr>
-                            <td class="fw-semibold"><%= notice.title %></td>
+                            <td class="ps-4 fw-semibold" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                <%= notice.title %>
+                            </td>
                             <td>
-                                <span class="badge bg-light text-dark border">
-                                    <%= notice.category === 'product' ? '제품공지' : notice.category === 'event' ? '이벤트' : '일반공지' %>
+                                <span class="badge bg-<%= notice.category === 'product' ? 'primary' : 'secondary' %> rounded-pill px-2">
+                                    <%= notice.category === 'product' ? '제품' : '일반' %>
                                 </span>
                             </td>
-                            <td><%= new Date(notice.created_at).toLocaleDateString() %></td>
-                            <td><%= notice.views || 0 %></td>
-                            <td class="text-end">
+                            <td class="text-muted small d-none d-sm-table-cell" style="white-space:nowrap;">
+                                <%= new Date(notice.created_at).toLocaleDateString('ko-KR') %>
+                            </td>
+                            <td class="text-muted small d-none d-md-table-cell text-end">
+                                <%= (notice.views || 0).toLocaleString() %>
+                            </td>
+                            <td class="text-end pe-4">
                                 <form method="post" action="/admin/notices/<%= notice.id %>/delete"
-                                    onsubmit="return confirm('이 공지를 삭제할까요?');">
+                                    onsubmit="return confirm('이 공지를 삭제할까요?');" class="d-inline">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button class="btn btn-sm btn-outline-danger">삭제</button>
                                 </form>

@@ -1,4 +1,5 @@
 const inquiryService = require('../services/inquiry.service');
+const { sendNewInquiryToAdmin } = require('../services/notification.service');
 
 const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
 
@@ -19,6 +20,12 @@ exports.create = async (req, res) => {
 		}
 
 		const saved = await inquiryService.createInquiry({ name, email, message });
+
+		// 관리자에게 이메일 알림 발송 (비동기 - 실패해도 응답에 영향 없음)
+		sendNewInquiryToAdmin({ name, email, message, id: saved.id }).catch((err) => {
+			console.error('[inquiry] admin notification failed:', err.message);
+		});
+
 		return res.json({ ok: true, id: saved.id });
 	} catch (err) {
 		console.error(err);

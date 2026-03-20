@@ -1,35 +1,232 @@
 <%- include('../layouts/shop-top', { title: '위시리스트', active: 'wishlist' }) %>
 
-<div class="shop-card p-4">
-    <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-            <h3 class="fw-bold mb-1">위시리스트</h3>
-            <p class="text-muted mb-0">찜한 상품을 확인할 수 있습니다.</p>
+<div class="shop-page">
+  <div class="container">
+
+    <!-- 헤더 -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div>
+        <h2 class="wishlist-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-4px;margin-right:8px;color:var(--c-accent);">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/>
+          </svg>
+          찜한 상품
+        </h2>
+        <p class="wishlist-count">
+          총 <strong style="color:var(--c-accent);"><%= (items || []).length %></strong>개 상품
+        </p>
+      </div>
+      <div class="wishlist-tools">
+        <!-- 뷰 토글: 그리드 / 목록 -->
+        <div class="view-toggle" id="viewToggle">
+          <button class="view-toggle__btn is-active" data-view="grid" title="그리드 보기">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </button>
+          <button class="view-toggle__btn" data-view="list" title="목록 보기">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
         </div>
-        <a class="btn btn-outline-secondary" href="/shop/products">상품 보러가기</a>
+        <a href="/shop/products" class="btn btn-outline-secondary btn-sm">+ 상품 보러가기</a>
+      </div>
     </div>
 
     <% if (!items || items.length === 0) { %>
-        <div class="alert alert-light border text-muted">찜한 상품이 없습니다.</div>
+      <div class="wishlist-empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="color:var(--c-muted-2);">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <h4>찜한 상품이 없습니다</h4>
+        <p>마음에 드는 상품에 ♥ 버튼을 눌러 저장해보세요.</p>
+        <a href="/shop/products" class="btn btn-primary">상품 둘러보기</a>
+      </div>
     <% } else { %>
-        <div class="row g-3">
-            <% items.forEach(item => { %>
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="shop-card p-3 h-100">
-                        <div class="bg-light rounded-3 mb-2" style="height:160px; overflow:hidden;">
-                            <img src="<%= item.image || '/images/no-image.png' %>"
-                                alt="<%= item.name %>" style="width:100%; height:100%; object-fit:cover;">
-                        </div>
-                        <div class="fw-semibold"><%= item.name %></div>
-                        <div class="text-muted small"><%= Number(item.price || 0).toLocaleString() %>원</div>
-                        <div class="mt-2">
-                            <a class="btn btn-sm btn-outline-primary" href="/shop/products/<%= item.id %>">상세보기</a>
-                        </div>
-                    </div>
+
+      <!-- 그리드 뷰 -->
+      <div class="wishlist-grid view-panel active" id="viewGrid">
+        <% items.forEach(item => { %>
+          <div class="wishlist-card">
+            <a href="/shop/products/<%= item.id %>" class="wishlist-card__img-wrap">
+              <% if (item.image) { %>
+                <img src="<%= item.image %>" alt="<%= item.name %>" loading="lazy">
+              <% } else { %>
+                <div class="wishlist-card__no-img">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9l4-4 4 4 4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </div>
-            <% }) %>
-        </div>
+              <% } %>
+              <% if (item.stock_quantity <= 0) { %>
+                <div class="wishlist-card__badge">품절</div>
+              <% } %>
+            </a>
+            <div class="wishlist-card__body">
+              <% if (item.category_name) { %>
+                <div class="wishlist-card__cat"><%= item.category_name %></div>
+              <% } %>
+              <div class="wishlist-card__name">
+                <a href="/shop/products/<%= item.id %>"><%= item.name %></a>
+              </div>
+              <% if (item.spec) { %>
+                <div class="wishlist-card__spec"><%= item.spec.slice(0, 40) %><%= item.spec.length > 40 ? '…' : '' %></div>
+              <% } %>
+              <div class="wishlist-card__price"><%= Number(item.price || 0).toLocaleString() %><span>원</span></div>
+              <div class="wishlist-card__actions">
+                <a class="btn btn-primary btn-sm flex-grow-1" href="/shop/products/<%= item.id %>">상세보기</a>
+                <form method="post" action="/shop/wishlist/toggle" class="m-0">
+                  <input type="hidden" name="productId" value="<%= item.id %>">
+                  <button class="btn btn-sm btn-outline-danger" type="submit" title="찜 해제">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- 목록 뷰 -->
+      <div class="wishlist-list-view view-panel" id="viewList">
+        <% items.forEach((item, idx) => { %>
+          <div class="wishlist-list-row">
+            <a href="/shop/products/<%= item.id %>" class="wishlist-list-row__img">
+              <% if (item.image) { %>
+                <img src="<%= item.image %>" alt="<%= item.name %>">
+              <% } else { %>
+                <div class="wishlist-list-row__no-img">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                </div>
+              <% } %>
+            </a>
+            <div class="wishlist-list-row__info">
+              <div class="wishlist-list-row__num">#<%= idx + 1 %></div>
+              <% if (item.category_name) { %>
+                <div class="wishlist-list-row__cat"><%= item.category_name %></div>
+              <% } %>
+              <div class="wishlist-list-row__name">
+                <a href="/shop/products/<%= item.id %>"><%= item.name %></a>
+              </div>
+              <% if (item.spec) { %>
+                <div class="wishlist-list-row__spec"><%= item.spec.slice(0, 60) %><%= item.spec.length > 60 ? '…' : '' %></div>
+              <% } %>
+            </div>
+            <div class="wishlist-list-row__price"><%= Number(item.price || 0).toLocaleString() %>원</div>
+            <div class="wishlist-list-row__actions">
+              <a class="btn btn-primary btn-sm" href="/shop/products/<%= item.id %>">상세</a>
+              <form method="post" action="/shop/wishlist/toggle" class="m-0">
+                <input type="hidden" name="productId" value="<%= item.id %>">
+                <button class="btn btn-sm btn-outline-danger" type="submit" title="찜 해제">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
     <% } %>
+  </div>
 </div>
+
+<style>
+.wishlist-title { font-family:var(--font-head); font-size:22px; font-weight:800; color:var(--c-navy); margin:0 0 4px; }
+.wishlist-count { font-size:13px; color:var(--c-muted); margin:0; }
+.wishlist-tools { display:flex; align-items:center; gap:10px; }
+.view-toggle { display:flex; border:1px solid var(--c-border); border-radius:var(--r); overflow:hidden; }
+.view-toggle__btn { background:#fff; border:none; padding:7px 10px; cursor:pointer; color:var(--c-muted); transition:all .15s; }
+.view-toggle__btn:hover { background:var(--c-bg-2); color:var(--c-navy); }
+.view-toggle__btn.is-active { background:var(--c-accent); color:#fff; }
+
+/* 빈 상태 */
+.wishlist-empty { text-align:center; padding:80px 20px; background:#fff; border:1px solid var(--c-border); border-radius:var(--r-xl); }
+.wishlist-empty h4 { font-size:18px; font-weight:700; color:var(--c-navy); margin:16px 0 8px; }
+.wishlist-empty p { color:var(--c-muted); font-size:14px; margin-bottom:24px; }
+
+/* 뷰 패널 */
+.view-panel { display:none; }
+.view-panel.active { display:block; }
+
+/* 그리드 뷰 */
+.wishlist-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+  gap:20px;
+}
+.wishlist-card { background:#fff; border:1px solid var(--c-border); border-radius:var(--r-xl); overflow:hidden; transition:box-shadow .2s, transform .2s; }
+.wishlist-card:hover { box-shadow:0 8px 32px rgba(0,0,0,.1); transform:translateY(-2px); }
+.wishlist-card__img-wrap { display:block; position:relative; height:200px; overflow:hidden; background:var(--c-bg-2); }
+.wishlist-card__img-wrap img { width:100%; height:100%; object-fit:cover; transition:transform .3s; }
+.wishlist-card:hover .wishlist-card__img-wrap img { transform:scale(1.04); }
+.wishlist-card__no-img { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--c-muted-2); }
+.wishlist-card__badge { position:absolute; top:10px; right:10px; background:rgba(220,38,38,.9); color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; }
+.wishlist-card__body { padding:16px; }
+.wishlist-card__cat { font-size:11px; font-weight:700; color:var(--c-accent); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.wishlist-card__name { font-size:14px; font-weight:700; color:var(--c-navy); margin-bottom:4px; line-height:1.4; }
+.wishlist-card__name a { color:inherit; text-decoration:none; }
+.wishlist-card__name a:hover { color:var(--c-accent); }
+.wishlist-card__spec { font-size:12px; color:var(--c-muted); margin-bottom:10px; }
+.wishlist-card__price { font-size:18px; font-weight:800; color:var(--c-navy); margin-bottom:14px; }
+.wishlist-card__price span { font-size:13px; font-weight:500; color:var(--c-muted); margin-left:2px; }
+.wishlist-card__actions { display:flex; gap:8px; }
+
+/* 목록 뷰 */
+.wishlist-list-view { display:flex; flex-direction:column; gap:10px; }
+.wishlist-list-row {
+  display:flex; align-items:center; gap:16px;
+  background:#fff; border:1px solid var(--c-border); border-radius:var(--r-lg);
+  padding:16px; transition:box-shadow .2s;
+}
+.wishlist-list-row:hover { box-shadow:0 4px 16px rgba(0,0,0,.07); }
+.wishlist-list-row__img { width:80px; height:80px; border-radius:var(--r); overflow:hidden; background:var(--c-bg-2); flex-shrink:0; }
+.wishlist-list-row__img img { width:100%; height:100%; object-fit:cover; }
+.wishlist-list-row__no-img { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--c-muted-2); }
+.wishlist-list-row__info { flex:1; min-width:0; }
+.wishlist-list-row__num { font-size:11px; font-weight:700; color:var(--c-muted-2); margin-bottom:2px; }
+.wishlist-list-row__cat { font-size:11px; font-weight:700; color:var(--c-accent); text-transform:uppercase; letter-spacing:.05em; }
+.wishlist-list-row__name { font-size:15px; font-weight:700; color:var(--c-navy); }
+.wishlist-list-row__name a { color:inherit; text-decoration:none; }
+.wishlist-list-row__name a:hover { color:var(--c-accent); }
+.wishlist-list-row__spec { font-size:12px; color:var(--c-muted); margin-top:2px; }
+.wishlist-list-row__price { font-size:16px; font-weight:800; color:var(--c-navy); white-space:nowrap; }
+.wishlist-list-row__actions { display:flex; gap:8px; flex-shrink:0; }
+
+@media (max-width:575px) {
+  .wishlist-list-row { flex-wrap:wrap; }
+  .wishlist-list-row__price { order:-1; flex-basis:100%; padding-left:96px; }
+}
+</style>
+
+<script>
+(function () {
+  const toggleBtns = document.querySelectorAll('.view-toggle__btn');
+  const viewGrid = document.getElementById('viewGrid');
+  const viewList = document.getElementById('viewList');
+
+  toggleBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const view = btn.dataset.view;
+      toggleBtns.forEach(function (b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      if (view === 'grid') {
+        viewGrid && viewGrid.classList.add('active');
+        viewList && viewList.classList.remove('active');
+      } else {
+        viewList && viewList.classList.add('active');
+        viewGrid && viewGrid.classList.remove('active');
+      }
+      localStorage.setItem('wishlist_view', view);
+    });
+  });
+
+  // 저장된 뷰 복원
+  const saved = localStorage.getItem('wishlist_view');
+  if (saved === 'list') {
+    document.querySelector('[data-view="list"]')?.click();
+  }
+})();
+</script>
 
 <%- include('../layouts/shop-bottom') %>

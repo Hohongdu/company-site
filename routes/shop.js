@@ -209,7 +209,7 @@ router.get('/', async (req, res) => {
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.visibility_status <> 'HIDDEN'
       ORDER BY p.created_at DESC
-      LIMIT 8
+      LIMIT 6
     `);
 
 		res.render('shop/index', { categories, latest, totalCount: latest.length });
@@ -437,27 +437,37 @@ router.post('/cart/add', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
 		const quantity = Math.max(1, Number(req.body.quantity) || 1);
-		if (!productId) return res.status(400).send('상품 정보가 올바르지 않습니다.');
+		const isAjax = req.xhr || (req.headers.accept || '').includes('application/json') || req.headers['x-requested-with'] === 'XMLHttpRequest';
+
+		if (!productId) {
+			if (isAjax) return res.status(400).json({ ok: false, message: '상품 정보가 올바르지 않습니다.' });
+			return res.status(400).send('상품 정보가 올바르지 않습니다.');
+		}
+
+		let cartCount = 0;
 
 		if (req.session.user) {
 			const cartId = await ensureUserCartId(req.session.user.id);
-
 			const [exist] = await db.execute('SELECT id FROM cart_items WHERE cart_id = ? AND product_id = ? LIMIT 1', [cartId, productId]);
-
 			if (exist.length) {
 				await db.execute('UPDATE cart_items SET quantity = quantity + ? WHERE id = ?', [quantity, exist[0].id]);
 			} else {
 				await db.execute('INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?, ?, ?)', [cartId, productId, quantity]);
 			}
-
-			return res.redirect('/shop/cart');
+			const [[cnt]] = await db.execute('SELECT COALESCE(SUM(quantity),0) AS cnt FROM cart_items WHERE cart_id = ?', [cartId]);
+			cartCount = Number(cnt?.cnt || 0);
+		} else {
+			const guestCart = getGuestCart(req);
+			guestCart.items[productId] = (Number(guestCart.items[productId]) || 0) + quantity;
+			cartCount = Object.values(guestCart.items).reduce((s, v) => s + (Number(v) || 0), 0);
 		}
 
-		const guestCart = getGuestCart(req);
-		guestCart.items[productId] = (Number(guestCart.items[productId]) || 0) + quantity;
+		if (isAjax) return res.json({ ok: true, cartCount });
 		return res.redirect('/shop/cart');
 	} catch (err) {
 		console.error(err);
+		const isAjax = req.xhr || (req.headers.accept || '').includes('application/json');
+		if (isAjax) return res.status(500).json({ ok: false, message: '장바구니 담기 오류' });
 		res.status(500).send('장바구니 담기 오류');
 	}
 });

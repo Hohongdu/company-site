@@ -78,7 +78,41 @@ exports.sendTemporaryPasswordEmail = async (payload) => {
 	return sendMail({ to, subject: '[ENERMADE] 임시 비밀번호 발급 안내', html });
 };
 
-// ── 3. 파일 전송 알림 (기존 stub 유지) ────────────────
+// ── 3. 새 문의 → 관리자 알림 ──────────────────────────
+/**
+ * @param {{ name: string, email: string, message: string, id?: number }} payload
+ */
+exports.sendNewInquiryToAdmin = async (payload) => {
+	const { name, email, message, id } = payload;
+	const adminEmail =
+		process.env.ADMIN_EMAIL ||
+		process.env.EMAIL_FROM ||
+		process.env.SMTP_USER;
+
+	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+
+	const html = wrapHtml(
+		'새 문의가 접수되었습니다',
+		`<p>새로운 문의가 웹사이트를 통해 접수되었습니다.</p>
+		<table style="width:100%;border-collapse:collapse;font-size:14px;">
+			<tr><td style="padding:8px 0;color:#666;width:90px;">문의자</td><td style="padding:8px 0;font-weight:600;">${name}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;">이메일</td><td style="padding:8px 0;">${email}</td></tr>
+			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${id}</td></tr>` : ''}
+		</table>
+		<div class="highlight" style="background:#fff7ed;border-left:4px solid #ea580c;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;line-height:1.7;">${message.replace(/\n/g, '<br>')}</div>
+		<p style="margin-top:20px;">
+			<a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/inquiries"
+			   style="background:#ea580c;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
+				관리자 대시보드에서 확인하기
+			</a>
+		</p>`,
+	);
+
+	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 문의: ${name}님`, html });
+};
+
+// ── 5. 파일 전송 알림 (기존 stub 유지) ────────────────
 exports.sendFileTransferEmail = async (payload) => {
 	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
 	return sendMail({

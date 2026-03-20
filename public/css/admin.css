@@ -122,6 +122,7 @@ body.admin-wrap {
 .sidebar-brand {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;  /* 로고 왼쪽, X 오른쪽 */
 	gap: 10px;
 	padding: 10px 10px 16px;
 	border-bottom: 1px solid var(--border);

@@ -1,126 +1,146 @@
-<%- include('partials/admin-header', { title: '문의 관리' , subtitle: '고객 문의 내역을 확인합니다.' , active: 'inquiries' }) %>
+<%- include('partials/admin-header', { title: '문의 관리', subtitle: '고객 문의 내역을 확인합니다.', active: 'inquiries' }) %>
 
 <div class="admin-card card mb-4">
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>상태</th>
-                        <th>제목</th>
-                        <th>문의자</th>
-                        <th>주문번호</th>
-                        <th>등록일</th>
-                        <th></th>
+                        <th style="width:90px;">상태</th>
+                        <th>내용</th>
+                        <th class="d-none d-sm-table-cell">문의자</th>
+                        <th class="d-none d-md-table-cell">등록일</th>
+                        <th style="width:70px;"></th>
                     </tr>
                 </thead>
                 <tbody>
                     <% if (!inquiries || inquiries.length === 0) { %>
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">문의 내역이 없습니다.</td>
+                            <td colspan="5" class="text-center text-muted py-5">문의 내역이 없습니다.</td>
                         </tr>
-                        <% } else { %>
-                            <% inquiries.forEach(inquiry => { %>
-                                <tr>
-                                    <td>
-                                        <span class="badge bg-<%= inquiry.status === 'NEW' ? 'warning' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %>">
-                                            <%= inquiry.status %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold"><%= inquiry.title %></div>
-                                        <div class="admin-inquiry-preview small"><%= inquiry.content %></div>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold"><%= inquiry.user_name || inquiry.guest_name || '비회원' %></div>
-                                        <div class="admin-muted small">
-                                            <%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %>
+                    <% } else { %>
+                        <% inquiries.forEach(inquiry => { %>
+                            <tr>
+                                <td>
+                                    <span class="badge rounded-pill bg-<%= inquiry.status === 'NEW' ? 'warning text-dark' : inquiry.status === 'ANSWERED' ? 'success' : 'secondary' %> px-2 py-1">
+                                        <%= inquiry.status === 'NEW' ? '신규' : inquiry.status === 'ANSWERED' ? '답변완료' : inquiry.status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <%= inquiry.title || inquiry.content?.slice(0, 30) || '(내용 없음)' %>
+                                    </div>
+                                    <div class="text-muted small" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <%= inquiry.content?.slice(0, 50) || '' %>
+                                    </div>
+                                </td>
+                                <td class="d-none d-sm-table-cell">
+                                    <div class="fw-semibold small"><%= inquiry.user_name || inquiry.guest_name || '비회원' %></div>
+                                    <div class="text-muted small" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %>
+                                    </div>
+                                </td>
+                                <td class="text-muted small d-none d-md-table-cell" style="white-space:nowrap;">
+                                    <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleDateString('ko-KR') : '-' %>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#inquiry-detail-<%= inquiry.id %>">
+                                        상세
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="collapse" id="inquiry-detail-<%= inquiry.id %>">
+                                <td colspan="5" class="p-0">
+                                    <div class="admin-inquiry-expand">
+                                        <div class="admin-inquiry-expand__meta">
+                                            <div class="admin-inquiry-meta-item">
+                                                <span class="label">문의자</span>
+                                                <span class="value"><%= inquiry.user_name || inquiry.guest_name || '비회원' %></span>
+                                            </div>
+                                            <div class="admin-inquiry-meta-item">
+                                                <span class="label">연락처</span>
+                                                <span class="value text-break"><%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %></span>
+                                            </div>
+                                            <div class="admin-inquiry-meta-item">
+                                                <span class="label">주문번호</span>
+                                                <span class="value"><%= inquiry.order_number || '-' %></span>
+                                            </div>
+                                            <div class="admin-inquiry-meta-item">
+                                                <span class="label">등록일</span>
+                                                <span class="value"><%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString('ko-KR') : '-' %></span>
+                                            </div>
                                         </div>
-                                    </td>
-                                    <td class="admin-muted small"><%= inquiry.order_number || '-' %></td>
-                                    <td class="admin-muted small">
-                                        <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : '-' %>
-                                    </td>
-                                    <td class="text-end">
-                                        <button class="btn btn-outline-primary btn-sm" type="button"
-                                            data-bs-toggle="collapse" data-bs-target="#inquiry-detail-<%= inquiry.id %>">
-                                            상세
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr class="collapse" id="inquiry-detail-<%= inquiry.id %>">
-                                    <td colspan="6" class="bg-light">
-                                        <div class="p-3">
-                                            <div class="d-flex flex-wrap gap-3 mb-2">
-                                                <div>
-                                                    <div class="admin-muted small">문의 상태</div>
-                                                    <div class="fw-semibold"><%= inquiry.status %></div>
-                                                </div>
-                                                <div>
-                                                    <div class="admin-muted small">주문번호</div>
-                                                    <div class="fw-semibold"><%= inquiry.order_number || '-' %></div>
-                                                </div>
-                                                <div>
-                                                    <div class="admin-muted small">연락처</div>
-                                                    <div class="fw-semibold">
-                                                        <%= inquiry.user_email || inquiry.guest_email || inquiry.guest_phone || '-' %>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div class="admin-muted small">등록일</div>
-                                                    <div class="fw-semibold">
-                                                        <%= inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : '-' %>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="admin-muted small mb-1">문의 내용</div>
-                                                <div class="admin-inquiry-content"><%= inquiry.content %></div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="admin-muted small mb-1">답변 상태</div>
-                                                <div class="fw-semibold">
-                                                    <%= inquiry.answer_content ? '답변 완료' : '답변 대기' %>
-                                                </div>
-                                                <% if (inquiry.answered_at) { %>
-                                                    <div class="admin-muted small">
-                                                        답변일: <%= new Date(inquiry.answered_at).toLocaleString() %>
-                                                    </div>
-                                                <% } %>
-                                                <div class="admin-muted small">
-                                                    알림: <%= inquiry.notification_channel || 'NONE' %>
-                                                    <%= inquiry.notification_status ? `(${inquiry.notification_status})` : '' %>
-                                                </div>
-                                                <% if (inquiry.notification_error) { %>
-                                                    <div class="text-danger small">알림 오류: <%= inquiry.notification_error %></div>
-                                                <% } %>
-                                            </div>
-                                            <% if (inquiry.answer_content) { %>
-                                                <div class="mb-3">
-                                                    <div class="admin-muted small mb-1">답변 내용</div>
-                                                    <div class="admin-inquiry-content"><%= inquiry.answer_content %></div>
-                                                </div>
-                                            <% } %>
-                                            <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post">
-                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                <div class="mb-2">
-                                                    <label class="admin-muted small mb-1">답변 작성</label>
-                                                    <textarea class="form-control" name="answerContent" rows="4" required><%= inquiry.answer_content || '' %></textarea>
-                                                </div>
-                                                <div class="text-muted small mb-2">이메일 전송 기능이 비활성화되어 답변 저장만 가능합니다.</div>
-                                                <div class="d-flex flex-wrap gap-2 align-items-center">
-                                                    <button type="submit" class="btn btn-admin btn-sm ms-auto">답변 저장</button>
-                                                </div>
-                                            </form>
+
+                                        <div class="admin-inquiry-content-box">
+                                            <div class="admin-inquiry-content-label">문의 내용</div>
+                                            <div class="admin-inquiry-content-text"><%= inquiry.content %></div>
                                         </div>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                                    <% } %>
+
+                                        <% if (inquiry.answer_content) { %>
+                                            <div class="admin-inquiry-content-box admin-inquiry-content-box--answered">
+                                                <div class="admin-inquiry-content-label">
+                                                    답변 내용
+                                                    <% if (inquiry.answered_at) { %>
+                                                        <span class="text-muted small ms-2"><%= new Date(inquiry.answered_at).toLocaleString('ko-KR') %></span>
+                                                    <% } %>
+                                                </div>
+                                                <div class="admin-inquiry-content-text"><%= inquiry.answer_content %></div>
+                                            </div>
+                                        <% } %>
+
+                                        <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-semibold">답변 작성</label>
+                                                <textarea class="form-control" name="answerContent" rows="4" required
+                                                    placeholder="답변 내용을 입력해주세요..."><%= inquiry.answer_content || '' %></textarea>
+                                            </div>
+                                            <div class="d-flex align-items-center justify-content-end gap-2">
+                                                <button type="submit" class="btn btn-admin btn-sm">답변 저장</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<style>
+.admin-inquiry-expand {
+    background: #f8fafc;
+    border-top: 2px solid var(--accent-light);
+    padding: 20px 24px;
+}
+.admin-inquiry-expand__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+.admin-inquiry-meta-item { display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+.admin-inquiry-meta-item .label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.admin-inquiry-meta-item .value { font-weight: 600; color: var(--text); }
+.admin-inquiry-content-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+.admin-inquiry-content-box--answered { border-left: 3px solid var(--accent); }
+.admin-inquiry-content-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.admin-inquiry-content-text { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+</style>
 
 <%- include('partials/admin-footer') %>

@@ -12,16 +12,38 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>window.__SITE_USER_IS_ADMIN = <%- (user && user.is_admin) ? 'true' : 'false' %>;</script>
 <script src="/js/main.js"></script>
 <script>
 (function () {
-  const toggle = document.getElementById('shopMobileToggle');
-  const menu   = document.getElementById('shopMobileMenu');
-  if (toggle && menu) {
-    toggle.addEventListener('click', function () {
-      menu.classList.toggle('open');
-    });
+  const toggle   = document.getElementById('shopMobileToggle');
+  const drawer   = document.getElementById('shopMobDrawer');
+  const backdrop = document.getElementById('shopMobBackdrop');
+  const closeBtn = document.getElementById('shopMobClose');
+
+  function openShopDrawer() {
+    drawer   && drawer.classList.add('open');
+    backdrop && backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    toggle   && toggle.setAttribute('aria-label', '메뉴 닫기');
   }
+  function closeShopDrawer() {
+    drawer   && drawer.classList.remove('open');
+    backdrop && backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+    toggle   && toggle.setAttribute('aria-label', '메뉴 열기');
+  }
+
+  toggle   && toggle.addEventListener('click', function () {
+    drawer && drawer.classList.contains('open') ? closeShopDrawer() : openShopDrawer();
+  });
+  closeBtn  && closeBtn.addEventListener('click', closeShopDrawer);
+  backdrop  && backdrop.addEventListener('click', closeShopDrawer);
+
+  // 웹 전환시 사이드바 닫기
+  window.addEventListener('resize', function () {
+    if (window.innerWidth >= 992) closeShopDrawer();
+  });
 })();
 </script>
 </body>

@@ -71,12 +71,16 @@
                 <div class="product-spec"><%= product.spec %></div>
               <% } %>
               <div class="product-price"><%= Number(product.price || 0).toLocaleString() %><span>원</span></div>
-              <form action="/shop/cart/add" method="post" class="product-actions">
-                <input type="hidden" name="productId" value="<%= product.id %>">
-                <input type="number" name="quantity" min="1" value="1" class="product-qty">
-                <button class="btn btn-primary btn-sm flex-grow-1" type="submit">담기</button>
+              <div class="product-actions">
+                <input type="number" name="quantity" min="1" value="1" class="product-qty" data-qty>
+                <button class="btn btn-primary btn-sm product-cart-btn"
+                  type="button"
+                  data-product-id="<%= product.id %>"
+                  style="min-width:64px;">
+                  <span class="btn-label">담기</span>
+                </button>
                 <a class="btn btn-outline-secondary btn-sm" href="/shop/products/<%= product.id %>">상세</a>
-              </form>
+              </div>
             </div>
           </div>
         <% }); %>
@@ -85,5 +89,57 @@
 
   </div>
 </div>
+
+<script>
+(function () {
+  document.querySelectorAll('.product-cart-btn').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      const productId = btn.dataset.productId;
+      const qtyInput = btn.closest('.product-actions')?.querySelector('[data-qty]');
+      const quantity = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 1;
+      const label = btn.querySelector('.btn-label');
+
+      // 로딩 상태 (버튼 크기 유지)
+      btn.disabled = true;
+      if (label) label.textContent = '...';
+
+      try {
+        const res = await fetch('/shop/cart/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ productId, quantity }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          if (label) label.textContent = '✓';
+          // 장바구니 배지 업데이트
+          document.querySelectorAll('.shop-cart-badge').forEach(function (el) {
+            el.textContent = data.cartCount || '';
+          });
+          // 배지 없을 경우 생성
+          if (data.cartCount > 0) {
+            document.querySelectorAll('.shop-tool-btn[href="/shop/cart"] .shop-cart-badge').forEach(function (el) {
+              el.textContent = data.cartCount;
+            });
+          }
+        } else {
+          if (label) label.textContent = '오류';
+        }
+      } catch (err) {
+        if (label) label.textContent = '오류';
+      }
+
+      setTimeout(function () {
+        btn.disabled = false;
+        if (label) label.textContent = '담기';
+      }, 1600);
+    });
+  });
+})();
+</script>
 
 <%- include('../layouts/shop-bottom') %>
