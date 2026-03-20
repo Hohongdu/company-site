@@ -40,8 +40,8 @@ function wrapHtml(title, bodyHtml) {
 exports.sendInquiryReplyEmail = async (payload) => {
 	const { to, name, inquiryTitle, replyContent } = payload;
 
-	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!to) return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', provider: 'NONE', error: 'SMTP 비활성화 — 환경변수 SMTP_HOST/SMTP_USER/SMTP_PASS 확인 필요' };
 
 	const greeting = name ? `${name}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -63,8 +63,8 @@ exports.sendInquiryReplyEmail = async (payload) => {
 exports.sendTemporaryPasswordEmail = async (payload) => {
 	const { to, name, tempPassword } = payload;
 
-	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!to) return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', provider: 'NONE', error: 'SMTP 비활성화 — 환경변수 SMTP_HOST/SMTP_USER/SMTP_PASS 확인 필요' };
 
 	const greeting = name ? `${name}님,` : '안녕하세요,';
 	const html = wrapHtml(

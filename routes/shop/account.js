@@ -249,7 +249,7 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 		// 운영 환경에서는 관리자가 쿠폰을 발급하고, 사용자는 코드만 입력해 적용하는 방식으로
 		// 전환하는 것을 권장합니다 (자가 발급 쿠폰 남용 방지).
 		// M-4: discount_pct 0~30% 범위 제한 (자가 발급 쿠폰 최대 할인율 제한)
-		const rawDiscount = Number(req.body.discountPct || 0);
+		const rawDiscount = Number(req.body.discountPct || 0) || 0; // NaN 방어: 비숫자 입력 → 0
 		const discountPct = Math.min(30, Math.max(0, rawDiscount));
 		const expiresAt = String(req.body.expiresAt || '').trim();
 
