@@ -1,8 +1,10 @@
 const express = require('express');
+const csurf = require('../../lib/csurf');
 const db = require('../../db');
 const { sendInquiryReplyEmail } = require('../../services/notification.service');
 
 const router = express.Router();
+const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 /* =========================
    문의 관리
@@ -42,7 +44,7 @@ router.get('/inquiries', async (req, res) => {
 	}
 });
 
-router.post('/inquiries/:id/reply', async (req, res) => {
+router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();

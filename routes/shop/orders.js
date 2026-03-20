@@ -46,7 +46,10 @@ router.post('/orders/guest', async (req, res) => {
 			});
 		}
 
-		if (detail.order.guest_email !== guestEmail && detail.order.guest_phone !== guestPhone) {
+		// 입력한 항목은 반드시 일치해야 함 (OR 허용 시 타인 주문 조회 가능)
+		const emailMatch = !guestEmail || detail.order.guest_email === guestEmail;
+		const phoneMatch = !guestPhone || detail.order.guest_phone === guestPhone;
+		if (!emailMatch || !phoneMatch) {
 			return res.render('shop/order-lookup', {
 				error: '주문 정보가 일치하지 않습니다.',
 				result: null,

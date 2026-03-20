@@ -1,7 +1,9 @@
 const express = require('express');
+const csurf = require('../../lib/csurf');
 const db = require('../../db');
 
 const router = express.Router();
+const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 /* =========================
    주문 관리
@@ -65,7 +67,7 @@ router.get('/orders', async (req, res) => {
 	}
 });
 
-router.post('/orders/:orderNumber/status', async (req, res) => {
+router.post('/orders/:orderNumber/status', csrfProtection, async (req, res) => {
 	try {
 		const orderNumber = String(req.params.orderNumber || '').trim();
 		const allowed = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELED'];

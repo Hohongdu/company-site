@@ -5,6 +5,15 @@ const { sendMail } = require('../services/email.service');
 
 const router = express.Router();
 
+function escapeHtml(str) {
+	return String(str)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#x27;');
+}
+
 async function ensureNoticesTable() {
 	await db.execute(
 		`CREATE TABLE IF NOT EXISTS notices (
@@ -61,12 +70,12 @@ router.post('/contact', async (req, res) => {
 	}
 
 	const html = `
-<h3>[문의] ${name}</h3>
-<p><strong>이름:</strong> ${name}</p>
-<p><strong>이메일:</strong> ${email}</p>
+<h3>[문의] ${escapeHtml(name)}</h3>
+<p><strong>이름:</strong> ${escapeHtml(name)}</p>
+<p><strong>이메일:</strong> ${escapeHtml(email)}</p>
 <hr>
 <p><strong>문의 내용:</strong></p>
-<pre style="white-space:pre-wrap">${message}</pre>
+<pre style="white-space:pre-wrap">${escapeHtml(message)}</pre>
 `;
 
 	const result = await sendMail({
@@ -114,7 +123,8 @@ router.get('/notices/:id', async (req, res) => {
 
 		await ensureNoticesTable();
 		await ensureNoticeCategoryColumn();
-		await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
+
+		// H-9: 존재 확인 먼저, 이후 조회수 증가 (없는 공지에 조회수 올라가는 현상 방지)
 		const [[notice]] = await db.execute(
 			`SELECT id, title, content, category, created_at, views
        FROM notices
@@ -124,6 +134,8 @@ router.get('/notices/:id', async (req, res) => {
 		);
 
 		if (!notice) return res.status(404).render('404', { message: '공지 없음' });
+
+		await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
 		return res.render('company/notice-detail', { notice });
 	} catch (err) {
 		console.error(err);

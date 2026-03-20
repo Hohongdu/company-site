@@ -108,7 +108,12 @@ router.post('/cart/update', async (req, res) => {
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			await db.execute('UPDATE cart_items SET quantity = ? WHERE id = ?', [quantity, cartItemId]);
+			const userId = req.session.user.id;
+			// H-10: 소유권 검증 — 본인 cart_items만 수정 가능
+			await db.execute(
+				'UPDATE cart_items SET quantity = ? WHERE id = ? AND cart_id = (SELECT id FROM carts WHERE user_id = ? LIMIT 1)',
+				[quantity, cartItemId, userId],
+			);
 			return res.redirect('/shop/cart');
 		}
 
@@ -128,7 +133,12 @@ router.post('/cart/remove', async (req, res) => {
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			await db.execute('DELETE FROM cart_items WHERE id = ?', [cartItemId]);
+			const userId = req.session.user.id;
+			// H-3: 소유권 검증 — 본인 cart_items만 삭제 가능
+			await db.execute(
+				'DELETE FROM cart_items WHERE id = ? AND cart_id = (SELECT id FROM carts WHERE user_id = ? LIMIT 1)',
+				[cartItemId, userId],
+			);
 			return res.redirect('/shop/cart');
 		}
 

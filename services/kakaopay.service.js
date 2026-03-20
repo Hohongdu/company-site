@@ -14,11 +14,6 @@ function getKakaoPayConfig() {
 
 function isConfigured() {
 	const { adminKey, cid } = getKakaoPayConfig();
-	console.log('[KakaoPay]', {
-		hasAdminKey: Boolean(adminKey),
-		cid,
-		adminKeyPreview: adminKey ? adminKey.slice(0, 6) + '***' : '(empty)',
-	});
 	return Boolean(adminKey && cid);
 }
 

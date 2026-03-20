@@ -171,6 +171,13 @@ router.get('/products/new', async (req, res) => {
 router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
+
+		// M-5: 상품명 필수 검증
+		const trimmedName = String(name || '').trim();
+		if (!trimmedName) {
+			return res.status(400).send('상품명은 필수입니다.');
+		}
+
 		await ensureProductStockColumn();
 
 		let imagePath = image || null;
@@ -286,7 +293,7 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 /* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
-router.post('/products/:id/delete', async (req, res) => {
+router.post('/products/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
@@ -596,12 +603,15 @@ router.get('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories', async (req, res) => {
+router.post('/categories', csrfProtection, async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
-		const slug = name.toLowerCase().replace(/\s+/g, '-');
-
 		if (!name) return res.status(400).send('카테고리 이름이 필요합니다.');
+
+		// M-6: 슬러그 중복 방지 — 충돌 시 타임스탬프 suffix 추가
+		const baseSlug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+		const [[existingSlug]] = await db.execute('SELECT id FROM categories WHERE slug = ? LIMIT 1', [baseSlug]);
+		const slug = existingSlug ? `${baseSlug}-${Date.now()}` : baseSlug;
 
 		await db.execute('INSERT INTO categories (name, slug) VALUES (?, ?)', [name, slug]);
 		res.redirect('/admin/categories');
@@ -611,7 +621,7 @@ router.post('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories/:id/delete', async (req, res) => {
+router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 

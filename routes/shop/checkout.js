@@ -70,6 +70,7 @@ router.post('/checkout/kakao', async (req, res) => {
 			[orderResult.orderId, readyResult.tid, orderResult.totalAmount],
 		);
 
+		// M-8: items 배열은 세션에 저장하지 않음 (불필요한 세션 용량 낭비)
 		req.session.kakaoPay = {
 			tid: readyResult.tid,
 			orderId: orderResult.orderId,
@@ -77,7 +78,6 @@ router.post('/checkout/kakao', async (req, res) => {
 			itemName,
 			quantity,
 			totalAmount: orderResult.totalAmount,
-			items: orderResult.items,
 		};
 
 		return res.redirect(readyResult.next_redirect_pc_url);
@@ -102,6 +102,19 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 			userId: req.session.user?.id,
 			pgToken,
 		});
+
+		// M-9: DB 레벨 소유권 검증 — 세션의 orderId가 실제로 이 사용자/tid 것인지 확인
+		const [[orderCheck]] = await db.execute(
+			`SELECT o.id FROM orders o
+       JOIN order_payments op ON op.order_id = o.id
+       WHERE o.id = ? AND op.tid = ?
+       LIMIT 1`,
+			[sessionPayment.orderId, sessionPayment.tid],
+		);
+		if (!orderCheck) {
+			req.session.kakaoPay = null;
+			return res.status(403).send('결제 정보가 일치하지 않습니다.');
+		}
 
 		await db.execute(
 			`UPDATE orders

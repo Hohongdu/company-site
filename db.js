@@ -1,21 +1,19 @@
 // db.js
-console.log('[DB ENV]', {
-	DB_HOST: process.env.DB_HOST,
-	DB_USER: process.env.DB_USER,
-	DB_NAME: process.env.DB_NAME,
-});
-
 const mysql = require('mysql2/promise');
+
+if (!process.env.DB_PASS) {
+	throw new Error('[db] DB_PASS 환경변수가 설정되지 않았습니다. .env 파일을 확인하세요.');
+}
 
 const pool = mysql.createPool({
 	host: process.env.DB_HOST || 'localhost',
 	user: process.env.DB_USER || 'root',
-	password: process.env.DB_PASS || '111111',
+	password: process.env.DB_PASS,
 	database: process.env.DB_NAME || 'company_site',
 	waitForConnections: true,
 	connectionLimit: Number(process.env.DB_CONN_LIMIT || 10),
 	queueLimit: 0,
-	timezone: '+09:00', // (선택) 한국 시간 맞추고 싶으면 추천
+	timezone: '+09:00',
 });
 
 module.exports = pool;

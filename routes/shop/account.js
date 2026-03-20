@@ -87,6 +87,12 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 			return res.redirect('/shop/account?error=이름과 이메일을 입력해주세요.');
 		}
 
+		// M-3: 이메일 형식 검증
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			return res.redirect('/shop/account?error=올바른 이메일 형식을 입력해주세요.');
+		}
+
 		const [[existing]] = await db.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
 		if (existing && existing.id !== userId) {
 			return res.redirect('/shop/account?error=이미 사용 중인 이메일입니다.');
@@ -220,7 +226,9 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 		const userId = req.session.user.id;
 		const code = String(req.body.code || '').trim();
 		const description = String(req.body.description || '').trim();
-		const discountPct = Number(req.body.discountPct || 0);
+		// M-4: discount_pct 0~100 범위 제한 (비즈니스 로직 보호)
+		const rawDiscount = Number(req.body.discountPct || 0);
+		const discountPct = Math.min(100, Math.max(0, rawDiscount));
 		const expiresAt = String(req.body.expiresAt || '').trim();
 
 		if (!code) {
@@ -231,7 +239,7 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 		await db.execute(
 			`INSERT INTO user_coupons (user_id, code, description, discount_pct, expires_at)
        VALUES (?, ?, ?, ?, ?)`,
-			[userId, code, description || null, discountPct || 0, expiresAt || null],
+			[userId, code, description || null, discountPct, expiresAt || null],
 		);
 
 		return res.redirect('/shop/account?message=쿠폰이 등록되었습니다.');
@@ -306,13 +314,14 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 			return renderShopError(res, '주문 정보를 찾을 수 없습니다.', 404);
 		}
 
-	if (order.status !== 'PENDING') {
-		return res.redirect('/shop/account/orders');
-	}
+		const cancellable = ['PENDING', 'PAID'];
+		if (!cancellable.includes(order.status)) {
+			return res.redirect('/shop/account/orders?error=' + encodeURIComponent('이미 처리된 주문은 취소 요청할 수 없습니다.'));
+		}
 
-	await ensureOrderStatusEnum();
-	await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
-		return res.redirect('/shop/account/orders');
+		await ensureOrderStatusEnum();
+		await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
+		return res.redirect('/shop/account/orders?notice=' + encodeURIComponent('취소 요청이 접수되었습니다.'));
 	} catch (err) {
 		console.error(err);
 		return renderShopError(res, '주문 취소 요청 중 오류가 발생했습니다.', 500);

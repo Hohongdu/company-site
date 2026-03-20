@@ -108,6 +108,14 @@ router.post('/inquiries', async (req, res) => {
 
 		let orderId = null;
 		if (orderNumber) {
+			// M-7: orderNumber 형식 검증 — 영숫자 하이픈만 허용, 최대 30자
+			if (!/^[A-Za-z0-9\-]{1,30}$/.test(orderNumber)) {
+				return res.render('shop/inquiry', {
+					form: { orderNumber, title, content, guestName, guestEmail, guestPhone },
+					success: false,
+					error: '올바른 주문번호 형식이 아닙니다.',
+				});
+			}
 			const [[order]] = await db.execute('SELECT id FROM orders WHERE order_number = ? LIMIT 1', [orderNumber]);
 			orderId = order?.id || null;
 		}

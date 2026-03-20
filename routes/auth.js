@@ -1,11 +1,32 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
 const { sendTemporaryPasswordEmail } = require('../services/notification.service');
 
 const router = express.Router();
+
+const MIN_PASSWORD_LENGTH = 8;
+
+// H-2: 로그인 브루트포스 방지 — 15분 내 20회
+const loginLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 20,
+	message: '잠시 후 다시 시도해주세요.',
+	standardHeaders: true,
+	legacyHeaders: false,
+});
+
+// H-1: 비밀번호 찾기 남용 방지 — 1시간 내 5회
+const forgotLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 5,
+	message: '잠시 후 다시 시도해주세요.',
+	standardHeaders: true,
+	legacyHeaders: false,
+});
 
 const sanitizeReturnTo = (value) => {
 	if (typeof value !== 'string') return '';
@@ -32,7 +53,7 @@ router.get('/forgot', (req, res) => {
 });
 
 
-router.post('/forgot', async (req, res) => {
+router.post('/forgot', forgotLimiter, async (req, res) => {
 	const SUCCESS_MSG = '입력하신 이메일 주소로 임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.';
 
 	try {
@@ -100,8 +121,24 @@ router.get('/register', (req, res) => res.render('auth/register'));
 
 router.post('/register', async (req, res) => {
 	try {
-		const { name, email, password, passwordConfirm } = req.body;
-		if (password !== passwordConfirm) return res.send('비밀번호가 일치하지 않습니다.');
+		const name = String(req.body.name || '').trim();
+		const email = String(req.body.email || '').trim().toLowerCase();
+		const password = String(req.body.password || '');
+		const passwordConfirm = String(req.body.passwordConfirm || '');
+
+		// M-1: 빈 값 검증
+		if (!name || !email || !password) {
+			return res.status(400).render('auth/register', { error: '모든 항목을 입력해주세요.' });
+		}
+
+		// H-6: 비밀번호 최소 길이
+		if (password.length < MIN_PASSWORD_LENGTH) {
+			return res.status(400).render('auth/register', { error: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.` });
+		}
+
+		if (password !== passwordConfirm) {
+			return res.status(400).render('auth/register', { error: '비밀번호가 일치하지 않습니다.' });
+		}
 
 		const hashedPw = await bcrypt.hash(password, 10);
 
@@ -115,17 +152,29 @@ router.post('/register', async (req, res) => {
 	}
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
 	try {
-		const { email, password } = req.body;
+		const email = String(req.body.email || '').trim().toLowerCase();
+		const password = String(req.body.password || '');
+
+		const renderLoginError = (msg) =>
+			res.status(401).render('auth/login', {
+				returnTo: req.body.returnTo || '',
+				csrfToken: req.csrfToken(),
+				error: msg,
+			});
 
 		// ✅ is_admin 포함해서 가져오기
 		const [rows] = await db.execute('SELECT id, name, email, password, is_admin FROM users WHERE email = ? LIMIT 1', [email]);
-		if (rows.length === 0) return res.send('존재하지 않는 이메일입니다.');
+
+		// M-2: User Enumeration 방지 — 동일 메시지로 통일
+		if (rows.length === 0) {
+			return renderLoginError('이메일 또는 비밀번호가 올바르지 않습니다.');
+		}
 
 		const user = rows[0];
 		const ok = await bcrypt.compare(password, user.password);
-		if (!ok) return res.send('비밀번호가 일치하지 않습니다.');
+		if (!ok) return renderLoginError('이메일 또는 비밀번호가 올바르지 않습니다.');
 
 		req.session.user = {
 			id: user.id,
