@@ -17,9 +17,9 @@
   --c-text-2:     #3f3f46;
   --c-muted:      #71717a;
   --c-muted-2:    #a1a1aa;
-  --c-accent:     #4338ca;
-  --c-accent-2:   #3730a3;
-  --c-accent-lt:  #eef2ff;
+  --c-accent:     #ea580c;
+  --c-accent-2:   #c2410c;
+  --c-accent-lt:  #fff7ed;
   --c-navy:       #0f172a;
   --c-navy-2:     #1e293b;
   --c-navy-3:     #334155;
@@ -52,8 +52,8 @@
 
 /* ── Bootstrap Variable Overrides ── */
 :root {
-  --bs-primary:          #4338ca;
-  --bs-primary-rgb:      67,56,202;
+  --bs-primary:          #ea580c;
+  --bs-primary-rgb:      234,88,12;
   --bs-body-font-family: var(--font-body);
   --bs-body-color:       var(--c-text-2);
   --bs-body-bg:          var(--c-bg);
@@ -167,7 +167,7 @@ img { max-width: 100%; display: block; }
 .form-control::placeholder { color: var(--c-muted-2); }
 .form-control:focus, .form-select:focus {
   border-color: var(--c-accent);
-  box-shadow: 0 0 0 3px rgba(67,56,202,.1);
+  box-shadow: 0 0 0 3px rgba(234,88,12,.1);
   outline: none;
 }
 .form-control-sm { padding: 7px 11px; font-size: 13px; }
@@ -277,7 +277,7 @@ hr { border-color: var(--c-border); opacity: 1; }
   bottom: 0; right: 0;
   width: 360px; height: 360px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(67,56,202,.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234,88,12,.15) 0%, transparent 70%);
   transform: translate(30%, 30%);
 }
 .page-banner .container { position: relative; z-index: 1; }

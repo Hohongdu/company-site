@@ -228,7 +228,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(67,56,202,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(234,88,12,.18) 0%, transparent 60%),
     radial-gradient(ellipse 50% 80% at 10% 80%, rgba(234,88,12,.1) 0%, transparent 60%);
 }
 .hero__grid {
@@ -275,7 +275,7 @@
 .hero__title em {
   font-style: normal;
   color: var(--c-accent);
-  background: linear-gradient(135deg, #818cf8, #4338ca);
+  background: linear-gradient(135deg, #f97316, #ea580c);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -308,7 +308,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(67,56,202,.2) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(234,88,12,.2) 0%, transparent 60%);
 }
 .hero__badge {
   position: absolute;
