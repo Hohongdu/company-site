@@ -214,43 +214,56 @@ router.get('/dashboard', async (req, res) => {
 		const [[orderCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM orders');
 		const [[inquiryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM inquiries');
 
-		const [recentOrders] = await db.execute(
-			`SELECT o.order_number, o.status, o.total_amount, o.created_at,
-        u.name AS user_name, o.guest_name
-       FROM orders o
-       LEFT JOIN users u ON u.id = o.user_id
-       ORDER BY o.created_at DESC
-       LIMIT 5`,
-		);
+		let recentOrders = [];
+		try {
+			[recentOrders] = await db.execute(
+				`SELECT o.id,
+                COALESCE(o.order_number, CONCAT('ORD-', o.id)) AS order_number,
+                o.status, o.total_amount, o.created_at,
+                u.name AS user_name, o.guest_name
+               FROM orders o
+               LEFT JOIN users u ON u.id = o.user_id
+               ORDER BY o.created_at DESC
+               LIMIT 5`,
+			);
+		} catch (_) {}
 
-		const [recentInquiries] = await db.execute(
-			`SELECT i.title, i.status, i.created_at, o.order_number,
-        u.name AS user_name, i.guest_name
-       FROM inquiries i
-       LEFT JOIN orders o ON o.id = i.order_id
-       LEFT JOIN users u ON u.id = i.user_id
-       ORDER BY i.created_at DESC
-       LIMIT 5`,
-		);
+		let recentInquiries = [];
+		try {
+			[recentInquiries] = await db.execute(
+				`SELECT i.title, i.status, i.created_at,
+                u.name AS user_name, i.guest_name
+               FROM inquiries i
+               LEFT JOIN users u ON u.id = i.user_id
+               ORDER BY i.created_at DESC
+               LIMIT 5`,
+			);
+		} catch (_) {}
 
-		const [monthlyOrders] = await db.execute(
-			`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
-        COUNT(*) AS cnt,
-        COALESCE(SUM(total_amount), 0) AS revenue
-       FROM orders
-       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
-       GROUP BY ym
-       ORDER BY ym ASC`,
-		);
+		let monthlyOrders = [];
+		try {
+			[monthlyOrders] = await db.execute(
+				`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
+                COUNT(*) AS cnt,
+                COALESCE(SUM(total_amount), 0) AS revenue
+               FROM orders
+               WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+               GROUP BY ym
+               ORDER BY ym ASC`,
+			);
+		} catch (_) {}
 
-		const [monthlyInquiries] = await db.execute(
-			`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
-        COUNT(*) AS cnt
-       FROM inquiries
-       WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
-       GROUP BY ym
-       ORDER BY ym ASC`,
-		);
+		let monthlyInquiries = [];
+		try {
+			[monthlyInquiries] = await db.execute(
+				`SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym,
+                COUNT(*) AS cnt
+               FROM inquiries
+               WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+               GROUP BY ym
+               ORDER BY ym ASC`,
+			);
+		} catch (_) {}
 
 		const monthLabels = [];
 		const now = new Date();
@@ -309,13 +322,45 @@ router.get('/dashboard', async (req, res) => {
 			vnstatMonthly = await execAsync(`vnstat -m 2>/dev/null | tail -n 1`);
 		}
 
+		// 재고 부족 상품 (stock_quantity가 있는 경우만)
+		let lowStockProducts = [];
+		try {
+			const [lsRows] = await db.execute(
+				`SELECT id, name, code, stock_quantity FROM products
+         WHERE stock_quantity IS NOT NULL AND stock_quantity <= 5 AND stock_quantity >= 0
+         ORDER BY stock_quantity ASC LIMIT 10`,
+			);
+			lowStockProducts = lsRows;
+		} catch (_) {}
+
+		// 미처리 문의 수
+		let pendingInquiries = 0;
+		try {
+			const [[piRow]] = await db.execute(`SELECT COUNT(*) AS cnt FROM inquiries WHERE status = 'NEW'`);
+			pendingInquiries = Number(piRow?.cnt || 0);
+		} catch (_) {}
+
+		// 이번달 매출
+		let thisMonthRevenue = 0;
+		try {
+			const [[tmr]] = await db.execute(
+				`SELECT COALESCE(SUM(total_amount),0) AS rev FROM orders
+         WHERE status IN ('PAID','PROCESSING','SHIPPED','DELIVERED')
+           AND DATE_FORMAT(created_at,'%Y-%m') = DATE_FORMAT(CURDATE(),'%Y-%m')`,
+			);
+			thisMonthRevenue = Number(tmr?.rev || 0);
+		} catch (_) {}
+
 		res.render('admin/dashboard', {
 			stats: {
 				totalProducts: productCnt.cnt,
 				totalCategories: categoryCnt.cnt,
 				totalOrders: orderCnt.cnt,
 				totalInquiries: inquiryCnt.cnt,
+				pendingInquiries,
+				thisMonthRevenue,
 			},
+			lowStockProducts,
 			sys: {
 				load1: load[0],
 				load5: load[1],
@@ -1090,6 +1135,31 @@ router.get('/orders', async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('주문 목록 로딩 오류');
+	}
+});
+
+router.post('/orders/:orderNumber/status', async (req, res) => {
+	try {
+		const orderNumber = String(req.params.orderNumber || '').trim();
+		const allowed = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELED'];
+		const status = String(req.body.status || '').trim();
+
+		if (!allowed.includes(status)) {
+			return res.status(400).send('유효하지 않은 상태값입니다.');
+		}
+
+		// Expand enum if needed
+		try {
+			await db.execute(
+				`ALTER TABLE orders MODIFY status ENUM('PENDING','PAID','CANCELED','FAILED','CANCEL_REQUESTED','PROCESSING','SHIPPED','DELIVERED') NOT NULL DEFAULT 'PENDING'`,
+			);
+		} catch (_) {}
+
+		await db.execute('UPDATE orders SET status = ? WHERE order_number = ?', [status, orderNumber]);
+		return res.redirect(`/admin/orders/${orderNumber}`);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('주문 상태 변경 오류');
 	}
 });
 
