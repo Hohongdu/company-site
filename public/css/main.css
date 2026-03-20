@@ -1,6 +1,6 @@
 /* ================================================================
    ENERMADE — Design System v3 "Blueprint"
-   White-first · Navy · Brand Blue
+   White-first · Navy · Brand Orange
    ================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
@@ -16,11 +16,11 @@
   --c-text:      #354D68;
   --c-muted:     #6E88A2;
   --c-subtle:    #A0B4CA;
-  --c-blue:      #1E55D8;
-  --c-blue-dark: #1646B8;
-  --c-blue-lt:   #EBF1FF;
-  --c-blue-mid:  #DAEAFF;
-  --c-orange:    #E8510F;
+  --c-blue:      #EA580C;
+  --c-blue-dark: #C2410C;
+  --c-blue-lt:   #FFF7ED;
+  --c-blue-mid:  #FFEDD5;
+  --c-orange:    #EA580C;
   --c-green:     #059669;
   --c-red:       #DC2626;
   --c-dark:      #0B1829;
@@ -92,7 +92,7 @@ input, textarea, select { font: inherit; }
 .btn-primary  { background: var(--c-blue);   border-color: var(--c-blue);   color: #fff; }
 .btn-primary:hover {
   background: var(--c-blue-dark); border-color: var(--c-blue-dark); color: #fff;
-  transform: translateY(-1px); box-shadow: 0 6px 20px rgba(30,85,216,.35);
+  transform: translateY(-1px); box-shadow: 0 6px 20px rgba(234,88,12,.35);
 }
 .btn-outline  { background: transparent; border-color: var(--c-border-2); color: var(--c-ink); }
 .btn-outline:hover { border-color: var(--c-blue); color: var(--c-blue); background: var(--c-blue-lt); }
@@ -129,7 +129,7 @@ input, textarea, select { font: inherit; }
 }
 .form-control:focus {
   border-color: var(--c-blue);
-  box-shadow: 0 0 0 3px rgba(30,85,216,.12);
+  box-shadow: 0 0 0 3px rgba(234,88,12,.12);
 }
 .form-control::placeholder { color: var(--c-subtle); }
 textarea.form-control {
@@ -154,7 +154,7 @@ textarea.form-control {
   appearance: none;
   transition: border-color .15s;
 }
-.form-select:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(30,85,216,.12); }
+.form-select:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(234,88,12,.12); }
 .form-check { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
 .form-check-input { width: 16px; height: 16px; accent-color: var(--c-blue); cursor: pointer; }
 .form-check-label { font-size: .875rem; cursor: pointer; }

@@ -4,9 +4,9 @@
    ============================================================ */
 :root {
 	--brand:            #0a1628;
-	--accent:           #2563eb;
-	--accent-dark:      #1d4ed8;
-	--accent-light:     #eff6ff;
+	--accent:           #ea580c;
+	--accent-dark:      #c2410c;
+	--accent-light:     #fff7ed;
 	--ink:              #0f172a;
 	--text:             #1e293b;
 	--muted:            #64748b;
@@ -32,12 +32,12 @@
 	--admin-border:     #dde4f0;
 	--admin-text:       #0f172a;
 	--admin-muted:      #64748b;
-	--admin-accent:     #2563eb;
-	--admin-accent-soft:#eff6ff;
+	--admin-accent:     #ea580c;
+	--admin-accent-soft:#fff7ed;
 
 	/* legacy */
-	--blue:             #2563eb;
-	--blue2:            #1d4ed8;
+	--blue:             #ea580c;
+	--blue2:            #c2410c;
 	--line:             #e2e8f0;
 	--radius-base:      10px;
 }
@@ -274,7 +274,7 @@ body.admin-wrap {
 }
 .admin-table tbody td { padding-top: 10px; padding-bottom: 10px; }
 .admin-table tbody tr { border-bottom: 1px solid #eef2f8; transition: background 0.12s; }
-.admin-table tbody tr:hover { background: rgba(37,99,235,0.025); }
+.admin-table tbody tr:hover { background: rgba(234,88,12,0.025); }
 
 .admin-inquiry-content { color: var(--admin-text); white-space: pre-wrap; }
 .admin-inquiry-preview {
@@ -490,7 +490,7 @@ body.admin-wrap {
 	display: block;
 	width: 100%;
 	border-radius: 6px;
-	background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+	background: linear-gradient(180deg, #fb923c, #c2410c);
 	opacity: 0.85;
 }
 
@@ -902,7 +902,7 @@ body.admin-wrap {
     justify-content: center;
     flex-shrink: 0;
 }
-.kpi-card--blue   .kpi-card__icon { background: #dbeafe; color: #2563eb; }
+.kpi-card--blue   .kpi-card__icon { background: #ffedd5; color: #ea580c; }
 .kpi-card--green  .kpi-card__icon { background: #d1fae5; color: #059669; }
 .kpi-card--orange .kpi-card__icon { background: #fef3c7; color: #d97706; }
 .kpi-card--purple .kpi-card__icon { background: #ede9fe; color: #7c3aed; }
@@ -986,7 +986,7 @@ body.admin-wrap {
     white-space: nowrap;
 }
 .adm-table tbody tr { transition: background 0.12s; }
-.adm-table tbody tr:hover { background: rgba(37,99,235,0.025); }
+.adm-table tbody tr:hover { background: rgba(234,88,12,0.025); }
 
 /* Status badge */
 .adm-status-badge {
