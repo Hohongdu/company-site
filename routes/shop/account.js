@@ -103,6 +103,11 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 			return res.redirect('/shop/account');
 		}
 
+		if (password && password.length < 8) {
+			req.flash('error', '비밀번호는 8자 이상이어야 합니다.');
+			return res.redirect('/shop/account');
+		}
+
 		if (password && password !== passwordConfirm) {
 			req.flash('error', '비밀번호가 일치하지 않습니다.');
 			return res.redirect('/shop/account');
@@ -240,9 +245,12 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 		const userId = req.session.user.id;
 		const code = String(req.body.code || '').trim();
 		const description = String(req.body.description || '').trim();
-		// M-4: discount_pct 0~100 범위 제한 (비즈니스 로직 보호)
+		// H-5: [보안 주의] 현재 로그인 사용자가 직접 쿠폰을 등록하는 구조입니다.
+		// 운영 환경에서는 관리자가 쿠폰을 발급하고, 사용자는 코드만 입력해 적용하는 방식으로
+		// 전환하는 것을 권장합니다 (자가 발급 쿠폰 남용 방지).
+		// M-4: discount_pct 0~30% 범위 제한 (자가 발급 쿠폰 최대 할인율 제한)
 		const rawDiscount = Number(req.body.discountPct || 0);
-		const discountPct = Math.min(100, Math.max(0, rawDiscount));
+		const discountPct = Math.min(30, Math.max(0, rawDiscount));
 		const expiresAt = String(req.body.expiresAt || '').trim();
 
 		if (!code) {
@@ -348,14 +356,18 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 
 router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 	const userId = req.session.user.id;
+
+	// H-7: ensure* 함수들은 pool 연결을 별도로 사용하므로 getConnection() 전에 호출
+	// (connection을 보유한 채 pool execute를 호출하면 커넥션 풀 고갈 위험)
+	await ensureAddressTable();
+	await ensurePaymentMethodTable();
+	await ensureCouponTable();
+	await ensureWishlistTable();
+	await ensureReviewTable();
+	await ensureNotificationSettingsTable();
+
 	const connection = await db.getConnection();
 	try {
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
-		await ensureWishlistTable();
-		await ensureReviewTable();
-		await ensureNotificationSettingsTable();
 		const [[user]] = await connection.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
 
 		if (!user) {

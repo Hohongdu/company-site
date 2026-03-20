@@ -1,17 +1,16 @@
 /**
  * order.service.js — 주문 생성 및 조회 비즈니스 로직
  */
+const crypto = require('crypto');
 const db = require('../db');
 const { getCartViewData } = require('../lib/cart');
 const { ensureOrderShippingColumns } = require('../lib/migrations');
 
 /**
- * 주문 번호 생성
+ * 주문 번호 생성 — CSPRNG 사용으로 동시 요청 시 충돌 방지
  */
 function generateOrderNumber() {
-	const rand = Math.floor(Math.random() * 1000)
-		.toString()
-		.padStart(3, '0');
+	const rand = crypto.randomBytes(4).toString('hex'); // 4,294,967,296 combinations
 	return `ORD-${Date.now()}-${rand}`;
 }
 
@@ -23,7 +22,9 @@ function generateOrderNumber() {
 async function createOrderFromCart(req, { guestName, guestEmail, guestPhone, shippingName, shippingPhone, shippingAddress, discountAmount, couponCode }) {
 	const data = await getCartViewData(req);
 
-	if (!data.items.length || !data.totalAmount) {
+	// M-6: totalAmount가 0인 경우(무료 상품)도 결제 진행 가능해야 함
+	// items가 비어있는 경우만 차단
+	if (!data.items.length) {
 		return { error: '결제할 상품이 없습니다.' };
 	}
 

@@ -131,6 +131,17 @@ router.post('/register', asyncHandler(async (req, res) => {
 		return res.status(400).render('auth/register', { error: '모든 항목을 입력해주세요.' });
 	}
 
+	// M-1: 이메일 형식 검증
+	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+		return res.status(400).render('auth/register', { error: '올바른 이메일 형식을 입력해주세요.' });
+	}
+
+	// M-2: 중복 이메일 사전 확인 — ER_DUP_ENTRY 대신 사용자 친화적 오류 반환
+	const [[existingUser]] = await db.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
+	if (existingUser) {
+		return res.status(400).render('auth/register', { error: '이미 사용 중인 이메일입니다.' });
+	}
+
 	// H-6: 비밀번호 최소 길이
 	if (password.length < MIN_PASSWORD_LENGTH) {
 		return res.status(400).render('auth/register', { error: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.` });
@@ -188,7 +199,7 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
 router.get('/logout', (req, res) => {
 	req.session.destroy((err) => {
 		if (err) console.error(err);
-		res.clearCookie('connect.sid');
+		res.clearCookie('sid'); // L-2: session name is 'sid', not 'connect.sid'
 		return res.redirect('/');
 	});
 });

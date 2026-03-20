@@ -30,14 +30,26 @@ router.post('/checkout/kakao', async (req, res) => {
 			req.session.guestOrderInfo = { guestName, guestEmail, guestPhone };
 		}
 
-		// 쿠폰 적용
-		const appliedCoupon = req.session.appliedCoupon || null;
+		// 쿠폰 적용 — 세션 캐시 의존 금지, DB에서 재검증
+		const sessionCoupon = req.session.appliedCoupon || null;
 		let discountAmount = 0;
 		let couponCode = null;
-		if (appliedCoupon) {
-			const cartData = await getCartViewData(req);
-			discountAmount = Math.floor(cartData.totalAmount * (appliedCoupon.discount_pct / 100));
-			couponCode = appliedCoupon.code;
+		if (sessionCoupon && req.session.user) {
+			const [[freshCoupon]] = await db.execute(
+				`SELECT * FROM user_coupons
+         WHERE user_id = ? AND code = ?
+           AND (expires_at IS NULL OR expires_at >= CURDATE())
+         LIMIT 1`,
+				[req.session.user.id, sessionCoupon.code],
+			);
+			if (freshCoupon) {
+				const cartData = await getCartViewData(req);
+				discountAmount = Math.floor(cartData.totalAmount * (freshCoupon.discount_pct / 100));
+				couponCode = freshCoupon.code;
+			} else {
+				// 만료된 쿠폰 — 세션에서 제거하고 진행
+				req.session.appliedCoupon = null;
+			}
 		}
 
 		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone, shippingName, shippingPhone, shippingAddress, discountAmount, couponCode });

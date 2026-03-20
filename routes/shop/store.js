@@ -1,9 +1,11 @@
 const express = require('express');
+const csurf = require('../../lib/csurf');
 const db = require('../../db');
 const { requireLogin } = require('../../middleware/auth');
-const { ensureProductVisibilityColumn, ensureReviewTable, ensureWishlistTable } = require('../../lib/migrations');
+const { ensureProductVisibilityColumn, ensureReviewTable, ensureReviewUniqueConstraint, ensureWishlistTable } = require('../../lib/migrations');
 
 const router = express.Router();
+const storeCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
 router.get('/', async (req, res) => {
 	try {
@@ -143,7 +145,7 @@ router.get('/products/:id', async (req, res) => {
 	}
 });
 
-router.post('/products/:id/reviews', requireLogin, async (req, res) => {
+router.post('/products/:id/reviews', requireLogin, storeCsrf, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const rating = Number(req.body.rating);
@@ -154,6 +156,17 @@ router.post('/products/:id/reviews', requireLogin, async (req, res) => {
 		}
 
 		await ensureReviewTable();
+		await ensureReviewUniqueConstraint();
+
+		// M-5: 사용자당 상품 리뷰 1건 제한 — 중복 방지 사전 확인
+		const [[existingReview]] = await db.execute(
+			'SELECT 1 FROM product_reviews WHERE product_id = ? AND user_id = ? LIMIT 1',
+			[productId, req.session.user.id],
+		);
+		if (existingReview) {
+			return res.redirect(`/shop/products/${productId}#reviews`);
+		}
+
 		await db.execute(
 			`INSERT INTO product_reviews (product_id, user_id, rating, content)
        VALUES (?, ?, ?, ?)`,
@@ -189,7 +202,7 @@ router.get('/wishlist', requireLogin, async (req, res) => {
 	}
 });
 
-router.post('/wishlist/toggle', requireLogin, async (req, res) => {
+router.post('/wishlist/toggle', requireLogin, storeCsrf, async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
 		if (!productId) return res.redirect('/shop/products');

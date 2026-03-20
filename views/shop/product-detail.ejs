@@ -6,6 +6,7 @@
             <a href="/shop/cart" class="btn btn-sm btn-outline-dark" data-i18n data-i18n-ko="장바구니">장바구니</a>
             <% if (user) { %>
                 <form action="/shop/wishlist/toggle" method="post">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="hidden" name="productId" value="<%= product.id %>">
                     <button class="btn btn-sm <%= wished ? 'btn-danger' : 'btn-outline-danger' %>" data-i18n
                         data-i18n-ko="<%= wished ? '찜 해제' : '찜하기' %>">
@@ -90,6 +91,7 @@
             <h4 class="mb-3" data-i18n data-i18n-ko="리뷰/평점">리뷰/평점</h4>
             <% if (user) { %>
                 <form class="row g-2 mb-3" method="post" action="/shop/products/<%= product.id %>/reviews">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="col-md-2">
                         <select class="form-select" name="rating" required>
                             <option value="" data-i18n data-i18n-ko="평점">평점</option>

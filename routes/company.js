@@ -1,10 +1,20 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { requireLogin } = require('../middleware/auth');
 const { sendMail } = require('../services/email.service');
 const asyncHandler = require('../lib/asyncHandler');
 
 const router = express.Router();
+
+// H-4: Rate-limit contact form submissions — prevents email spam to site owner
+const contactLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 10,
+	message: '잠시 후 다시 시도해주세요.',
+	standardHeaders: true,
+	legacyHeaders: false,
+});
 
 function escapeHtml(str) {
 	return String(str)
@@ -56,7 +66,7 @@ router.get('/contact', (req, res) =>
 	}),
 );
 
-router.post('/contact', async (req, res) => {
+router.post('/contact', contactLimiter, asyncHandler(async (req, res) => {
 	const name = String(req.body.name || '').trim().slice(0, 100);
 	const email = String(req.body.email || '').trim().slice(0, 200);
 	const message = String(req.body.message || '').trim().slice(0, 5000);
@@ -91,7 +101,7 @@ router.post('/contact', async (req, res) => {
 	}
 
 	return res.redirect('/contact?ok=1');
-});
+}));
 
 router.get('/notices', asyncHandler(async (req, res) => {
 	const q = String(req.query.q || '').trim();

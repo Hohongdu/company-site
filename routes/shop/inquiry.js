@@ -48,6 +48,8 @@ router.post('/inquiries/guest', inquiryLookupCsrf, asyncHandler(async (req, res)
 		});
 	}
 
+	// H-10: 빈 문자열은 || null로 NULL 변환 → 'guest_email = NULL'은 항상 false
+	// (빈 문자열이 DB의 빈 문자열 행과 매칭되는 현상 방지)
 	const [[inquiry]] = await db.execute(
 		`SELECT *
        FROM inquiries
