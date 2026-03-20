@@ -1,149 +1,99 @@
 <%- include('../layouts/company-top', { title: '연혁', active: 'history' }) %>
 
-<!-- Page Banner -->
 <div class="page-banner">
   <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">홈</a></li>
+        <li class="breadcrumb-item active">연혁</li>
+      </ol>
+    </nav>
     <h1>연혁</h1>
     <p>우리 회사의 주요 성장 단계와 성과를 소개합니다</p>
   </div>
 </div>
 
-<section class="section-py">
+<section class="sec-py">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-12 col-lg-8">
 
-        <!-- 2024 -->
-        <div class="em-timeline-item">
-          <div class="em-timeline-year">2024</div>
-          <div class="em-timeline-card">
-            <div class="card p-4">
-              <ul class="list-unstyled mb-0">
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">신규</span>
-                  <span>글로벌 파트너십 확대 — 동남아 3개국 공급망 구축</span>
-                </li>
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">출시</span>
-                  <span>신규 소재 라인업 출시 — 질화규소(Si₃N₄) 양산 체제 돌입</span>
-                </li>
-                <li class="d-flex align-items-start gap-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">인증</span>
-                  <span>환경 경영 시스템 ISO 14001 인증 획득</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <div class="timeline">
 
-        <!-- 2022 -->
-        <div class="em-timeline-item">
-          <div class="em-timeline-year">2022</div>
-          <div class="em-timeline-card">
-            <div class="card p-4">
-              <ul class="list-unstyled mb-0">
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">투자</span>
-                  <span>생산 자동화 라인 구축 — 연간 생산량 200% 향상</span>
-                </li>
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">인증</span>
-                  <span>품질 인증 확대 — 반도체 소재 특수 인증 취득</span>
-                </li>
-                <li class="d-flex align-items-start gap-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">R&amp;D</span>
-                  <span>연구소 독립 법인 분리 — 차세대 소재 개발 가속화</span>
-                </li>
-              </ul>
-            </div>
+          <!-- 2024 -->
+          <div class="timeline-item">
+            <div class="timeline-year">2024</div>
+            <div class="timeline-title">글로벌 성장 · 신소재 확장</div>
+            <p class="timeline-desc">
+              동남아 3개국 공급망 구축 및 글로벌 파트너십 확대.<br>
+              질화규소(Si₃N₄) 신규 소재 양산 체제 돌입.<br>
+              환경 경영 시스템 ISO 14001 인증 획득.
+            </p>
           </div>
-        </div>
 
-        <!-- 2020 -->
-        <div class="em-timeline-item">
-          <div class="em-timeline-year">2020</div>
-          <div class="em-timeline-card">
-            <div class="card p-4">
-              <ul class="list-unstyled mb-0">
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">디지털</span>
-                  <span>온라인 상품몰 오픈 — B2B 디지털 전환 선도</span>
-                </li>
-                <li class="d-flex align-items-start gap-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">수출</span>
-                  <span>일본·대만 수출 본격화 — 해외 매출 비중 30% 달성</span>
-                </li>
-              </ul>
-            </div>
+          <!-- 2022 -->
+          <div class="timeline-item">
+            <div class="timeline-year">2022</div>
+            <div class="timeline-title">생산 자동화 · R&amp;D 독립</div>
+            <p class="timeline-desc">
+              생산 자동화 라인 구축으로 연간 생산량 200% 향상.<br>
+              반도체 소재 특수 인증 취득.<br>
+              연구소 독립 법인 분리로 차세대 소재 개발 가속화.
+            </p>
           </div>
-        </div>
 
-        <!-- 2018 -->
-        <div class="em-timeline-item">
-          <div class="em-timeline-year">2018</div>
-          <div class="em-timeline-card">
-            <div class="card p-4">
-              <ul class="list-unstyled mb-0">
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">계약</span>
-                  <span>국내 주요 제조사 공급 계약 — 삼성, LG 협력사 등록</span>
-                </li>
-                <li class="d-flex align-items-start gap-2">
-                  <span class="badge bg-blue-pale text-em-blue mt-1 flex-shrink-0">조직</span>
-                  <span>연구개발 조직 강화 — 박사급 연구원 10명 이상 영입</span>
-                </li>
-              </ul>
-            </div>
+          <!-- 2020 -->
+          <div class="timeline-item">
+            <div class="timeline-year">2020</div>
+            <div class="timeline-title">디지털 전환 · 해외 수출 본격화</div>
+            <p class="timeline-desc">
+              온라인 B2B 상품몰 오픈 — 디지털 전환 선도.<br>
+              일본·대만 수출 본격화로 해외 매출 비중 30% 달성.
+            </p>
           </div>
-        </div>
 
-        <!-- 2010 -->
-        <div class="em-timeline-item">
-          <div class="em-timeline-year">2010</div>
-          <div class="em-timeline-card">
-            <div class="card p-4">
-              <ul class="list-unstyled mb-0">
-                <li class="d-flex align-items-start gap-2 mb-2">
-                  <span class="badge bg-navy text-white mt-1 flex-shrink-0">인증</span>
-                  <span>ISO 9001 품질 관리 시스템 인증 획득</span>
-                </li>
-                <li class="d-flex align-items-start gap-2">
-                  <span class="badge bg-navy text-white mt-1 flex-shrink-0">확장</span>
-                  <span>공장 증설 — 연면적 3,000평 규모로 생산 시설 확장</span>
-                </li>
-              </ul>
-            </div>
+          <!-- 2018 -->
+          <div class="timeline-item">
+            <div class="timeline-year">2018</div>
+            <div class="timeline-title">주요 제조사 공급 · 연구 인력 강화</div>
+            <p class="timeline-desc">
+              삼성, LG 협력사 등록 — 국내 주요 제조사 공급 계약 체결.<br>
+              박사급 연구원 10명 이상 영입으로 연구개발 조직 강화.
+            </p>
           </div>
-        </div>
 
-        <!-- 2004 -->
-        <div class="em-timeline-item em-timeline-item--last">
-          <div class="em-timeline-year">2004</div>
-          <div class="em-timeline-card">
-            <div class="card p-4 border-navy">
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="badge bg-navy text-white">창립</span>
-                <strong>ENERMADE 창립</strong>
-              </div>
-              <p class="text-em-muted small mb-0">
-                세라믹 가공 전문 기업으로 출발하여 국내 첨단 산업에 고품질 세라믹 솔루션을 공급하기 시작했습니다.
-              </p>
-            </div>
+          <!-- 2010 -->
+          <div class="timeline-item">
+            <div class="timeline-year">2010</div>
+            <div class="timeline-title">ISO 9001 인증 · 생산 시설 확장</div>
+            <p class="timeline-desc">
+              ISO 9001 품질 관리 시스템 인증 획득.<br>
+              연면적 3,000평 규모로 공장 증설 및 생산 시설 확장.
+            </p>
           </div>
-        </div>
 
+          <!-- 2004 -->
+          <div class="timeline-item">
+            <div class="timeline-year">2004</div>
+            <div class="timeline-title">ENERMADE 창립</div>
+            <p class="timeline-desc">
+              세라믹 가공 전문 기업으로 출발. 국내 첨단 산업에 고품질 세라믹 솔루션을 공급하기 시작하며 기술력과 신뢰를 쌓아왔습니다.
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="em-cta">
+<section class="cta-section">
   <div class="container text-center">
-    <h2 class="fw-black mb-3">함께 미래를 만들어 가겠습니다</h2>
-    <p class="mb-4 opacity-75">20년의 경험을 바탕으로 귀사의 성공을 함께 이끌겠습니다</p>
+    <h2>함께 미래를 만들어 가겠습니다</h2>
+    <p>20년의 경험을 바탕으로 귀사의 성공을 함께 이끌겠습니다</p>
     <div class="d-flex gap-3 justify-content-center flex-wrap">
-      <a href="/about" class="btn btn-primary btn-lg">회사 소개</a>
+      <a href="/about" class="btn btn-dark btn-lg">회사 소개</a>
       <a href="/contact" class="btn btn-outline-light btn-lg">문의하기</a>
     </div>
   </div>

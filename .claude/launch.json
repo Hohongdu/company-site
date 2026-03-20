@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "company-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["app.js"],
+      "port": 3002,
+      "env": {
+        "PORT": "3002"
+      }
+    }
+  ]
+}

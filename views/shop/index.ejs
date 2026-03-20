@@ -1,74 +1,89 @@
 <%- include('../layouts/shop-top', { title: 'SHOP', active: 'home' }) %>
 
-<section class="shop-home">
-    <section class="shop-home-hero">
-        <div class="shop-home-hero-inner container">
-            <p class="shop-home-hero-eyebrow">2026 SPRING CURATION</p>
-            <h1>고객 맞춤형 세라믹 솔루션</h1>
-            <p>산업용 고성능 세라믹 부품을 공급합니다. 고객 요구에 최적화된 솔루션을 제공합니다.</p>
-            <div class="shop-home-hero-actions">
-                <a href="/shop/products" class="shop-home-hero-btn is-primary">전체 상품 보기</a>
-                <a href="/shop/cart" class="shop-home-hero-btn">장바구니</a>
-            </div>
+<!-- Hero -->
+<section class="shop-hero">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-12 col-lg-7">
+        <p class="shop-hero__eyebrow">ENERMADE 쇼핑몰</p>
+        <h1 class="shop-hero__title">고객 맞춤형<br>세라믹 솔루션</h1>
+        <p class="shop-hero__sub">산업용 고성능 세라믹 부품을 공급합니다. 고객 요구에 최적화된 솔루션을 제공합니다.</p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="/shop/products" class="btn btn-primary">전체 상품 보기</a>
+          <a href="/shop/inquiries" class="btn btn-outline-light">견적 문의하기</a>
         </div>
-    </section>
-
-    <section class="shop-home-catalog container">
-        <header class="shop-home-catalog-head">
-            <p class="shop-home-count"><strong><%= Number((typeof totalCount !== 'undefined' ? totalCount : null) || (latest || []).length || 0).toLocaleString() %>개</strong> 제품</p>
-
-            <div class="shop-home-category-row" aria-label="카테고리">
-                <a class="shop-home-category-chip is-active" href="/shop/products?category=all">전체</a>
-                <% (categories || []).slice(0, 8).forEach((category) => { %>
-                    <a class="shop-home-category-chip" href="/shop/products?category=<%= category.slug %>"><%= category.name %></a>
-                <% }) %>
-            </div>
-        </header>
-
-        <% if (!latest || latest.length === 0) { %>
-            <div class="shop-home-empty">
-                현재 등록된 상품이 없습니다. 관리자에서 상품을 등록해 주세요.
-            </div>
-        <% } else { %>
-            <div class="shop-home-grid">
-                <% (latest || []).forEach((product) => { %>
-                    <% const thumb = product.image_thumb || product.image || '/images/no-image.png'; %>
-                    <article class="shop-home-card">
-                        <a class="shop-home-thumb" href="/shop/products/<%= product.id %>">
-                            <img src="<%= thumb %>" alt="<%= product.name %>" loading="lazy">
-                        </a>
-
-                        <div class="shop-home-card-body">
-                            <div class="shop-home-badges">
-                                <span class="shop-home-badge">신상품</span>
-                                <span class="shop-home-badge shop-home-badge-safe">전체공개</span>
-                            </div>
-
-                            <h2 class="shop-home-title">
-                                <a href="/shop/products/<%= product.id %>"><%= product.name %></a>
-                            </h2>
-
-                            <% if (product.category_name || product.spec) { %>
-                                <p class="shop-home-meta"><%= product.category_name || product.spec %></p>
-                            <% } %>
-
-                            <div class="shop-home-card-foot">
-                                <strong class="shop-home-price"><%= Number(product.price || 0).toLocaleString() %>원</strong>
-                                <div class="shop-home-card-actions">
-                                    <a class="shop-home-like" href="<%= user ? '/shop/wishlist' : '/auth/login' %>" aria-label="찜하기">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </a>
-                                    <a class="shop-home-sample" href="/shop/products/<%= product.id %>">견적 문의</a>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-                <% }) %>
-            </div>
-        <% } %>
-    </section>
+      </div>
+    </div>
+  </div>
 </section>
+
+<!-- Catalog -->
+<div class="shop-page">
+  <div class="container">
+
+    <!-- Category chips -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div>
+        <h2 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--c-text);margin-bottom:2px;">신규 등록 상품</h2>
+        <p style="font-size:13px;color:var(--c-muted);margin:0;">총 <strong style="color:var(--c-text)"><%= Number((typeof totalCount !== 'undefined' ? totalCount : null) || (latest || []).length || 0).toLocaleString() %></strong>개 제품</p>
+      </div>
+      <a href="/shop/products" class="btn btn-outline-dark btn-sm">전체 보기 →</a>
+    </div>
+
+    <div class="filter-chips mb-5">
+      <a class="chip active" href="/shop/products?category=all">전체</a>
+      <% (categories || []).slice(0, 8).forEach(function(category) { %>
+        <a class="chip" href="/shop/products?category=<%= category.slug %>"><%= category.name %></a>
+      <% }); %>
+    </div>
+
+    <!-- Products -->
+    <% if (!latest || latest.length === 0) { %>
+      <div style="text-align:center;padding:80px 20px;background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="margin:0 auto 16px;color:var(--c-muted-2);">
+          <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16 3H8l-2 4h12l-2-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <p style="color:var(--c-muted);margin:0;">현재 등록된 상품이 없습니다.</p>
+      </div>
+    <% } else { %>
+      <div class="product-grid">
+        <% (latest || []).forEach(function(product) { %>
+          <% const thumb = product.image_thumb || product.image; %>
+          <div class="product-card">
+            <a href="/shop/products/<%= product.id %>">
+              <div class="product-thumb">
+                <% if (thumb) { %>
+                  <img src="<%= thumb %>" alt="<%= product.name %>" loading="lazy">
+                <% } else { %>
+                  <div class="product-thumb-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9l4-4 4 4 4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
+                <% } %>
+              </div>
+            </a>
+            <div class="product-body">
+              <% if (product.category_name) { %>
+                <div class="product-cat"><%= product.category_name %></div>
+              <% } %>
+              <div class="product-name"><a href="/shop/products/<%= product.id %>" style="color:inherit;text-decoration:none;"><%= product.name %></a></div>
+              <% if (product.spec) { %>
+                <div class="product-spec"><%= product.spec %></div>
+              <% } %>
+              <div class="product-price"><%= Number(product.price || 0).toLocaleString() %><span>원</span></div>
+              <form action="/shop/cart/add" method="post" class="product-actions">
+                <input type="hidden" name="productId" value="<%= product.id %>">
+                <input type="number" name="quantity" min="1" value="1" class="product-qty">
+                <button class="btn btn-primary btn-sm flex-grow-1" type="submit">담기</button>
+                <a class="btn btn-outline-secondary btn-sm" href="/shop/products/<%= product.id %>">상세</a>
+              </form>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+  </div>
+</div>
 
 <%- include('../layouts/shop-bottom') %>

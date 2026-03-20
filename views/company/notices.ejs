@@ -2,74 +2,62 @@
 
 <% const currentType = typeof type !== 'undefined' ? type : 'all'; %>
 <% const queryParam = query ? `&q=${encodeURIComponent(query)}` : ''; %>
-<% const typeLabels = { all: '전체', general: '일반공지', product: '제품공지' }; %>
 <% const typeBadge  = { general: '일반', product: '제품' }; %>
 
-<!-- Page Banner -->
 <div class="page-banner">
   <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">홈</a></li>
+        <li class="breadcrumb-item active">공지사항</li>
+      </ol>
+    </nav>
     <h1>공지사항</h1>
     <p>회사 소식과 업데이트를 확인하세요</p>
   </div>
 </div>
 
-<section class="section-py">
+<section class="sec-py">
   <div class="container">
 
-    <!-- Filter + Search row -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-      <!-- Tabs -->
-      <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-sm <%= currentType === 'all'     ? 'btn-dark'          : 'btn-outline-dark' %>"
-           href="/notices?type=all<%= queryParam %>"><%= typeLabels.all %></a>
-        <a class="btn btn-sm <%= currentType === 'general' ? 'btn-dark'          : 'btn-outline-dark' %>"
-           href="/notices?type=general<%= queryParam %>"><%= typeLabels.general %></a>
-        <a class="btn btn-sm <%= currentType === 'product' ? 'btn-dark'          : 'btn-outline-dark' %>"
-           href="/notices?type=product<%= queryParam %>"><%= typeLabels.product %></a>
+    <!-- Filter + Search -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-5">
+      <div class="notice-filters" style="margin-bottom:0;">
+        <a class="notice-filter-btn <%= currentType === 'all'     ? 'active' : '' %>" href="/notices?type=all<%= queryParam %>">전체</a>
+        <a class="notice-filter-btn <%= currentType === 'general' ? 'active' : '' %>" href="/notices?type=general<%= queryParam %>">일반공지</a>
+        <a class="notice-filter-btn <%= currentType === 'product' ? 'active' : '' %>" href="/notices?type=product<%= queryParam %>">제품공지</a>
       </div>
-
-      <!-- Search -->
-      <form class="d-flex gap-2" method="get" action="/notices" style="min-width:220px;">
+      <form class="d-flex gap-2" method="get" action="/notices" style="min-width:240px;">
         <input type="hidden" name="type" value="<%= currentType %>">
-        <input type="text" name="q" class="form-control form-control-sm"
-          placeholder="검색어를 입력하세요" value="<%= query || '' %>">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="검색어를 입력하세요" value="<%= query || '' %>">
         <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">검색</button>
       </form>
     </div>
 
-    <!-- Count -->
-    <p class="small text-em-muted mb-3">총 <strong><%= notices ? notices.length : 0 %></strong>건</p>
+    <p style="font-size:13px;color:var(--c-muted);margin-bottom:16px;">총 <strong style="color:var(--c-text)"><%= notices ? notices.length : 0 %></strong>건</p>
 
-    <!-- Notice List -->
     <% if (!notices || notices.length === 0) { %>
-      <div class="card p-5 text-center">
-        <p class="text-em-muted mb-0">등록된 공지가 없습니다.</p>
+      <div style="text-align:center;padding:80px 20px;background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="margin:0 auto 16px;color:var(--c-muted-2);">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p style="color:var(--c-muted);margin:0;">등록된 공지가 없습니다.</p>
       </div>
     <% } else { %>
-      <div class="card overflow-hidden">
-        <!-- Table header -->
-        <div class="d-none d-md-grid px-4 py-2 bg-surface border-bottom"
-          style="grid-template-columns: 60px 80px 1fr 120px 70px; gap: 1rem; font-size:.8rem; font-weight:800; color:var(--em-muted); letter-spacing:.04em; text-transform:uppercase;">
-          <div>번호</div>
-          <div>구분</div>
-          <div>제목</div>
-          <div>작성일</div>
-          <div class="text-end">조회</div>
-        </div>
-        <!-- Rows -->
+      <div class="notice-list">
         <% notices.forEach((notice, i) => { %>
-          <a href="/notices/<%= notice.id %>"
-            class="d-grid px-4 py-3 border-bottom text-decoration-none em-notice-grid"
-            style="grid-template-columns: 60px 80px 1fr 120px 70px; gap: 1rem; align-items:center; color:var(--em-text); transition: background var(--em-t);"
-            onmouseenter="this.style.background='var(--em-bg)'"
-            onmouseleave="this.style.background=''">
-            <div class="text-em-muted small d-none d-md-block"><%= notices.length - i %></div>
-            <div>
-              <span class="badge bg-blue-pale text-em-blue"><%= typeBadge[notice.category] || '일반' %></span>
+          <a href="/notices/<%= notice.id %>" class="notice-row">
+            <span class="notice-row__cat <%= notice.category === 'product' ? 'product' : 'general' %>">
+              <%= typeBadge[notice.category] || '일반' %>
+            </span>
+            <div class="notice-row__main">
+              <div class="notice-row__title"><%= notice.title %></div>
+              <div class="notice-row__meta"><%= new Date(notice.created_at).toLocaleDateString('ko-KR') %></div>
             </div>
-            <div class="fw-semibold"><%= notice.title %></div>
-            <div class="text-em-muted small d-none d-md-block"><%= new Date(notice.created_at).toLocaleDateString('ko-KR') %></div>
-            <div class="text-em-muted small text-end d-none d-md-block"><%= notice.views || 0 %></div>
+            <div class="notice-row__views">조회 <%= notice.views || 0 %></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="color:var(--c-muted-2);flex-shrink:0;">
+              <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </a>
         <% }) %>
       </div>

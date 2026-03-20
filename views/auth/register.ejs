@@ -1,59 +1,54 @@
 <%- include('../layouts/company-top', { title: '회원가입', active: '' }) %>
 
-<section class="em-auth-wrap">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-12 col-sm-10 col-md-7 col-lg-5">
-        <div class="em-auth-card">
-          <div class="em-auth-header">
-            <div class="em-auth-brand">ENERMADE</div>
-            <h1 class="em-auth-title">회원가입</h1>
-            <p class="em-auth-sub">회사와 상품몰을 함께 이용할 수 있는 계정을 만드세요</p>
-          </div>
-          <div class="em-auth-body">
-            <% if (locals.error) { %>
-              <div class="alert alert-danger mb-3" role="alert"><%= error %></div>
-            <% } %>
-            <form method="POST" action="/auth/register" class="d-grid gap-3">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<div class="auth-page">
+  <div style="width:100%;max-width:460px;margin:0 auto;">
+    <a href="/" class="auth-logo" style="margin-bottom:32px;">ENER<span>MADE</span></a>
 
-              <div>
-                <label class="form-label" for="reg-name">이름</label>
-                <input type="text" id="reg-name" name="name" class="form-control"
-                  placeholder="이름을 입력하세요" required>
-              </div>
+    <div class="auth-card">
+      <div class="auth-title">계정 만들기</div>
+      <p class="auth-sub">회사와 상품몰을 함께 이용할 수 있는 계정을 만드세요</p>
 
-              <div>
-                <label class="form-label" for="reg-email">이메일</label>
-                <input type="email" id="reg-email" name="email" class="form-control"
-                  placeholder="example@company.com" required>
-              </div>
+      <% if (locals.error) { %>
+        <div class="alert alert-danger mb-3" role="alert"><%= error %></div>
+      <% } %>
 
-              <div>
-                <label class="form-label" for="reg-pw">비밀번호</label>
-                <input type="password" id="reg-pw" name="password" class="form-control"
-                  placeholder="비밀번호를 입력하세요" required>
-              </div>
+      <form method="POST" action="/auth/register" class="d-grid gap-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-              <div>
-                <label class="form-label" for="reg-pw2">비밀번호 확인</label>
-                <input type="password" id="reg-pw2" name="passwordConfirm" class="form-control"
-                  placeholder="비밀번호를 다시 입력하세요" required>
-              </div>
-
-              <button type="submit" class="btn btn-dark btn-lg">회원가입 완료</button>
-            </form>
-
-            <hr class="divider my-4">
-            <p class="text-center text-em-muted small mb-0">
-              이미 계정이 있으신가요?
-              <a href="/auth/login" class="fw-bold text-navy">로그인하기 →</a>
-            </p>
-          </div>
+        <div>
+          <label class="form-label" for="reg-name">이름</label>
+          <input type="text" id="reg-name" name="name" class="form-control"
+            placeholder="이름을 입력하세요" required>
         </div>
-      </div>
+
+        <div>
+          <label class="form-label" for="reg-email">이메일</label>
+          <input type="email" id="reg-email" name="email" class="form-control"
+            placeholder="example@company.com" required>
+        </div>
+
+        <div>
+          <label class="form-label" for="reg-pw">비밀번호</label>
+          <input type="password" id="reg-pw" name="password" class="form-control"
+            placeholder="비밀번호를 입력하세요" required>
+        </div>
+
+        <div>
+          <label class="form-label" for="reg-pw2">비밀번호 확인</label>
+          <input type="password" id="reg-pw2" name="passwordConfirm" class="form-control"
+            placeholder="비밀번호를 다시 입력하세요" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding:12px;">회원가입 완료</button>
+      </form>
+
+      <hr class="my-4">
+      <p class="auth-footer">
+        이미 계정이 있으신가요?
+        <a href="/auth/login">로그인하기 →</a>
+      </p>
     </div>
   </div>
-</section>
+</div>
 
 <%- include('../layouts/company-bottom') %>
