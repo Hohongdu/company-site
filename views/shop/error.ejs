@@ -1,16 +1,18 @@
-<%- include('../layouts/shop-top', { title: '오류', active: '' }) %>
+<%- include('../layouts/shop-top', { title: '오류 안내', active: '' }) %>
 
-<div class="result-page">
-  <div class="result-card">
-    <div class="result-icon" style="color:#e67e22;">⚠️</div>
-    <div class="result-title">요청 처리 중 오류가 발생했습니다</div>
-    <div class="result-sub"><%= typeof message !== 'undefined' && message ? message : '잠시 후 다시 시도해주세요.' %></div>
-
-    <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">
-      <a href="<%= typeof backHref !== 'undefined' && backHref ? backHref : '/shop/account/orders' %>" class="btn btn-outline">이전 페이지로</a>
-      <a href="/shop" class="btn btn-primary">쇼핑몰 홈</a>
+<section class="section error-center">
+    <div class="container">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <h3 class="mb-2">요청 처리 중 오류가 발생했습니다.</h3>
+                <p class="text-muted mb-4"><%= message || '잠시 후 다시 시도해주세요.' %></p>
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <a class="btn btn-outline-secondary" href="<%= backHref || '/shop/account/orders' %>">주문 내역으로</a>
+                    <a class="btn btn-primary" href="/shop">상품몰 홈</a>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
+</section>
 
 <%- include('../layouts/shop-bottom') %>

@@ -1,93 +1,31 @@
-<%- include('../layouts/shop-top', { title: '주문 조회', active: '' }) %>
+<%- include('../layouts/shop-top', { title: '비회원 주문 조회' , active: 'order_lookup' }) %>
 
-<div class="lookup-wrap">
-  <div class="lookup-card">
-    <div class="lookup-head">
-      <div class="lookup-title">비회원 주문 조회</div>
-      <div class="lookup-sub">주문번호와 이메일 또는 연락처를 입력하면 주문 상태를 확인할 수 있습니다.</div>
-    </div>
-    <div class="lookup-body">
-      <% if (typeof error !== 'undefined' && error) { %>
-        <div class="alert alert-danger" style="margin-bottom:1rem;"><%= error %></div>
-      <% } %>
+<div class="shop-card p-4">
+    <h3 class="fw-bold mb-2">비회원 주문 조회</h3>
+    <p class="text-muted mb-4">주문번호와 이메일 또는 연락처를 입력하면 주문 상태를 확인할 수 있습니다.</p>
 
-      <form action="/shop/orders/guest" method="POST">
-        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-          <div class="form-group" style="grid-column:1/-1;">
-            <label class="form-label">주문번호 <span style="color:#e74c3c;">*</span></label>
-            <input class="form-control" name="orderNumber" required
-              value="<%= (typeof form !== 'undefined' && form) ? form.orderNumber || '' : '' %>">
-          </div>
-          <div class="form-group">
-            <label class="form-label">이메일</label>
-            <input class="form-control" type="email" name="guestEmail"
-              value="<%= (typeof form !== 'undefined' && form) ? form.guestEmail || '' : '' %>">
-          </div>
-          <div class="form-group">
-            <label class="form-label">연락처</label>
-            <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
-              value="<%= (typeof form !== 'undefined' && form) ? form.guestPhone || '' : '' %>">
-          </div>
-        </div>
-        <div style="margin-top:.75rem;">
-          <button class="btn btn-primary" type="submit">조회하기</button>
-        </div>
-      </form>
+    <% if (error) { %>
+        <div class="alert alert-warning"><%= error %></div>
+        <% } %>
 
-      <!-- Order result -->
-      <% if (typeof order !== 'undefined' && order) { %>
-        <div style="margin-top:1.5rem;">
-          <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:1rem;">주문 정보</h3>
-
-          <div style="background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:1rem;margin-bottom:1rem;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.875rem;">
-              <span style="color:#888;">주문번호</span>
-              <strong><%= order.order_number %></strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.875rem;">
-              <span style="color:#888;">주문 상태</span>
-              <span class="badge"><%= order.status %></span>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.875rem;">
-              <span style="color:#888;">결제 금액</span>
-              <strong>₩<%= Number(order.total_amount || 0).toLocaleString() %></strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:.8rem;">
-              <span style="color:#888;">주문일</span>
-              <span><%= new Date(order.created_at).toLocaleDateString('ko-KR') %></span>
-            </div>
-          </div>
-
-          <!-- Items -->
-          <% const _lookupItems = (typeof items !== 'undefined' && Array.isArray(items)) ? items : []; %>
-          <% if (_lookupItems.length > 0) { %>
-            <h4 style="font-size:.875rem;font-weight:700;margin-bottom:.75rem;">주문 상품</h4>
-            <div style="display:flex;flex-direction:column;gap:.5rem;">
-              <% _lookupItems.forEach(function(it) { %>
-                <div class="order-item-row">
-                  <div class="order-item-thumb">
-                    <% if (it.product_image) { %>
-                      <img src="<%= it.product_image %>" alt="<%= it.product_name %>" style="width:100%;height:100%;object-fit:cover;">
-                    <% } else { %>
-                      <div style="width:100%;height:100%;background:#f2f2f2;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#bbb;">없음</div>
-                    <% } %>
-                  </div>
-                  <div class="order-item-meta">
-                    <div class="order-item-name"><%= it.product_name %></div>
-                    <div style="font-size:.8rem;color:#888;margin-top:.2rem;">
-                      수량: <%= it.quantity %> &middot; ₩<%= Number(it.unit_price || 0).toLocaleString() %>
-                    </div>
-                  </div>
-                  <div class="order-item-total">₩<%= Number(it.total_price || 0).toLocaleString() %></div>
+            <form action="/shop/orders/guest" method="post" class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">주문번호</label>
+                    <input class="form-control" name="orderNumber" required value="<%= form.orderNumber %>">
                 </div>
-              <% }); %>
-            </div>
-          <% } %>
-        </div>
-      <% } %>
-    </div>
-  </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">이메일</label>
+                    <input class="form-control" type="email" name="guestEmail" value="<%= form.guestEmail %>">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">연락처</label>
+                    <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
+                        value="<%= form.guestPhone %>">
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary">조회하기</button>
+                </div>
+            </form>
 </div>
 
 <%- include('../layouts/shop-bottom') %>

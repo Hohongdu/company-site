@@ -1,161 +1,167 @@
 <%- include('../layouts/shop-top', { title: product.name, active: 'products' }) %>
 
-<!-- Breadcrumb / top bar -->
-<div data-i18n-auto style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem;">
-  <a href="/shop/products" class="btn btn-outline btn-sm">← 목록으로</a>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-    <a href="/shop/cart" class="btn btn-outline btn-sm">장바구니</a>
-    <% if (user) { %>
-      <form action="/shop/wishlist/toggle" method="POST" style="display:inline;">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="hidden" name="productId" value="<%= product.id %>">
-        <button type="submit" class="btn btn-sm <%= wished ? 'btn-dark' : 'btn-outline' %>">
-          <%= wished ? '♥ 찜 해제' : '♡ 찜하기' %>
-        </button>
-      </form>
-    <% } %>
-  </div>
-</div>
+<div class="shop-page">
+  <div class="container">
 
-<!-- Product detail layout -->
-<div class="product-detail-layout">
-  <!-- Left: image -->
-  <div class="product-detail-image-wrap">
-    <% if (product.image) { %>
-      <img src="<%= product.image %>" alt="<%= product.name %>">
-    <% } else { %>
-      <div style="width:100%;height:360px;display:flex;align-items:center;justify-content:center;background:#f2f2f2;color:#bbb;border-radius:8px;">이미지 없음</div>
-    <% } %>
-  </div>
-
-  <!-- Right: info card -->
-  <div class="product-detail-info-card">
-    <% if (product.category_name) { %><div class="product-detail-cat"><%= product.category_name %></div><% } %>
-    <h1 class="product-detail-name"><%= product.name %></h1>
-    <% if (product.code) { %><div class="product-detail-code">제품 코드: <%= product.code %></div><% } %>
-
-    <div class="product-detail-price">
-      <% if (product.price) { %>₩<%= Number(product.price).toLocaleString() %><% } else { %>가격 문의<% } %>
+    <!-- Breadcrumb + actions -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <a href="/shop/products" class="btn btn-sm btn-outline-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:4px;">
+          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        목록으로
+      </a>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/shop/cart" class="btn btn-sm btn-outline-dark">장바구니</a>
+        <% if (user) { %>
+          <form action="/shop/wishlist/toggle" method="post" class="m-0">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+            <input type="hidden" name="productId" value="<%= product.id %>">
+            <button class="btn btn-sm <%= wished ? 'btn-danger' : 'btn-outline-secondary' %>" type="submit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="<%= wished ? 'currentColor' : 'none' %>" style="display:inline;vertical-align:-1px;margin-right:3px;">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+              <%= wished ? '찜 해제' : '찜하기' %>
+            </button>
+          </form>
+        <% } %>
+      </div>
     </div>
 
-    <% if (reviewStats && reviewStats.review_count > 0) { %>
-      <div style="font-size:.8125rem;color:#888;margin-bottom:1rem;">
-        평균 평점 <strong><%= Number(reviewStats.avg_rating).toFixed(1) %></strong>점
-        (<%= reviewStats.review_count %>건)
+    <!-- Product main -->
+    <div class="row g-4 mb-5">
+      <!-- Image -->
+      <div class="col-12 col-lg-6">
+        <div class="product-detail-img">
+          <img src="<%= product.image || '' %>" alt="<%= product.name %>"
+            onerror="this.style.display='none';"
+            style="width:100%;height:100%;object-fit:cover;">
+        </div>
       </div>
-    <% } %>
 
-    <!-- Spec section -->
-    <% if (product.spec) { %>
-      <div class="product-detail-spec">
-        <div class="product-detail-spec-label">규격 / 스펙</div>
-        <div class="product-detail-spec-value"><%= product.spec %></div>
-      </div>
-    <% } %>
-
-    <!-- Description -->
-    <% if (product.description) { %>
-      <div style="margin-bottom:1.25rem;">
-        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#888;margin-bottom:.4rem;">제품 설명</div>
-        <div style="font-size:.875rem;line-height:1.65;color:#555;"><%= product.description %></div>
-      </div>
-    <% } %>
-
-    <hr style="margin:1.25rem 0;border:none;border-top:1px solid #e8e8e8;">
-
-    <!-- Add to cart form -->
-    <form action="/shop/cart/add" method="POST" class="product-detail-add-form">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="productId" value="<%= product.id %>">
-      <div class="product-detail-qty">
-        <label class="form-label" style="font-size:.8rem;margin-bottom:.35rem;">수량</label>
-        <input class="form-control" type="number" name="quantity" min="1" value="1" style="width:90px;">
-      </div>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem;">
-        <button type="submit" class="btn btn-primary btn-lg" style="flex:1;">장바구니 담기</button>
-      </div>
-    </form>
-
-    <div style="font-size:.75rem;color:#aaa;margin-top:.75rem;">
-      비회원도 장바구니 이용 가능 (세션 종료 시 초기화)
-    </div>
-  </div>
-</div>
-
-<!-- Reviews section -->
-<section style="margin-top:2.5rem;">
-  <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:1.75rem;">
-    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">리뷰 / 평점</h3>
-
-    <% if (user) { %>
-      <form action="/shop/products/<%= product.id %>/reviews" method="POST" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <select class="form-select" name="rating" required style="width:100px;">
-          <option value="">평점</option>
-          <option value="5">5점</option>
-          <option value="4">4점</option>
-          <option value="3">3점</option>
-          <option value="2">2점</option>
-          <option value="1">1점</option>
-        </select>
-        <input class="form-control" style="flex:1;min-width:200px;" name="content" placeholder="리뷰 내용을 입력해주세요." required>
-        <button class="btn btn-primary" type="submit">등록</button>
-      </form>
-    <% } else { %>
-      <div class="alert alert-success" style="font-size:.875rem;margin-bottom:1.25rem;">
-        리뷰를 작성하려면 <a href="/auth/login">로그인</a>해주세요.
-      </div>
-    <% } %>
-
-    <% const _reviews = (typeof reviews !== 'undefined' && Array.isArray(reviews)) ? reviews : []; %>
-    <% if (_reviews.length === 0) { %>
-      <p style="color:#aaa;font-size:.875rem;">등록된 리뷰가 없습니다.</p>
-    <% } else { %>
-      <div style="display:flex;flex-direction:column;gap:.75rem;">
-        <% _reviews.forEach(function(review) { %>
-          <div style="border:1px solid #f0f0f0;border-radius:8px;padding:1rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-              <strong style="font-size:.875rem;"><%= review.user_name || '고객' %></strong>
-              <span style="font-size:.8rem;color:#888;"><%= review.rating %>점 &middot; <%= new Date(review.created_at).toLocaleDateString('ko-KR') %></span>
-            </div>
-            <div style="font-size:.875rem;color:#555;"><%= review.content %></div>
+      <!-- Info -->
+      <div class="col-12 col-lg-6">
+        <div class="product-detail-badge">
+          <%= product.category_name || '미분류' %>
+        </div>
+        <h1 class="product-detail-name"><%= product.name %></h1>
+        <% if (product.code) { %>
+          <p class="product-detail-spec">코드: <strong><%= product.code %></strong></p>
+        <% } %>
+        <% if (product.spec) { %>
+          <div style="background:var(--c-bg-2);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--c-muted);margin-bottom:6px;">규격/스펙</div>
+            <div style="font-size:14px;color:var(--c-text);font-weight:500;"><%= product.spec %></div>
           </div>
-        <% }); %>
-      </div>
-    <% } %>
-  </div>
-</section>
+        <% } %>
 
-<!-- Related products -->
-<% const _related = (typeof related !== 'undefined' && Array.isArray(related)) ? related : []; %>
-<% if (_related.length > 0) { %>
-  <section style="margin-top:2.5rem;">
-    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">연관 상품</h3>
-    <div class="product-grid">
-      <% _related.forEach(function(item) { %>
-        <div class="product-card">
-          <a href="/shop/products/<%= item.id %>" class="product-thumb">
-            <% if (item.image) { %>
-              <img src="<%= item.image %>" alt="<%= item.name %>" loading="lazy">
-            <% } else { %>
-              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f2f2f2;color:#bbb;font-size:.75rem;">이미지 없음</div>
-            <% } %>
-          </a>
-          <div class="product-body">
-            <% if (item.category_name) { %><div class="product-cat"><%= item.category_name %></div><% } %>
-            <div class="product-name"><%= item.name %></div>
-            <% if (item.spec) { %><div class="product-spec"><%= item.spec %></div><% } %>
-          </div>
-          <div class="product-foot">
-            <div class="product-price">
-              <% if (item.price) { %>₩<%= Number(item.price).toLocaleString() %><% } else { %>문의 요망<% } %>
-            </div>
-            <a href="/shop/products/<%= item.id %>" class="btn btn-outline btn-sm">보기</a>
+        <!-- Rating -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <div style="font-size:13px;color:var(--c-muted);">
+            평점 <strong style="color:var(--c-text)"><%= reviewStats?.avg_rating ? Number(reviewStats.avg_rating).toFixed(1) : '0.0' %></strong>
+            (<%= reviewStats?.review_count || 0 %>건)
           </div>
         </div>
-      <% }); %>
+
+        <div class="product-detail-price">
+          <%= Number(product.price || 0).toLocaleString() %><small>원</small>
+        </div>
+
+        <hr class="product-detail-divider">
+
+        <form action="/shop/cart/add" method="post" class="product-add-form">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+          <input type="hidden" name="productId" value="<%= product.id %>">
+          <input type="number" name="quantity" min="1" value="1" class="form-control product-add-qty" style="width:90px;">
+          <button class="btn btn-primary flex-grow-1" type="submit" style="padding:12px;">장바구니 담기</button>
+        </form>
+
+        <p style="font-size:12px;color:var(--c-muted-2);margin-top:12px;">비회원도 장바구니 사용 가능 (세션 종료 시 초기화)</p>
+
+        <% if (product.description) { %>
+          <hr class="product-detail-divider">
+          <div class="product-desc"><%= product.description %></div>
+        <% } %>
+      </div>
     </div>
-  </section>
-<% } %>
+
+    <!-- Reviews -->
+    <div style="background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);padding:32px;margin-bottom:24px;" id="reviews">
+      <h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--c-text);margin-bottom:20px;">리뷰/평점</h3>
+      <% if (user) { %>
+        <form class="row g-2 mb-4" method="post" action="/shop/products/<%= product.id %>
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">/reviews">
+          <div class="col-md-2 col-sm-4">
+            <select class="form-select" name="rating" required>
+              <option value="">평점</option>
+              <option value="5">5점</option>
+              <option value="4">4점</option>
+              <option value="3">3점</option>
+              <option value="2">2점</option>
+              <option value="1">1점</option>
+            </select>
+          </div>
+          <div class="col-md-8 col-sm-12">
+            <input class="form-control" name="content" placeholder="리뷰 내용을 입력해주세요." required>
+          </div>
+          <div class="col-md-2 col-sm-4">
+            <button class="btn btn-primary w-100" type="submit">등록</button>
+          </div>
+        </form>
+      <% } else { %>
+        <div class="alert alert-info mb-4">리뷰를 작성하려면 <a href="/auth/login">로그인</a>해주세요.</div>
+      <% } %>
+
+      <% if (!reviews || reviews.length === 0) { %>
+        <p style="color:var(--c-muted);font-size:14px;">등록된 리뷰가 없습니다.</p>
+      <% } else { %>
+        <div class="d-grid gap-3">
+          <% reviews.forEach(function(review) { %>
+            <div style="padding:16px;background:var(--c-bg-2);border-radius:var(--r-lg);">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong style="font-size:14px;color:var(--c-text);"><%= review.user_name || '고객' %></strong>
+                <span style="font-family:var(--font-head);font-size:12px;font-weight:700;color:var(--c-accent);">★ <%= review.rating %>점</span>
+              </div>
+              <div style="font-size:12px;color:var(--c-muted-2);margin-bottom:8px;"><%= new Date(review.created_at).toLocaleDateString('ko-KR') %></div>
+              <div style="font-size:14px;color:var(--c-text-2);"><%= review.content %></div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Related -->
+    <% if (related && related.length > 0) { %>
+      <div style="background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);padding:32px;">
+        <h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--c-text);margin-bottom:20px;">연관 상품</h3>
+        <div class="product-grid">
+          <% related.forEach(function(item) { %>
+            <div class="product-card">
+              <a href="/shop/products/<%= item.id %>">
+                <div class="product-thumb">
+                  <% if (item.image) { %>
+                    <img src="<%= item.image %>" alt="<%= item.name %>">
+                  <% } else { %>
+                    <div class="product-thumb-placeholder">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </div>
+                  <% } %>
+                </div>
+              </a>
+              <div class="product-body">
+                <div class="product-name"><a href="/shop/products/<%= item.id %>" style="color:inherit;text-decoration:none;"><%= item.name %></a></div>
+                <div class="product-price"><%= Number(item.price || 0).toLocaleString() %><span>원</span></div>
+                <div class="product-actions">
+                  <a class="btn btn-outline-primary btn-sm w-100" href="/shop/products/<%= item.id %>">상세보기</a>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</div>
 
 <%- include('../layouts/shop-bottom') %>

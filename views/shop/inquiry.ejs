@@ -1,62 +1,87 @@
-<%- include('../layouts/shop-top', { title: '문의하기', active: 'inquiry' }) %>
+<%- include('../layouts/shop-top', { title: '문의하기' , active: 'inquiry' }) %>
 
-<div class="inquiry-form-card">
-  <div style="margin-bottom:1.5rem;">
-    <h1 style="font-size:1.25rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem;">문의하기</h1>
-    <p style="font-size:.875rem;color:#888;">주문/배송/제품 문의 내용을 남겨주시면 확인 후 답변드리겠습니다.</p>
-  </div>
+<div class="shop-card p-4">
+    <h3 class="fw-bold mb-2" data-i18n data-i18n-ko="문의하기"
+       >문의하기</h3>
+    <p class="text-muted mb-4" data-i18n data-i18n-ko="주문/배송/제품 문의 내용을 남겨주시면 확인 후 답변드리겠습니다."
+       
+       
+       >
+        주문/배송/제품 문의 내용을 남겨주시면 확인 후 답변드리겠습니다.
+    </p>
 
-  <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert alert-success">문의가 등록되었습니다. 빠르게 확인 후 연락드리겠습니다.</div>
-  <% } %>
-  <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-danger"><%= error %></div>
-  <% } %>
-
-  <form action="/shop/inquiries" method="POST">
-    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-
-    <div class="form-group">
-      <label class="form-label">주문번호 (선택)</label>
-      <input class="form-control" name="orderNumber" value="<%= (typeof form !== 'undefined' && form) ? form.orderNumber || '' : '' %>" placeholder="주문번호를 입력하세요 (선택사항)">
-    </div>
-
-    <% if (typeof user === 'undefined' || !user) { %>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
-        <div class="form-group" style="grid-column:1/-1;">
-          <label class="form-label">이름 <span style="color:#e74c3c;">*</span></label>
-          <input class="form-control" name="guestName" required value="<%= (typeof form !== 'undefined' && form) ? form.guestName || '' : '' %>">
+    <% if (success) { %>
+        <div class="alert alert-success" data-i18n data-i18n-ko="문의가 등록되었습니다. 빠르게 확인 후 연락드리겠습니다."
+           
+           >
+            문의가 등록되었습니다. 빠르게 확인 후 연락드리겠습니다.
         </div>
-        <div class="form-group">
-          <label class="form-label">이메일</label>
-          <input class="form-control" type="email" name="guestEmail" value="<%= (typeof form !== 'undefined' && form) ? form.guestEmail || '' : '' %>">
-        </div>
-        <div class="form-group">
-          <label class="form-label">연락처</label>
-          <input class="form-control" name="guestPhone" placeholder="010-0000-0000" value="<%= (typeof form !== 'undefined' && form) ? form.guestPhone || '' : '' %>">
-        </div>
-      </div>
-    <% } %>
+        <% } %>
+            <% if (error) { %>
+                <div class="alert alert-warning"><%= error %></div>
+                <% } %>
 
-    <div class="form-group">
-      <label class="form-label">문의 제목 <span style="color:#e74c3c;">*</span></label>
-      <input class="form-control" name="title" required value="<%= (typeof form !== 'undefined' && form) ? form.title || '' : '' %>">
-    </div>
+                    <form action="/shop/inquiries" method="post" class="row g-3">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" data-i18n data-i18n-ko="주문번호 (선택)"
+                               
+                               >주문번호 (선택)</label>
+                            <input class="form-control" name="orderNumber" value="<%= form.orderNumber %>">
+                        </div>
 
-    <div class="form-group">
-      <label class="form-label">문의 내용 <span style="color:#e74c3c;">*</span></label>
-      <textarea class="form-control" rows="6" name="content" required><%= (typeof form !== 'undefined' && form) ? form.content || '' : '' %></textarea>
-    </div>
+                        <% if (!user) { %>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" data-i18n data-i18n-ko="이름"
+                                   >이름</label>
+                                <input class="form-control" name="guestName" required value="<%= form.guestName %>">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" data-i18n data-i18n-ko="이메일"
+                                   >이메일</label>
+                                <input class="form-control" type="email" name="guestEmail"
+                                    value="<%= form.guestEmail %>">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" data-i18n data-i18n-ko="연락처"
+                                   >연락처</label>
+                                <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
+                                    data-i18n-placeholder data-i18n-placeholder-ko="010-0000-0000"
+                                   
+                                   
+                                   
+                                    value="<%= form.guestPhone %>">
+                            </div>
+                            <% } %>
 
-    <div style="margin-top:1rem;">
-      <button class="btn btn-primary" type="submit">문의 등록</button>
-    </div>
-  </form>
+                                <div class="col-12">
+                                    <label class="form-label" data-i18n data-i18n-ko="문의 제목"
+                                       >문의 제목</label>
+                                    <input class="form-control" name="title" required value="<%= form.title %>">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" data-i18n data-i18n-ko="문의 내용"
+                                       >문의 내용</label>
+                                    <textarea class="form-control" rows="6" name="content"
+                                        required><%= form.content %></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-primary" data-i18n data-i18n-ko="문의 등록"
+                                       >문의 등록</button>
+                                </div>
+                    </form>
 
-  <div style="margin-top:1.5rem;font-size:.8125rem;color:#aaa;">
-    비회원 문의 답변 조회가 필요하신가요?
-    <a href="/shop/inquiries/guest">비회원 문의 조회</a>
-  </div>
+                    <div class="mt-4 text-muted small">
+                        <span data-i18n data-i18n-ko="비회원 문의 답변 조회가 필요하신가요?"
+                           
+                           
+                           >
+                            비회원 문의 답변 조회가 필요하신가요?
+                        </span>
+                        <a href="/shop/inquiries/guest" data-i18n data-i18n-ko="비회원 문의 조회"
+                           
+                           >비회원 문의 조회</a>
+                    </div>
 </div>
 
 <%- include('../layouts/shop-bottom') %>
