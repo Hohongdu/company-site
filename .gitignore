@@ -12,3 +12,8 @@ npm-debug.log
 *.jpg
 screenshot-*.png
 screenshot-*.jpg
+
+# Dev tools
+.playwright-mcp/
+public/screenshots/
+deploy_pi.py
