@@ -15,7 +15,7 @@
   position: sticky;
   top: 0;
   z-index: 1040;
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .shop-header__inner {
@@ -393,7 +393,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
    SHOP FOOTER
 ══════════════════════════════════════ */
 .shop-footer {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   border-top: 1px solid rgba(255,255,255,.07);
   padding: 20px 0;
   margin-top: auto;
@@ -425,7 +425,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
    SHOP HOMEPAGE HERO
 ══════════════════════════════════════ */
 .shop-hero {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   padding: 72px 0 56px;
   position: relative;
   overflow: hidden;
@@ -863,7 +863,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   top: 90px;
 }
 .shop-account-sidebar__head {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   padding: 24px;
 }
 .shop-account-sidebar__name {

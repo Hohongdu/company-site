@@ -107,13 +107,44 @@
 	}
 
 	function autoTextCandidates() {
-		return Array.from(document.querySelectorAll('[data-i18n-auto]')).map((el) => {
+		// 1) 명시적으로 data-i18n-auto 태그된 요소
+		const tagged = Array.from(document.querySelectorAll('[data-i18n-auto]')).map((el) => {
 			const src = el.getAttribute('data-i18n-auto-ko') || el.textContent.trim();
 			if (src && !el.getAttribute('data-i18n-auto-ko')) {
 				el.setAttribute('data-i18n-auto-ko', src);
 			}
 			return { el, src };
 		});
+
+		// 2) <main> 내 정적 텍스트 요소 자동 감지 — 개별 뷰 파일 수정 없이 전 페이지 적용
+		const mainEl = document.querySelector('main');
+		if (!mainEl) return tagged;
+
+		const taggedSet = new Set(tagged.map((t) => t.el));
+		const autoScanned = [];
+
+		// 안전하게 번역 가능한 정적 요소 선택자
+		const STATIC_SELECTORS = [
+			'h1','h2','h3','h4','h5','h6',
+			'.sec-label','.page-banner h1','.page-banner p',
+			'label','legend','th',
+			'.card-title','.acct-card__title','.product-name',
+			'.cart-summary-title','.sidebar-label',
+		].join(',');
+
+		mainEl.querySelectorAll(STATIC_SELECTORS).forEach((el) => {
+			// 이미 처리됐거나 data-i18n-auto 부모 아래에 있으면 스킵
+			if (taggedSet.has(el) || el.closest('[data-i18n-auto]')) return;
+			// 자식 엘리먼트가 있으면 스킵 (동적 렌더 포함 가능)
+			if (el.children.length > 0) return;
+			const src = el.getAttribute('data-i18n-auto-ko') || el.textContent.trim();
+			if (!src || src.length < 1) return;
+			if (!el.getAttribute('data-i18n-auto-ko')) el.setAttribute('data-i18n-auto-ko', src);
+			autoScanned.push({ el, src });
+		});
+
+		appendLog('autoScan', { tagged: tagged.length, scanned: autoScanned.length });
+		return [...tagged, ...autoScanned];
 	}
 
 	async function applyLanguage(lang) {

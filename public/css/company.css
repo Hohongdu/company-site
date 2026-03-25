@@ -121,7 +121,7 @@ html, body {
 .site-nav__hamburger span {
   display: block;
   height: 2px;
-  background: var(--c-navy);
+  background: var(--c-text);
   border-radius: 2px;
   transition: all .25s;
 }
@@ -252,11 +252,11 @@ html, body {
 }
 .mob-drawer__btn-outline:hover { background: var(--c-bg-2); }
 .mob-drawer__btn-dark {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   color: #fff;
   flex: 1;
 }
-.mob-drawer__btn-dark:hover { background: #1e3a5f; }
+.mob-drawer__btn-dark:hover { background: var(--c-bg-navy-2); }
 .mob-drawer__btn-admin {
   background: var(--c-accent-lt);
   color: var(--c-accent);
@@ -347,7 +347,7 @@ html, body {
    HERO — HOMEPAGE
 ══════════════════════════════════════ */
 .hero {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   min-height: 92vh;
   display: flex;
   align-items: center;
@@ -535,7 +535,7 @@ html, body {
    STATS SECTION
 ══════════════════════════════════════ */
 .stats-section {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   padding: 72px 0;
 }
 .stats-grid {
@@ -638,7 +638,7 @@ html, body {
    FOOTER
 ══════════════════════════════════════ */
 .site-footer {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   color: rgba(255,255,255,.5);
   padding: 64px 0 0;
 }
@@ -875,7 +875,7 @@ html, body {
    CONTACT
 ══════════════════════════════════════ */
 .contact-info-card {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   border-radius: var(--r-xl);
   padding: 36px 32px;
   height: 100%;
