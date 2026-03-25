@@ -87,6 +87,118 @@
 [data-theme="dark"] .dropdown-item { color: var(--c-text-2); }
 [data-theme="dark"] .dropdown-item:hover { background: var(--c-bg-3); }
 
+/* ── Dark Mode: Shop & Company Component Overrides ── */
+
+/* Shop header uses --c-navy as bg; since --c-navy flips to light in dark mode,
+   explicitly pin the bg to a fixed dark color */
+[data-theme="dark"] .shop-header { background: #0f172a; border-bottom-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .shop-account-sidebar__head { background: #0f172a; }
+
+/* White-background cards & containers */
+[data-theme="dark"] .chip { background: var(--c-bg-2); color: var(--c-text-2); }
+[data-theme="dark"] .product-card { background: var(--c-bg-2); }
+[data-theme="dark"] .sidebar-card { background: var(--c-bg-2); }
+[data-theme="dark"] .cart-summary { background: var(--c-bg-2); }
+[data-theme="dark"] .payment-result__card { background: var(--c-bg-2); }
+[data-theme="dark"] .shop-account-sidebar { background: var(--c-bg-2); }
+[data-theme="dark"] .inquiry-card { background: var(--c-bg-2); }
+[data-theme="dark"] .acct-sidebar { background: var(--c-bg-2); }
+[data-theme="dark"] .acct-card { background: var(--c-bg-2); border-color: var(--c-border); }
+[data-theme="dark"] .acct-card--danger { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.35); }
+
+/* Company navbar & mobile drawer */
+[data-theme="dark"] .site-nav { background: var(--c-bg); }
+[data-theme="dark"] .mob-drawer { background: var(--c-bg); }
+[data-theme="dark"] .login-box { background: var(--c-bg-2); }
+
+/* Account card internals */
+[data-theme="dark"] .acct-card__head { border-color: var(--c-border); }
+[data-theme="dark"] .acct-card__title { color: var(--c-text); }
+[data-theme="dark"] .acct-card__desc { color: var(--c-muted); }
+[data-theme="dark"] .acct-addr-item { background: var(--c-bg-3); border-color: var(--c-border); }
+[data-theme="dark"] .acct-addr-label { color: var(--c-text); }
+[data-theme="dark"] .acct-addr-detail { color: var(--c-muted); }
+[data-theme="dark"] .acct-empty { color: var(--c-muted); }
+
+/* Account nav links */
+[data-theme="dark"] .acct-nav-group-label { color: var(--c-muted); }
+[data-theme="dark"] .acct-nav-link { color: var(--c-text-2); }
+[data-theme="dark"] .acct-nav-link:hover,
+[data-theme="dark"] .acct-nav-link.is-active { background: rgba(234,88,12,.15); color: var(--c-accent); border-color: rgba(234,88,12,.3); }
+
+/* Accordion & inquiry */
+[data-theme="dark"] .acct-inquiry-item { border-color: var(--c-border); }
+[data-theme="dark"] .acct-inquiry-header { background: var(--c-bg-3); border-color: var(--c-border); }
+[data-theme="dark"] .acct-accordion-trigger { background: var(--c-bg-3); }
+[data-theme="dark"] .acct-accordion-trigger:hover { background: var(--c-bg-2); }
+[data-theme="dark"] .acct-accordion-body { background: var(--c-bg-2); border-color: var(--c-border); }
+[data-theme="dark"] .acct-inquiry-answer { background: rgba(22,163,74,.1); border-color: rgba(22,163,74,.3); }
+[data-theme="dark"] .acct-inquiry-title { color: var(--c-text); }
+[data-theme="dark"] .acct-inquiry-date { color: var(--c-muted); }
+[data-theme="dark"] .acct-inquiry-text { color: var(--c-text-2); }
+[data-theme="dark"] .acct-inquiry-text--answer { color: #4ade80; }
+
+/* Account table */
+[data-theme="dark"] .acct-card .table thead th { background: var(--c-bg-3); color: var(--c-muted); border-color: var(--c-border); }
+[data-theme="dark"] .acct-card .table tbody tr:hover { background: rgba(234,88,12,.08); }
+
+/* Order & account status badges */
+[data-theme="dark"] .order-status-badge.pending   { background: rgba(217,119,6,.15);  color: #fbbf24; }
+[data-theme="dark"] .order-status-badge.paid      { background: rgba(22,163,74,.15);  color: #4ade80; }
+[data-theme="dark"] .order-status-badge.cancelled { background: rgba(220,38,38,.15);  color: #f87171; }
+[data-theme="dark"] .order-status-badge.shipping  { background: rgba(234,88,12,.15);  color: var(--c-accent); }
+[data-theme="dark"] .acct-status-badge--pending { background: rgba(234,88,12,.15); color: var(--c-accent); border-color: rgba(234,88,12,.3); }
+[data-theme="dark"] .acct-status-badge--done    { background: rgba(22,163,74,.15);  color: #4ade80; border-color: rgba(22,163,74,.3); }
+[data-theme="dark"] .acct-status-badge--default { background: var(--c-bg-3); color: var(--c-muted); border-color: var(--c-border); }
+
+/* Payment result icons */
+[data-theme="dark"] .payment-result__icon.success { background: rgba(22,163,74,.15); }
+[data-theme="dark"] .payment-result__icon.fail    { background: rgba(220,38,38,.15); }
+
+/* Product detail badge — uses --c-accent-lt which stays orange-tinted */
+[data-theme="dark"] .product-detail-badge { background: rgba(234,88,12,.15); }
+
+/* Cart hover */
+[data-theme="dark"] .cart-remove-btn:hover { background: rgba(220,38,38,.15); border-color: var(--c-danger); color: var(--c-danger); }
+
+/* Shop account nav active state */
+[data-theme="dark"] .shop-account-sidebar__nav a.active { background: rgba(234,88,12,.15); color: var(--c-accent); }
+[data-theme="dark"] .shop-account-sidebar__nav a:hover  { background: var(--c-bg-3); }
+
+/* Bootstrap alert variants */
+[data-theme="dark"] .alert-success { background: rgba(22,163,74,.12);  border-color: rgba(22,163,74,.3);  color: #4ade80; }
+[data-theme="dark"] .alert-danger  { background: rgba(220,38,38,.12);  border-color: rgba(220,38,38,.3);  color: #f87171; }
+[data-theme="dark"] .alert-warning { background: rgba(217,119,6,.12);  border-color: rgba(217,119,6,.3);  color: #fbbf24; }
+[data-theme="dark"] .alert-info    { background: rgba(8,145,178,.12);  border-color: rgba(8,145,178,.3);  color: #38bdf8; }
+
+/* Pagination */
+[data-theme="dark"] .page-link { background: var(--c-bg-2); border-color: var(--c-border); color: var(--c-text-2); }
+[data-theme="dark"] .page-link:hover { background: var(--c-bg-3); }
+[data-theme="dark"] .page-item.active .page-link { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+[data-theme="dark"] .page-item.disabled .page-link { background: var(--c-bg-2); color: var(--c-muted); }
+
+/* prefers-color-scheme: apply dark automatically unless user explicitly chose light */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]):not([data-theme="dark"]) {
+    --c-bg:        #0f172a;
+    --c-bg-2:      #1e293b;
+    --c-bg-3:      #263347;
+    --c-border:    #334155;
+    --c-border-2:  #475569;
+    --c-text:      #f1f5f9;
+    --c-text-2:    #cbd5e1;
+    --c-muted:     #94a3b8;
+    --c-muted-2:   #64748b;
+    --c-navy:      #f1f5f9;
+    --c-navy-2:    #e2e8f0;
+    --c-navy-3:    #cbd5e1;
+    --bs-body-bg:  #0f172a;
+    --bs-body-color: #cbd5e1;
+    --bs-border-color: #334155;
+    color-scheme: dark;
+  }
+}
+
 /* 다크 모드 토글 버튼 — fixed 좌측 상단 */
 .dark-mode-btn {
   position: fixed;

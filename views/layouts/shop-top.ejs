@@ -14,7 +14,7 @@
 <% const safeCartCount = Number(cartCount || 0); %>
 <!doctype html>
 <html lang="ko" data-theme="">
-<script>(function(){var t=localStorage.getItem('site_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})()</script>
+<script>(function(){var t=localStorage.getItem('site_theme');if(t){document.documentElement.setAttribute('data-theme',t);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}})()</script>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
