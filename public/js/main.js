@@ -152,6 +152,14 @@
 			'.cart-summary-title','.sidebar-label',
 			// CTA 버튼 (a.btn, button.btn) — <main> 내 정적 텍스트 버튼 번역
 			'a.btn','button.btn',
+			// 연혁 타임라인
+			'.timeline-title','.timeline-desc',
+			// 공지사항 필터 버튼
+			'.notice-filter-btn',
+			// 문의 연락처 정보
+			'.contact-info-item__label','.contact-notice li',
+			// 브레드크럼
+			'.breadcrumb-item a','.breadcrumb-item.active',
 		].join(',');
 
 		mainEl.querySelectorAll(STATIC_SELECTORS).forEach((el) => {

@@ -105,6 +105,10 @@
 [data-theme="dark"] .lookup-result-card { background: var(--c-bg-3); border-color: var(--c-border) !important; }
 [data-theme="dark"] .lookup-content-box { background: var(--c-bg-2); }
 
+/* lookup tab cards hover — theme-aware */
+.lookup-tab-card:hover { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .lookup-tab-card { color: var(--c-text) !important; }
+
 /* White-background cards & containers */
 [data-theme="dark"] .chip { background: var(--c-bg-2); color: var(--c-text-2); }
 [data-theme="dark"] .product-card { background: var(--c-bg-2); }
