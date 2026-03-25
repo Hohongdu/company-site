@@ -106,6 +106,12 @@
 		return fallback;
 	}
 
+	// h1 > em, h2 > br 같이 인라인 전용 자식만 있는 경우 통 번역 허용
+	const INLINE_TAGS = new Set(['EM','STRONG','SPAN','B','I','BR','A','MARK','SMALL','SUP','SUB','ABBR','CITE','WBR','S','U']);
+	function hasOnlyInlineChildren(el) {
+		return Array.from(el.children).every(ch => INLINE_TAGS.has(ch.tagName));
+	}
+
 	function autoTextCandidates() {
 		// 1) 명시적으로 data-i18n-auto 태그된 요소
 		const tagged = Array.from(document.querySelectorAll('[data-i18n-auto]')).map((el) => {
@@ -123,20 +129,37 @@
 		const taggedSet = new Set(tagged.map((t) => t.el));
 		const autoScanned = [];
 
-		// 안전하게 번역 가능한 정적 요소 선택자
+		// 안전하게 번역 가능한 정적 요소 선택자 (동적 데이터 제외)
 		const STATIC_SELECTORS = [
+			// 헤딩 (인라인 자식 포함 허용)
 			'h1','h2','h3','h4','h5','h6',
+			// 공통 레이아웃
 			'.sec-label','.page-banner h1','.page-banner p',
 			'label','legend','th',
-			'.card-title','.acct-card__title','.product-name',
+			// 홈 hero 섹션
+			'.hero__eyebrow','.hero__sub','.hero__stat-label','.hero__badge-label',
+			// 홈 feature cards
+			'.feat-card__title','.feat-card__desc',
+			// 홈 partners / stats / why / faq
+			'.partners-label','.stat-label',
+			'.why-item__title','.why-item__desc',
+			'.accordion-button','.accordion-body',
+			// 홈 CTA / 공통 설명 텍스트
+			'.cta-label','.txt-muted',
+			// shop / account
+			'.card-title','.acct-card__title',
 			'.cart-summary-title','.sidebar-label',
 		].join(',');
 
 		mainEl.querySelectorAll(STATIC_SELECTORS).forEach((el) => {
 			// 이미 처리됐거나 data-i18n-auto 부모 아래에 있으면 스킵
 			if (taggedSet.has(el) || el.closest('[data-i18n-auto]')) return;
-			// 자식 엘리먼트가 있으면 스킵 (동적 렌더 포함 가능)
-			if (el.children.length > 0) return;
+			// 블록 자식이 있으면 동적 컨텐츠로 간주해 스킵 (인라인 전용은 허용)
+			if (el.children.length > 0 && !hasOnlyInlineChildren(el)) return;
+			// 인라인 자식이 있는 경우 innerHTML 원본 저장 (한국어 복원 시 <em>, <br> 등 유지)
+			if (el.children.length > 0 && !el.getAttribute('data-i18n-auto-html-ko')) {
+				el.setAttribute('data-i18n-auto-html-ko', el.innerHTML);
+			}
 			const src = el.getAttribute('data-i18n-auto-ko') || el.textContent.trim();
 			if (!src || src.length < 1) return;
 			if (!el.getAttribute('data-i18n-auto-ko')) el.setAttribute('data-i18n-auto-ko', src);
@@ -173,7 +196,10 @@
 				if (src) el.setAttribute('placeholder', src);
 			});
 			autoEls.forEach(({ el, src }) => {
-				if (src) el.textContent = src;
+				// 인라인 자식 있던 요소는 innerHTML 원본으로 복원 (em, br 등 스타일 유지)
+				const htmlKo = el.getAttribute('data-i18n-auto-html-ko');
+				if (htmlKo) el.innerHTML = htmlKo;
+				else if (src) el.textContent = src;
 			});
 			appendLog('apply done', { lang, count: textEls.length + htmlEls.length + placeholderEls.length + autoEls.length });
 			return;
