@@ -83,7 +83,7 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 bulk-actions-sticky">
-                    <div class="text-muted small">선택 삭제 기능</div>
+                    <div class="text-muted small" id="bulkSelectInfo">0개 선택됨</div>
                     <button class="btn btn-sm btn-outline-danger" type="button" id="bulkDeleteBtn" disabled>
                         선택 삭제
                     </button>
@@ -240,6 +240,7 @@
                 return bootstrap.Modal.getOrCreateInstance(bulkDeleteModalEl);
             };
 
+            const bulkSelectInfo = document.getElementById('bulkSelectInfo');
             const syncBulkState = () => {
                 const checkedCount = rowChecks.filter((el) => el.checked).length;
                 bulkDeleteBtn.disabled = checkedCount === 0;
@@ -249,6 +250,9 @@
                 }
                 if (bulkDeleteCount) {
                     bulkDeleteCount.textContent = String(checkedCount);
+                }
+                if (bulkSelectInfo) {
+                    bulkSelectInfo.textContent = `${checkedCount}개 선택됨`;
                 }
             };
 

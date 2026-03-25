@@ -5,8 +5,8 @@
     <a href="/" class="auth-logo" style="margin-bottom:32px;">ENER<span>MADE</span></a>
 
     <div class="auth-card">
-      <div class="auth-title">다시 오셨군요</div>
-      <p class="auth-sub">계정으로 로그인하여 더 많은 서비스를 이용하세요</p>
+      <div class="auth-title" data-i18n-auto>다시 오셨군요</div>
+      <p class="auth-sub" data-i18n-auto>계정으로 로그인하여 더 많은 서비스를 이용하세요</p>
 
       <% if (locals.error) { %>
         <div class="alert alert-danger mb-3" role="alert"><%= error %></div>
@@ -30,10 +30,12 @@
         <div>
           <div class="d-flex justify-content-between align-items-center mb-1">
             <label class="form-label mb-0" for="login-pw">비밀번호</label>
-            <a href="/auth/forgot" style="font-size:12px;font-weight:600;color:var(--c-accent);">비밀번호 찾기</a>
+            <a href="/auth/forgot" data-i18n-auto style="font-size:12px;font-weight:600;color:var(--c-accent);">비밀번호 찾기</a>
           </div>
           <input type="password" id="login-pw" name="password" class="form-control"
-            placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
+            placeholder="비밀번호를 입력하세요"
+            data-i18n-placeholder data-i18n-placeholder-ko="비밀번호를 입력하세요"
+            autocomplete="current-password" required>
         </div>
 
         <button type="submit" class="btn btn-primary w-100" style="padding:12px;">로그인</button>
@@ -42,8 +44,8 @@
 
       <hr class="my-4">
       <p class="auth-footer">
-        아직 회원이 아니신가요?
-        <a href="/auth/register">회원가입 하기 →</a>
+        <span data-i18n-auto>아직 회원이 아니신가요?</span>
+        <a href="/auth/register" data-i18n-auto>회원가입 하기 →</a>
       </p>
     </div>
   </div>
