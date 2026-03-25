@@ -1,46 +1,20 @@
-<!doctype html>
-<html lang="ko">
+<%- include('layouts/company-top', { title: '서버 오류', active: '' }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <title>500 | 서버 오류가 발생했습니다</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+<section style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:80px 0;">
+  <div style="text-align:center;max-width:480px;margin:0 auto;padding:0 24px;">
+    <div style="font-size:96px;font-weight:900;color:var(--c-accent,#ea580c);line-height:1;margin-bottom:16px;font-family:var(--font-head,'Sora',sans-serif);">500</div>
+    <h1 style="font-size:22px;font-weight:700;color:var(--c-text,#0f172a);margin-bottom:12px;">서버 오류가 발생했습니다</h1>
+    <p style="font-size:15px;color:var(--c-muted,#64748b);margin-bottom:36px;line-height:1.7;">
+      <%= typeof message !== 'undefined' ? message : '잠시 후 다시 시도해 주세요. 문제가 계속되면 관리자에게 문의해 주세요.' %>
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="/" class="btn btn-primary" style="padding:10px 28px;">홈으로</a>
+      <button onclick="location.reload()" class="btn btn-outline-secondary" style="padding:10px 28px;">새로고침</button>
+    </div>
+    <% if (typeof errorId !== 'undefined' && errorId) { %>
+      <p style="margin-top:24px;font-size:12px;color:var(--c-muted-2,#94a3b8);">오류 코드: <strong><%= errorId %></strong></p>
+    <% } %>
+  </div>
+</section>
 
-<body>
-    <%- include('partials/header-company') %>
-
-        <main class="py-5">
-            <div class="container text-center">
-                <h1 class="display-6 mb-3">500 – 서버 오류가 발생했습니다</h1>
-
-                <p class="text-muted mb-4">
-                    <%= typeof message !=='undefined' ? message : '잠시 후 다시 시도해 주세요. 문제가 계속되면 관리자에게 문의해 주세요.' %>
-                </p>
-
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="/" class="btn btn-primary">홈으로</a>
-                    <button onclick="location.reload()" class="btn btn-outline-secondary">
-                        새로고침
-                    </button>
-                </div>
-
-                <% if (typeof errorId !=='undefined' && errorId) { %>
-                    <div class="mt-4 small text-muted">
-                        오류 코드: <strong>
-                            <%= errorId %>
-                        </strong>
-                    </div>
-                    <% } %>
-            </div>
-        </main>
-
-        <%- include('partials/footer') %>
-
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-            <script src="/js/main.js"></script>
-</body>
-
-</html>
+<%- include('layouts/company-bottom') %>

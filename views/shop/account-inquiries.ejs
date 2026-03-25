@@ -1,29 +1,7 @@
 <%- include('../layouts/shop-top', { title: '문의 내역', active: 'account' }) %>
 
 <div class="shop-account-wrap">
-  <aside class="acct-sidebar">
-    <div class="acct-sidebar__head">
-      <div class="acct-avatar"><%= user.name.charAt(0) %></div>
-      <div>
-        <div class="acct-user-name"><%= user.name %></div>
-        <div class="acct-user-email"><%= user.email %></div>
-      </div>
-    </div>
-    <nav class="acct-nav">
-      <a class="acct-nav-link" href="/shop/account">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        프로필 관리
-      </a>
-      <a class="acct-nav-link" href="/shop/account/orders">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-        주문 내역
-      </a>
-      <a class="acct-nav-link is-active" href="/shop/account/inquiries">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        문의 내역
-      </a>
-    </nav>
-  </aside>
+  <%- include('partials/account-sidebar', { activeItem: 'inquiries' }) %>
 
   <div class="acct-content">
     <div class="acct-card">
@@ -45,31 +23,52 @@
         </div>
       <% } %>
 
-      <div class="acct-inquiry-list">
-        <% inquiries.forEach(inquiry => { %>
-          <div class="acct-inquiry-item">
-            <div class="acct-inquiry-header">
-              <div>
-                <div class="acct-inquiry-title"><%= inquiry.title %></div>
-                <div class="acct-inquiry-date">접수일: <%= new Date(inquiry.created_at).toLocaleDateString('ko-KR') %></div>
+      <div class="acct-inquiry-list" id="inquiryAccordion">
+        <% inquiries.forEach((inquiry, idx) => { %>
+          <div class="acct-inquiry-item acct-accordion-item" id="inq-<%= idx %>">
+            <!-- 클릭 가능한 제목 행 -->
+            <button class="acct-accordion-trigger" type="button" aria-expanded="false" aria-controls="inq-body-<%= idx %>">
+              <div class="acct-accordion-trigger__left">
+                <svg class="acct-accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                  <div class="acct-inquiry-title"><%= inquiry.title %></div>
+                  <div class="acct-inquiry-date">접수일: <%= new Date(inquiry.created_at).toLocaleDateString('ko-KR') %></div>
+                </div>
               </div>
               <span class="acct-status-badge acct-status-badge--<%= inquiry.answer_content ? 'done' : 'pending' %>">
                 <%= inquiry.answer_content ? '답변 완료' : '답변 대기' %>
               </span>
-            </div>
-            <div class="acct-inquiry-body">
-              <div class="acct-inquiry-label">문의 내용</div>
-              <div class="acct-inquiry-text"><%= inquiry.content %></div>
-            </div>
-            <% if (inquiry.answer_content) { %>
-              <div class="acct-inquiry-answer">
-                <div class="acct-inquiry-label">답변</div>
-                <div class="acct-inquiry-text acct-inquiry-text--answer"><%= inquiry.answer_content %></div>
+            </button>
+            <!-- 펼쳐지는 내용 -->
+            <div class="acct-accordion-body" id="inq-body-<%= idx %>" hidden>
+              <div class="acct-inquiry-body">
+                <div class="acct-inquiry-label">문의 내용</div>
+                <div class="acct-inquiry-text"><%= inquiry.content %></div>
               </div>
-            <% } %>
+              <% if (inquiry.answer_content) { %>
+                <div class="acct-inquiry-answer">
+                  <div class="acct-inquiry-label">답변</div>
+                  <div class="acct-inquiry-text acct-inquiry-text--answer"><%= inquiry.answer_content %></div>
+                </div>
+              <% } %>
+            </div>
           </div>
         <% }) %>
       </div>
+      <script>
+      document.querySelectorAll('.acct-accordion-trigger').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var bodyId = btn.getAttribute('aria-controls');
+          var body = document.getElementById(bodyId);
+          var expanded = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', String(!expanded));
+          if (body) body.hidden = expanded;
+          btn.classList.toggle('is-open', !expanded);
+        });
+      });
+      </script>
     </div>
   </div>
 </div>

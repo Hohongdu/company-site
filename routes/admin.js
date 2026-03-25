@@ -213,6 +213,8 @@ router.get('/dashboard', async (req, res) => {
 		const [[categoryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM categories');
 		const [[orderCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM orders');
 		const [[inquiryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM inquiries');
+		const [[pendingInqCnt]] = await db.execute("SELECT COUNT(*) AS cnt FROM inquiries WHERE answer_content IS NULL OR answer_content = ''");
+		const [[thisMonthRev]] = await db.execute("SELECT COALESCE(SUM(total_amount),0) AS revenue FROM orders WHERE DATE_FORMAT(created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')");
 
 		const [recentOrders] = await db.execute(
 			`SELECT o.order_number, o.status, o.total_amount, o.created_at,
@@ -315,6 +317,8 @@ router.get('/dashboard', async (req, res) => {
 				totalCategories: categoryCnt.cnt,
 				totalOrders: orderCnt.cnt,
 				totalInquiries: inquiryCnt.cnt,
+				pendingInquiries: pendingInqCnt.cnt,
+				thisMonthRevenue: thisMonthRev.revenue,
 			},
 			sys: {
 				load1: load[0],
@@ -1214,5 +1218,99 @@ router.post('/inquiries/:id/reply', async (req, res) => {
 	}
 });
 
+
+// ─── 방문 로그 ────────────────────────────────────────────
+router.get('/visit-logs', requireAdmin, async (req, res) => {
+	try {
+		const page = Math.max(1, Number(req.query.page) || 1);
+		const limit = 50;
+		const offset = (page - 1) * limit;
+
+		const [[{ total }]] = await db.execute('SELECT COUNT(*) AS total FROM visit_logs');
+		const [logs] = await db.execute(
+			'SELECT * FROM visit_logs ORDER BY visited_at DESC LIMIT ? OFFSET ?',
+			[limit, offset],
+		);
+
+		// 첫 진입 페이지 집계
+		const [topPages] = await db.execute(
+			`SELECT first_path, COUNT(*) AS cnt FROM visit_logs
+       GROUP BY first_path ORDER BY cnt DESC LIMIT 10`,
+		);
+
+		res.render('admin/visit-logs', {
+			title: '방문 로그', active: 'visit-logs',
+			logs, topPages, total, page, limit, user: req.session.user,
+		});
+	} catch (err) {
+		console.error('[visit-logs]', err);
+		res.render('admin/visit-logs', {
+			title: '방문 로그', active: 'visit-logs',
+			logs: [], topPages: [], total: 0, page: 1, limit: 50, user: req.session.user,
+		});
+	}
+});
+
+// ─── 검색어 통계 ────────────────────────────────────────────
+router.get('/search-stats', requireAdmin, async (req, res) => {
+	try {
+		const period = req.query.period || '30'; // days
+		const days = Math.min(Number(period) || 30, 365);
+
+		// 인기 검색어 TOP 20
+		const [topKeywords] = await db.execute(
+			`SELECT keyword, COUNT(*) AS cnt, MAX(searched_at) AS last_searched
+       FROM search_logs
+       WHERE searched_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+       GROUP BY keyword ORDER BY cnt DESC LIMIT 20`,
+			[days],
+		);
+
+		// 일별 검색 수 (최근 30일)
+		const [dailyStats] = await db.execute(
+			`SELECT DATE(searched_at) AS day, COUNT(*) AS cnt
+       FROM search_logs
+       WHERE searched_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+       GROUP BY DATE(searched_at) ORDER BY day ASC`,
+		);
+
+		res.render('admin/search-stats', {
+			title: '검색어 통계', active: 'search-stats',
+			topKeywords, dailyStats, period: days, user: req.session.user,
+		});
+	} catch (err) {
+		console.error('[search-stats]', err);
+		// 테이블이 없으면 빈 데이터로 렌더
+		res.render('admin/search-stats', {
+			title: '검색어 통계', active: 'search-stats',
+			topKeywords: [], dailyStats: [], period: 30, user: req.session.user,
+		});
+	}
+});
+
+// 검색어 통계 Excel/CSV 내보내기
+router.get('/search-stats/export', requireAdmin, async (req, res) => {
+	try {
+		const [rows] = await db.execute(
+			`SELECT keyword, COUNT(*) AS count, MIN(searched_at) AS first_searched, MAX(searched_at) AS last_searched
+       FROM search_logs GROUP BY keyword ORDER BY count DESC`,
+		);
+
+		const wb = xlsx.utils.book_new();
+		const wsData = [['검색어', '검색 횟수', '첫 검색', '마지막 검색']].concat(
+			rows.map(r => [r.keyword, r.count, r.first_searched, r.last_searched]),
+		);
+		const ws = xlsx.utils.aoa_to_sheet(wsData);
+		xlsx.utils.book_append_sheet(wb, ws, '검색어통계');
+
+		const buf = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+		res.setHeader('Content-Disposition', `attachment; filename="search-stats-${Date.now()}.xlsx"`);
+		res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		res.send(buf);
+	} catch (err) {
+		console.error('[search-stats export]', err);
+		res.status(500).send('내보내기 오류가 발생했습니다.');
+	}
+});
 
 module.exports = router;

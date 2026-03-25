@@ -1,0 +1,106 @@
+<%- include('../layouts/shop-top', { title: '쇼핑몰 내 정보', active: 'account' }) %>
+
+<div class="shop-account-wrap">
+  <%- include('partials/account-sidebar', { activeItem: 'shop-info' }) %>
+
+  <div class="acct-content">
+
+    <div class="acct-card">
+      <div class="acct-card__head">
+        <h5 class="acct-card__title">배송지 관리</h5>
+        <p class="acct-card__desc">자주 사용하는 배송지를 등록할 수 있습니다.</p>
+      </div>
+      <% if (message) { %>
+        <div class="alert alert-success mb-4"><%= message %></div>
+      <% } %>
+      <% if (error) { %>
+        <div class="alert alert-danger mb-4"><%= error %></div>
+      <% } %>
+      <% if (addresses && addresses.length) { %>
+        <div class="acct-addr-list mb-4">
+          <% addresses.forEach(address => { %>
+            <div class="acct-addr-item">
+              <div>
+                <div class="acct-addr-label"><%= address.label || '기본 배송지' %></div>
+                <div class="acct-addr-detail"><%= address.recipient_name %> · <%= address.phone || '-' %></div>
+                <div class="acct-addr-detail"><%= address.address_line1 %> <%= address.address_line2 || '' %> (<%= address.postal_code || '-' %>)</div>
+              </div>
+              <form method="post" action="/shop/account/addresses/<%= address.id %>/delete">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm btn-outline-danger">삭제</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted small mb-4">등록된 배송지가 없습니다.</p>
+      <% } %>
+      <form action="/shop/account/addresses" method="post" class="row g-2">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="col-md-3"><input class="form-control" name="label" placeholder="배송지 별칭"></div>
+        <div class="col-md-3"><input class="form-control" name="recipientName" placeholder="수령인" required></div>
+        <div class="col-md-3"><input class="form-control" name="phone" placeholder="연락처"></div>
+        <div class="col-md-3"><input class="form-control" name="postalCode" placeholder="우편번호"></div>
+        <div class="col-md-6"><input class="form-control" name="addressLine1" placeholder="주소" required></div>
+        <div class="col-md-6"><input class="form-control" name="addressLine2" placeholder="상세주소"></div>
+        <div class="col-12"><button class="btn btn-outline-primary">배송지 추가</button></div>
+      </form>
+    </div>
+
+    <div class="acct-card">
+      <div class="acct-card__head">
+        <h5 class="acct-card__title">결제수단 관리</h5>
+        <p class="acct-card__desc">카드/계좌 정보를 간단히 관리합니다.</p>
+      </div>
+      <% if (paymentMethods && paymentMethods.length) { %>
+        <div class="acct-addr-list mb-4">
+          <% paymentMethods.forEach(method => { %>
+            <div class="acct-addr-item">
+              <div>
+                <div class="acct-addr-label"><%= method.label || method.provider %></div>
+                <div class="acct-addr-detail"><%= method.provider %> · **** <%= method.last4 %></div>
+              </div>
+              <form method="post" action="/shop/account/payments/<%= method.id %>/delete">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm btn-outline-danger">삭제</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted small mb-4">등록된 결제수단이 없습니다.</p>
+      <% } %>
+      <form action="/shop/account/payments" method="post" class="row g-2">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="col-md-4"><input class="form-control" name="label" placeholder="결제수단 별칭"></div>
+        <div class="col-md-4"><input class="form-control" name="provider" placeholder="카드사/은행" required></div>
+        <div class="col-md-4"><input class="form-control" name="last4" placeholder="마지막 4자리" required></div>
+        <div class="col-12"><button class="btn btn-outline-primary">결제수단 추가</button></div>
+      </form>
+    </div>
+
+    <% if (coupons && coupons.length) { %>
+    <div class="acct-card">
+      <div class="acct-card__head">
+        <h5 class="acct-card__title">쿠폰 목록</h5>
+      </div>
+      <div class="acct-addr-list">
+        <% coupons.forEach(c => { %>
+          <div class="acct-addr-item">
+            <div>
+              <div class="acct-addr-label"><%= c.code %></div>
+              <div class="acct-addr-detail"><%= c.description %> · <%= c.discount_pct %>% 할인</div>
+              <% if (c.expires_at) { %>
+                <div class="acct-addr-detail text-muted">만료: <%= new Date(c.expires_at).toLocaleDateString('ko-KR') %></div>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+  </div>
+</div>
+
+<%- include('../layouts/shop-bottom') %>

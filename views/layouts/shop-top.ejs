@@ -4,6 +4,7 @@
 <% const isHome = activeKey === 'home' || currentPath === '/shop' || currentPath === '/shop/'; %>
 <% const isProducts = activeKey === 'products' || currentPath.indexOf('/shop/products') === 0; %>
 <%/* 각각 독립 활성화 처리 - 하나만 눌러도 다 활성화되는 버그 수정 */%>
+<% const isLookup = activeKey === 'lookup' || currentPath.indexOf('/shop/lookup') === 0 || currentPath.indexOf('/shop/orders/guest') === 0 || currentPath.indexOf('/shop/inquiries/guest') === 0; %>
 <% const isOrderLookup = activeKey === 'order_lookup' || currentPath.indexOf('/shop/orders/guest') === 0; %>
 <% const isInquiryLookup = activeKey === 'inquiry_lookup' || currentPath.indexOf('/shop/inquiries/guest') === 0; %>
 <% const isInquiry = activeKey === 'inquiry' || (currentPath === '/shop/inquiries' || currentPath === '/shop/inquiries/'); %>
@@ -12,7 +13,8 @@
 <% const isWishlist = activeKey === 'wishlist' || currentPath.indexOf('/shop/wishlist') === 0; %>
 <% const safeCartCount = Number(cartCount || 0); %>
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="">
+<script>(function(){var t=localStorage.getItem('site_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})()</script>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -22,6 +24,12 @@
   <link rel="stylesheet" href="/css/shop.css" />
 </head>
 <body class="shop-wrap">
+
+<!-- 다크 모드 토글 (fixed 좌측 상단) -->
+<button class="dark-mode-btn" id="darkModeToggle" aria-label="다크 모드 전환" title="다크 모드">
+  <svg class="dm-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="dm-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
 
 <header class="shop-header">
   <div class="container shop-header__inner">
@@ -33,11 +41,10 @@
 
     <!-- Desktop nav -->
     <nav class="shop-nav" aria-label="쇼핑 내비게이션">
-      <a href="/shop" class="<%= isHome ? 'is-active' : '' %>">홈</a>
-      <a href="/shop/products" class="<%= isProducts ? 'is-active' : '' %>">전체 상품</a>
-      <a href="/shop/orders/guest" class="<%= isOrderLookup ? 'is-active' : '' %>">주문 조회</a>
-      <a href="/shop/inquiries/guest" class="<%= isInquiryLookup ? 'is-active' : '' %>">문의 조회</a>
-      <a href="/shop/inquiries" class="<%= isInquiry ? 'is-active' : '' %>">문의하기</a>
+      <a href="/shop" class="<%= isHome ? 'is-active' : '' %>" data-i18n-auto>홈</a>
+      <a href="/shop/products" class="<%= isProducts ? 'is-active' : '' %>" data-i18n-auto>전체 상품</a>
+      <a href="/shop/lookup" class="<%= isLookup ? 'is-active' : '' %>" data-i18n-auto>조회</a>
+      <a href="/shop/inquiries" class="<%= isInquiry ? 'is-active' : '' %>" data-i18n-auto>문의하기</a>
     </nav>
 
     <!-- Desktop tools -->
@@ -169,15 +176,14 @@
 
   <!-- 메뉴 링크 -->
   <nav class="shop-mob-nav">
-    <a href="/shop" class="shop-mob-link <%= isHome ? 'is-active' : '' %>">홈</a>
-    <a href="/shop/products" class="shop-mob-link <%= isProducts ? 'is-active' : '' %>">전체 상품</a>
-    <a href="/shop/cart" class="shop-mob-link <%= isCart ? 'is-active' : '' %>">장바구니<% if (safeCartCount > 0) { %> <span class="shop-mob-badge"><%= safeCartCount %></span><% } %></a>
-    <a href="/shop/orders/guest" class="shop-mob-link <%= isOrderLookup ? 'is-active' : '' %>">주문 조회</a>
-    <a href="/shop/inquiries/guest" class="shop-mob-link <%= isInquiryLookup ? 'is-active' : '' %>">문의 조회</a>
-    <a href="/shop/inquiries" class="shop-mob-link <%= isInquiry ? 'is-active' : '' %>">문의하기</a>
+    <a href="/shop" class="shop-mob-link <%= isHome ? 'is-active' : '' %>" data-i18n-auto>홈</a>
+    <a href="/shop/products" class="shop-mob-link <%= isProducts ? 'is-active' : '' %>" data-i18n-auto>전체 상품</a>
+    <a href="/shop/cart" class="shop-mob-link <%= isCart ? 'is-active' : '' %>"><span data-i18n-auto>장바구니</span><% if (safeCartCount > 0) { %> <span class="shop-mob-badge"><%= safeCartCount %></span><% } %></a>
+    <a href="/shop/lookup" class="shop-mob-link <%= isLookup ? 'is-active' : '' %>" data-i18n-auto>조회</a>
+    <a href="/shop/inquiries" class="shop-mob-link <%= isInquiry ? 'is-active' : '' %>" data-i18n-auto>문의하기</a>
     <% if (user) { %>
-      <a href="/shop/account" class="shop-mob-link <%= isAccount ? 'is-active' : '' %>">내 정보</a>
-      <a href="/shop/wishlist" class="shop-mob-link <%= isWishlist ? 'is-active' : '' %>">찜한 상품</a>
+      <a href="/shop/account" class="shop-mob-link <%= isAccount ? 'is-active' : '' %>" data-i18n-auto>내 정보</a>
+      <a href="/shop/wishlist" class="shop-mob-link <%= isWishlist ? 'is-active' : '' %>" data-i18n-auto>찜한 상품</a>
     <% } %>
   </nav>
 </div>

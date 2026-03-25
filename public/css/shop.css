@@ -1006,6 +1006,16 @@ html, body { overflow-x: hidden; max-width: 100%; }
   gap: 2px;
 }
 
+.acct-nav-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  padding: 6px 14px 2px;
+  margin-top: 4px;
+}
+
 .acct-nav-link {
   display: flex;
   align-items: center;
@@ -1168,6 +1178,41 @@ html, body { overflow-x: hidden; max-width: 100%; }
   padding: 16px;
   background: #f8f8f8;
   border-bottom: 1px solid #e4e4e7;
+}
+
+/* 아코디언 트리거 버튼 */
+.acct-accordion-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  background: #f8fafc;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.acct-accordion-trigger:hover { background: #f1f5f9; }
+.acct-accordion-trigger__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.acct-accordion-chevron {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+.acct-accordion-trigger.is-open .acct-accordion-chevron {
+  transform: rotate(180deg);
+}
+.acct-accordion-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid #e4e4e7;
+  background: #fff;
 }
 
 .acct-inquiry-title {

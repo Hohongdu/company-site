@@ -96,22 +96,40 @@ router.post('/forgot', async (req, res) => {
 		});
 	}
 });
-router.get('/register', (req, res) => res.render('auth/register'));
+router.get('/register', (req, res) => res.render('auth/register', {
+	csrfToken: req.csrfToken ? req.csrfToken() : (res.locals.csrfToken || ''),
+	error: null,
+}));
 
 router.post('/register', async (req, res) => {
+	const renderError = (msg) => res.status(400).render('auth/register', {
+		csrfToken: req.csrfToken ? req.csrfToken() : (res.locals.csrfToken || ''),
+		error: msg,
+	});
+
 	try {
 		const { name, email, password, passwordConfirm } = req.body;
-		if (password !== passwordConfirm) return res.send('비밀번호가 일치하지 않습니다.');
+
+		if (!name || !name.trim()) return renderError('이름을 입력해 주세요.');
+		if (!email || !email.trim()) return renderError('이메일을 입력해 주세요.');
+		if (!password) return renderError('비밀번호를 입력해 주세요.');
+		if (password !== passwordConfirm) return renderError('비밀번호가 일치하지 않습니다.');
+		if (password.length < 4) return renderError('비밀번호는 4자 이상이어야 합니다.');
+
+		// 중복 이메일 확인
+		const [[existing]] = await db.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [email.trim().toLowerCase()]);
+		if (existing) return renderError('이미 사용 중인 이메일입니다.');
 
 		const hashedPw = await bcrypt.hash(password, 10);
-
-		// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
-		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
+		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name.trim(), email.trim().toLowerCase(), hashedPw]);
 
 		return res.redirect('/auth/login');
 	} catch (err) {
-		console.error(err);
-		return res.status(500).send('회원가입 중 오류 발생');
+		console.error('[register]', err);
+		return res.status(500).render('auth/register', {
+			csrfToken: req.csrfToken ? req.csrfToken() : (res.locals.csrfToken || ''),
+			error: '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+		});
 	}
 });
 

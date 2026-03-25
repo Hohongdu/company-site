@@ -1,0 +1,90 @@
+<%- include('partials/admin-header', { title: '검색어 통계', subtitle: '쇼핑몰 검색어 분석', active: 'search-stats', user }) %>
+
+<div class="dash-card mb-4">
+  <div class="dash-card__head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <h6 class="dash-card__title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+      검색어 통계
+    </h6>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <form method="get" action="/admin/search-stats" style="display:flex;gap:6px;align-items:center;">
+        <select name="period" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+          <option value="7" <%= period==7?'selected':'' %>>최근 7일</option>
+          <option value="30" <%= period==30?'selected':'' %>>최근 30일</option>
+          <option value="90" <%= period==90?'selected':'' %>>최근 90일</option>
+          <option value="365" <%= period==365?'selected':'' %>>최근 1년</option>
+        </select>
+      </form>
+      <a href="/admin/search-stats/export" class="btn btn-sm btn-outline-success">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:4px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Excel 내보내기
+      </a>
+    </div>
+  </div>
+
+  <!-- 차트: 일별 검색 수 -->
+  <% if (dailyStats && dailyStats.length > 0) { %>
+  <div style="margin-bottom:24px;">
+    <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:10px;">일별 검색 수 (최근 30일)</div>
+    <canvas id="searchDailyChart" style="height:120px;max-height:120px;" role="img" aria-label="일별 검색량 차트"></canvas>
+  </div>
+  <% } %>
+
+  <!-- 인기 검색어 TOP 20 -->
+  <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:10px;">인기 검색어 TOP 20 (최근 <%= period %>일)</div>
+  <% if (!topKeywords || topKeywords.length === 0) { %>
+    <div style="padding:32px;text-align:center;color:#94a3b8;font-size:14px;">
+      아직 검색 데이터가 없습니다. 쇼핑몰에서 검색을 시도하면 여기에 표시됩니다.
+    </div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead style="background:var(--admin-bg,#f8fafc);">
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>검색어</th>
+            <th style="width:100px;text-align:right;">검색 횟수</th>
+            <th style="width:160px;text-align:right;">마지막 검색</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% topKeywords.forEach((row, idx) => { %>
+            <tr>
+              <td style="color:#94a3b8;font-size:12px;"><%= idx + 1 %></td>
+              <td>
+                <% if (idx < 3) { %>
+                  <span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:<%= idx===0?'#ea580c':idx===1?'#f97316':'#fb923c' %>;color:#fff;font-size:10px;font-weight:700;text-align:center;line-height:18px;margin-right:6px;"><%= idx+1 %></span>
+                <% } %>
+                <strong style="font-size:14px;"><%= row.keyword %></strong>
+              </td>
+              <td style="text-align:right;font-weight:700;color:var(--admin-accent,#ea580c);"><%= row.cnt %></td>
+              <td style="text-align:right;font-size:12px;color:#94a3b8;"><%= new Date(row.last_searched).toLocaleDateString('ko-KR') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<% if (dailyStats && dailyStats.length > 0) { %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const labels = <%- JSON.stringify(dailyStats.map(d => d.day)) %>;
+  const data   = <%- JSON.stringify(dailyStats.map(d => d.cnt)) %>;
+  const ctx = document.getElementById('searchDailyChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: '검색 수', data, backgroundColor: '#ea580c33', borderColor: '#ea580c', borderWidth: 1.5, borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+})();
+</script>
+<% } %>
+
+<%- include('partials/admin-footer') %>

@@ -132,6 +132,55 @@ app.use(async (req, res, next) => {
 });
 
 // =====================
+// 방문 로그 (세션당 최초 1회)
+// =====================
+app.use(async (req, res, next) => {
+	// 정적 파일, API, 관리자 경로 제외
+	if (req.path.startsWith('/css') || req.path.startsWith('/js') ||
+		req.path.startsWith('/images') || req.path.startsWith('/uploads') ||
+		req.path.startsWith('/api') || req.path.startsWith('/admin')) {
+		return next();
+	}
+	if (req.session && !req.session.visitLogged) {
+		req.session.visitLogged = true;
+		try {
+			await db.execute(
+				`CREATE TABLE IF NOT EXISTS visit_logs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          first_path VARCHAR(512) NOT NULL,
+          referrer VARCHAR(512),
+          user_id INT DEFAULT NULL,
+          is_member TINYINT(1) DEFAULT 0,
+          visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_visited_at (visited_at)
+        )`,
+			);
+			const userId = req.session?.user?.id || null;
+			await db.execute(
+				'INSERT INTO visit_logs (first_path, referrer, user_id, is_member) VALUES (?, ?, ?, ?)',
+				[req.originalUrl, req.get('Referer') || null, userId, userId ? 1 : 0],
+			);
+		} catch (e) {
+			// 로깅 실패 무시
+		}
+	}
+	next();
+});
+
+// =====================
+// 관리자 공통: 미처리 문의 수 주입
+// =====================
+app.use('/admin', async (req, res, next) => {
+	try {
+		const [[row]] = await db.execute("SELECT COUNT(*) AS cnt FROM inquiries WHERE answer_content IS NULL OR answer_content = ''");
+		res.locals.pendingInquiries = Number(row?.cnt || 0);
+	} catch (e) {
+		res.locals.pendingInquiries = 0;
+	}
+	next();
+});
+
+// =====================
 // View engine
 // =====================
 app.set('view engine', 'ejs');

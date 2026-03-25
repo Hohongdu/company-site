@@ -115,6 +115,28 @@ async function ensureCouponTable() {
 	);
 }
 
+async function ensureSearchLogsTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS search_logs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      keyword VARCHAR(255) NOT NULL,
+      user_id INT DEFAULT NULL,
+      searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_keyword (keyword),
+      INDEX idx_searched_at (searched_at)
+    )`,
+	);
+}
+
+async function logSearch(keyword, userId) {
+	try {
+		await ensureSearchLogsTable();
+		await db.execute('INSERT INTO search_logs (keyword, user_id) VALUES (?, ?)', [keyword, userId || null]);
+	} catch (e) {
+		// 로깅 실패는 조용히 무시
+	}
+}
+
 function generateOrderNumber() {
 	const rand = Math.floor(Math.random() * 1000)
 		.toString()
@@ -245,6 +267,8 @@ router.get('/products', async (req, res) => {
 		if (q) {
 			where.push('(p.name LIKE ? OR p.code LIKE ? OR p.spec LIKE ?)');
 			params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+			// 검색어 비동기 로깅 (성능 영향 없음)
+			logSearch(q, req.session?.user?.id);
 		}
 
 		if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
@@ -677,6 +701,11 @@ router.get('/checkout/kakao/fail', (req, res) => {
 	});
 });
 
+// 통합 조회 페이지
+router.get('/lookup', (req, res) => {
+	res.render('shop/lookup', { active: 'lookup' });
+});
+
 router.get('/orders/guest', (req, res) => {
 	res.render('shop/order-lookup', {
 		error: null,
@@ -986,6 +1015,41 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('쿠폰 등록 중 오류가 발생했습니다.');
+	}
+});
+
+router.get('/account/shop-info', requireLogin, accountCsrf, async (req, res) => {
+	try {
+		const userId = req.session.user.id;
+		await ensureAddressTable();
+		await ensurePaymentMethodTable();
+		await ensureCouponTable();
+		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+		const [addresses] = await db.execute(
+			'SELECT id, label, recipient_name, phone, address_line1, address_line2, postal_code FROM user_addresses WHERE user_id = ? ORDER BY id DESC',
+			[userId],
+		);
+		const [paymentMethods] = await db.execute(
+			'SELECT id, label, provider, last4 FROM user_payment_methods WHERE user_id = ? ORDER BY id DESC',
+			[userId],
+		);
+		const [coupons] = await db.execute(
+			'SELECT id, code, description, discount_pct, expires_at FROM user_coupons WHERE user_id = ? ORDER BY id DESC',
+			[userId],
+		);
+		return res.render('shop/account-shop-info', {
+			user,
+			active: 'account',
+			message: req.query?.message || null,
+			error: req.query?.error || null,
+			csrfToken: req.csrfToken(),
+			addresses,
+			paymentMethods,
+			coupons,
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).render('500', { message: '정보 로딩 중 오류가 발생했습니다.' });
 	}
 });
 

@@ -4,9 +4,9 @@
   <div class="container shop-footer__inner">
     <span class="shop-footer__copy">© <%= new Date().getFullYear() %> ENERMADE. All rights reserved.</span>
     <div class="shop-footer__links">
-      <a href="/about">회사 소개</a>
-      <a href="/shop/inquiries">문의하기</a>
-      <a href="/shop/orders/guest">주문 조회</a>
+      <a href="/about" data-i18n-auto>회사 소개</a>
+      <a href="/shop/inquiries" data-i18n-auto>문의하기</a>
+      <a href="/shop/orders/guest" data-i18n-auto>주문 조회</a>
     </div>
   </div>
 </footer>
@@ -44,6 +44,16 @@
   window.addEventListener('resize', function () {
     if (window.innerWidth >= 992) closeShopDrawer();
   });
+
+  /* Dark mode toggle */
+  const dmBtn = document.getElementById('darkModeToggle');
+  if (dmBtn) {
+    dmBtn.addEventListener('click', function () {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+      localStorage.setItem('site_theme', isDark ? '' : 'dark');
+    });
+  }
 })();
 </script>
 </body>
