@@ -78,11 +78,12 @@
 
 		const data = await response.json().catch(() => null);
 		if (!response.ok || !data?.ok) {
-			if (response.status >= 500 || response.status === 403 || response.status === 502) {
+			// 인증 실패(401/403)만 전체 번역 차단 — 502/5xx는 개별 텍스트 문제일 수 있으므로 계속 진행
+			if (response.status === 401 || response.status === 403) {
 				translationTemporarilyBlocked = true;
 				lastBlockingError = {
 					status: response.status,
-					message: data?.message || 'response not ok',
+					message: data?.message || 'auth error',
 				};
 			}
 			appendLog('translate failed', {
