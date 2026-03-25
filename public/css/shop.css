@@ -421,6 +421,14 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .shop-main { min-height: calc(100vh - 62px - 57px); }
 .shop-page { padding: 32px 0 64px; }
 
+/* Generic shop card — lookup, payment result, inquiry pages */
+.shop-card {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
 /* ══════════════════════════════════════
    SHOP HOMEPAGE HERO
 ══════════════════════════════════════ */

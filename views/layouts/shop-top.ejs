@@ -55,7 +55,8 @@
           <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
           <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <input type="search" name="q" placeholder="상품 검색" value="<%= q %>">
+        <input type="search" name="q" placeholder="상품 검색" value="<%= q %>"
+               data-i18n-placeholder data-i18n-placeholder-ko="상품 검색">
       </form>
 
       <!-- Wishlist -->
@@ -63,7 +64,7 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
           <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
         </svg>
-        찜
+        <span data-i18n-auto>찜</span>
       </a>
 
       <!-- Cart -->
@@ -73,7 +74,7 @@
           <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
           <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        장바구니
+        <span data-i18n-auto>장바구니</span>
         <% if (safeCartCount > 0) { %>
           <span class="shop-cart-badge"><%= safeCartCount %></span>
         <% } %>
@@ -88,7 +89,7 @@
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
             <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
           </svg>
-          회사
+          <span data-i18n-auto>회사</span>
         </a>
         <% if (user.is_admin) { %>
           <!-- 관리자 전용 대시보드 버튼 -->
@@ -100,7 +101,7 @@
               <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
               <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
             </svg>
-            관리자
+            <span data-i18n-auto>관리자</span>
           </a>
         <% } %>
         <a class="shop-tool-btn <%= isAccount ? 'is-active' : '' %>" href="/shop/account">
@@ -110,11 +111,11 @@
           </svg>
           <%= user.name %>
         </a>
-        <a class="shop-auth-btn outline" href="/auth/logout">로그아웃</a>
+        <a class="shop-auth-btn outline" href="/auth/logout" data-i18n-auto>로그아웃</a>
       <% } else { %>
-        <a class="shop-auth-btn outline" href="/" title="회사 홈페이지">회사</a>
-        <a class="shop-auth-btn outline" href="/auth/login">로그인</a>
-        <a class="shop-auth-btn filled" href="/auth/register">회원가입</a>
+        <a class="shop-auth-btn outline" href="/" title="회사 홈페이지" data-i18n-auto>회사</a>
+        <a class="shop-auth-btn outline" href="/auth/login" data-i18n-auto>로그인</a>
+        <a class="shop-auth-btn filled" href="/auth/register" data-i18n-auto>회원가입</a>
       <% } %>
     </div>
 
@@ -144,8 +145,9 @@
 
   <!-- 검색 -->
   <form class="shop-mob-search" action="/shop/products" method="get">
-    <input type="search" name="q" placeholder="상품 검색" value="<%= q %>">
-    <button class="btn btn-primary btn-sm" type="submit">검색</button>
+    <input type="search" name="q" placeholder="상품 검색" value="<%= q %>"
+           data-i18n-placeholder data-i18n-placeholder-ko="상품 검색">
+    <button class="btn btn-primary btn-sm" type="submit" data-i18n-auto>검색</button>
   </form>
 
   <!-- 상단: 인증 버튼 -->
@@ -159,17 +161,17 @@
         </div>
       </div>
       <div class="shop-mob-btns">
-        <a href="/" class="shop-mob-btn-outline">회사 홈</a>
+        <a href="/" class="shop-mob-btn-outline" data-i18n-auto>회사 홈</a>
         <% if (user.is_admin) { %>
-          <a href="/admin/dashboard" class="shop-mob-btn-admin">관리자</a>
+          <a href="/admin/dashboard" class="shop-mob-btn-admin" data-i18n-auto>관리자</a>
         <% } %>
-        <a href="/auth/logout" class="shop-mob-btn-dark">로그아웃</a>
+        <a href="/auth/logout" class="shop-mob-btn-dark" data-i18n-auto>로그아웃</a>
       </div>
     <% } else { %>
       <div class="shop-mob-btns">
-        <a href="/" class="shop-mob-btn-outline">회사 홈</a>
-        <a href="/auth/login" class="shop-mob-btn-outline">로그인</a>
-        <a href="/auth/register" class="shop-mob-btn-primary">회원가입</a>
+        <a href="/" class="shop-mob-btn-outline" data-i18n-auto>회사 홈</a>
+        <a href="/auth/login" class="shop-mob-btn-outline" data-i18n-auto>로그인</a>
+        <a href="/auth/register" class="shop-mob-btn-primary" data-i18n-auto>회원가입</a>
       </div>
     <% } %>
   </div>

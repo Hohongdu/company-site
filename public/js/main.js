@@ -150,6 +150,8 @@
 			// shop / account
 			'.card-title','.acct-card__title',
 			'.cart-summary-title','.sidebar-label',
+			// CTA 버튼 (a.btn, button.btn) — <main> 내 정적 텍스트 버튼 번역
+			'a.btn','button.btn',
 		].join(',');
 
 		mainEl.querySelectorAll(STATIC_SELECTORS).forEach((el) => {

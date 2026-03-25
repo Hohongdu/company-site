@@ -95,6 +95,16 @@
 /* Shop header: border-bottom 미세 조정 */
 [data-theme="dark"] .shop-header { border-bottom-color: rgba(255,255,255,.06); }
 
+/* bg-light Bootstrap utility — stays white in dark mode without override */
+[data-theme="dark"] .bg-light { background: var(--c-bg-3) !important; color: var(--c-text-2) !important; }
+
+/* shop-card — generic shop page card (order/inquiry lookup, payment result) */
+[data-theme="dark"] .shop-card { background: var(--c-bg-2); border-color: var(--c-border); }
+
+/* lookup result card & content box */
+[data-theme="dark"] .lookup-result-card { background: var(--c-bg-3); border-color: var(--c-border) !important; }
+[data-theme="dark"] .lookup-content-box { background: var(--c-bg-2); }
+
 /* White-background cards & containers */
 [data-theme="dark"] .chip { background: var(--c-bg-2); color: var(--c-text-2); }
 [data-theme="dark"] .product-card { background: var(--c-bg-2); }
