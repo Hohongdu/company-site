@@ -690,5 +690,6 @@ hr { border-color: var(--c-border); opacity: 1; }
   background: var(--c-navy-2);
   box-shadow: 0 6px 28px rgba(0,0,0,.45);
 }
-.dark-toggle__icon { font-size: 15px; line-height: 1; }
+.dark-toggle__icon { display: flex; align-items: center; flex-shrink: 0; }
+.dark-toggle__svg { display: block; color: rgba(255,255,255,.85); flex-shrink: 0; }
 .dark-toggle__label { font-size: 13px; }
