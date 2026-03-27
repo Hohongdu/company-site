@@ -418,8 +418,52 @@
 		root._updateLabel = updateLabel;
 	}
 
+	function createDarkModeToggle() {
+		const storageKey = 'site_theme';
+		const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+		function applyTheme(dark) {
+			if (dark) {
+				document.documentElement.setAttribute('data-theme', 'dark');
+			} else {
+				document.documentElement.removeAttribute('data-theme');
+			}
+			localStorage.setItem(storageKey, dark ? 'dark' : 'light');
+			const iconEl = root.querySelector('.dark-toggle__icon');
+			const labelEl = root.querySelector('.dark-toggle__label');
+			if (iconEl) iconEl.textContent = dark ? '☀️' : '🌙';
+			if (labelEl) labelEl.textContent = dark ? '라이트' : '다크';
+		}
+
+		const root = document.createElement('div');
+		root.className = 'dark-widget';
+		root.id = 'darkWidget';
+		root.innerHTML = `
+			<button class="dark-toggle" type="button" aria-label="다크 모드 토글">
+				<span class="dark-toggle__icon">🌙</span>
+				<span class="dark-toggle__label">다크</span>
+			</button>
+		`;
+		document.body.appendChild(root);
+
+		root.querySelector('.dark-toggle').addEventListener('click', () => {
+			applyTheme(!isDark());
+		});
+
+		// Init from stored preference, fallback to system preference
+		const stored = localStorage.getItem(storageKey);
+		if (stored === 'dark') {
+			applyTheme(true);
+		} else if (stored === 'light') {
+			applyTheme(false);
+		} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+			applyTheme(true);
+		}
+	}
+
 	if (document.body) {
 		createLanguageWidget();
+		createDarkModeToggle();
 		const defaultLang = localStorage.getItem(storageLangKey) || 'ko';
 		const widget = document.getElementById('langWidget');
 		if (widget && widget._updateLabel) widget._updateLabel(defaultLang);
