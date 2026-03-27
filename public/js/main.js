@@ -433,9 +433,7 @@
 			}
 			localStorage.setItem(storageKey, dark ? 'dark' : 'light');
 			const iconEl = root.querySelector('.dark-toggle__icon');
-			const labelEl = root.querySelector('.dark-toggle__label');
 			if (iconEl) iconEl.innerHTML = dark ? ICON_SUN : ICON_MOON;
-			if (labelEl) labelEl.textContent = dark ? '라이트' : '다크';
 		}
 
 		const root = document.createElement('div');
@@ -444,7 +442,6 @@
 		root.innerHTML = `
 			<button class="dark-toggle" type="button" aria-label="다크 모드 토글">
 				<span class="dark-toggle__icon">${ICON_MOON}</span>
-				<span class="dark-toggle__label">다크</span>
 			</button>
 		`;
 		document.body.appendChild(root);
