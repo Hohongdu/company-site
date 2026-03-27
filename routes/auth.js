@@ -96,40 +96,30 @@ router.post('/forgot', async (req, res) => {
 		});
 	}
 });
-router.get('/register', (req, res) => res.render('auth/register', {
-	csrfToken: req.csrfToken ? req.csrfToken() : (res.locals.csrfToken || ''),
-	error: null,
-}));
+router.get('/register', (req, res) => res.render('auth/register'));
 
 router.post('/register', async (req, res) => {
-	const renderError = (msg) => res.status(400).render('auth/register', {
-		csrfToken: req.csrfToken ? req.csrfToken() : (res.locals.csrfToken || ''),
-		error: msg,
-	});
-
 	try {
 		const { name, email, password, passwordConfirm } = req.body;
 
-		if (!name || !name.trim()) return renderError('이름을 입력해 주세요.');
-		if (!email || !email.trim()) return renderError('이메일을 입력해 주세요.');
-		if (!password) return renderError('비밀번호를 입력해 주세요.');
-		if (password !== passwordConfirm) return renderError('비밀번호가 일치하지 않습니다.');
-		if (password.length < 4) return renderError('비밀번호는 4자 이상이어야 합니다.');
-
-		// 중복 이메일 확인
-		const [[existing]] = await db.execute('SELECT id FROM users WHERE email = ? LIMIT 1', [email.trim().toLowerCase()]);
-		if (existing) return renderError('이미 사용 중인 이메일입니다.');
+		// 입력값 기본 검증
+		if (!name || name.trim().length < 2 || name.trim().length > 50)
+			return res.send('이름은 2자 이상 50자 이하로 입력해주세요.');
+		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+			return res.send('올바른 이메일 주소를 입력해주세요.');
+		if (!password || password.length < 8 || password.length > 72)
+			return res.send('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
+		if (password !== passwordConfirm) return res.send('비밀번호가 일치하지 않습니다.');
 
 		const hashedPw = await bcrypt.hash(password, 10);
-		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name.trim(), email.trim().toLowerCase(), hashedPw]);
+
+		// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
+		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
 
 		return res.redirect('/auth/login');
 	} catch (err) {
-		console.error('[register]', err);
-		return res.status(500).render('auth/register', {
-			csrfToken: req.csrfToken ? req.csrfToken() : (res.locals.csrfToken || ''),
-			error: '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
-		});
+		console.error(err);
+		return res.status(500).send('회원가입 중 오류 발생');
 	}
 });
 
