@@ -10,6 +10,8 @@ const helmet = require('helmet');
 const crypto = require('crypto');
 const csurf = require('./lib/csurf');
 
+const axios = require('axios');
+
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
 const { requireLogin } = require('./middleware/auth');
@@ -320,10 +322,11 @@ app.get('/payments/kakao/success', requireLogin, async (req, res) => {
 				},
 			},
 		);
-		console.log('[Kakao approve] query=', req.query);
-		console.log('[Kakao approve] session=', req.session?.kakaoPay || req.session);
-
-		console.log('KakaoPay approve result:', approveResponse.data);
+		if (process.env.NODE_ENV !== 'production') {
+			console.log('[Kakao approve] query=', req.query);
+			console.log('[Kakao approve] tid=', req.session?.kakaoPay?.tid);
+			console.log('KakaoPay approve result:', approveResponse.data);
+		}
 
 		// 3) 주문 상태 업데이트
 		await db.execute(

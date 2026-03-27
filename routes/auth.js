@@ -101,6 +101,14 @@ router.get('/register', (req, res) => res.render('auth/register'));
 router.post('/register', async (req, res) => {
 	try {
 		const { name, email, password, passwordConfirm } = req.body;
+
+		// 입력값 기본 검증
+		if (!name || name.trim().length < 2 || name.trim().length > 50)
+			return res.send('이름은 2자 이상 50자 이하로 입력해주세요.');
+		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+			return res.send('올바른 이메일 주소를 입력해주세요.');
+		if (!password || password.length < 8 || password.length > 72)
+			return res.send('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
 		if (password !== passwordConfirm) return res.send('비밀번호가 일치하지 않습니다.');
 
 		const hashedPw = await bcrypt.hash(password, 10);
