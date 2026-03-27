@@ -1,140 +1,253 @@
 <%- include('../layouts/shop-top', { title: '장바구니', active: 'cart' }) %>
 
-<div class="shop-page">
-  <div class="container">
+<!-- ─────────────────────────────────────────────
+   장바구니 화면
+   구조: 오류 알림 → 카트 아이템 리스트 → 주문 요약 → sticky 결제 CTA
+   비회원 주문 폼은 결제 버튼 위에 위치 (기존 동작 유지)
+   ───────────────────────────────────────────── -->
 
-    <!-- Toolbar -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-      <div>
-        <h2 style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--c-text);margin-bottom:4px;">장바구니</h2>
-        <p style="font-size:13px;color:var(--c-muted);margin:0;">
-          <% if (isGuest) { %>비회원 장바구니입니다. 브라우저 세션이 끝나면 초기화됩니다.<% } else { %>회원 장바구니입니다. 로그인 상태에서 유지됩니다.<% } %>
-        </p>
+<% if (cartError) { %>
+  <div class="app-section">
+    <div class="app-alert app-alert--warn"><%= cartError %></div>
+  </div>
+<% } %>
+
+<!-- ── 빈 장바구니 ── -->
+<% if (!items || items.length === 0) { %>
+  <div class="app-section--pad" style="padding-top:48px;">
+    <div class="app-empty">
+      <div class="app-empty__icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round"/>
+        </svg>
       </div>
-      <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-sm btn-outline-secondary" href="/shop/products">상품 더 보기</a>
-        <form action="/shop/cart/clear" method="post" class="m-0" onsubmit="return confirm('장바구니를 비울까요?');">
-          <button class="btn btn-sm btn-outline-danger" type="submit">전체 비우기</button>
+      <p class="app-empty__title">장바구니가 비어 있어요</p>
+      <p class="app-empty__desc">마음에 드는 상품을 담아보세요</p>
+      <a href="/shop/products" class="app-btn app-btn--primary app-btn--sm">상품 보러가기</a>
+    </div>
+  </div>
+
+<% } else { %>
+
+  <!-- ── 비회원 안내 배너 ── -->
+  <% if (isGuest) { %>
+    <div class="app-section" style="padding-bottom:0;">
+      <div class="app-alert app-alert--info">
+        비회원 장바구니입니다. 브라우저 세션이 끝나면 초기화됩니다.
+      </div>
+    </div>
+  <% } %>
+
+  <!-- ── 카트 아이템 목록 ── -->
+  <div class="app-cart-list">
+    <% items.forEach(function(it) { %>
+      <div class="app-cart-item">
+
+        <!-- 상품 썸네일 -->
+        <a href="/shop/products/<%= it.product_id %>"
+           class="app-cart-item__thumb"
+           aria-label="<%= it.name %> 상세 보기">
+          <% if (it.image) { %>
+            <img src="<%= it.image %>" alt="<%= it.name %>" loading="lazy">
+          <% } else { %>
+            <div class="app-product-card__placeholder" style="height:100%;border-radius:var(--r-lg);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="2"
+                      stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </div>
+          <% } %>
+        </a>
+
+        <!-- 상품 정보 -->
+        <div class="app-cart-item__info">
+          <div class="app-cart-item__name">
+            <a href="/shop/products/<%= it.product_id %>"
+               style="color:inherit;text-decoration:none;"><%= it.name %></a>
+          </div>
+          <div class="app-cart-item__unit">
+            단가 <%= Number(it.price || 0).toLocaleString() %>원
+          </div>
+
+          <!-- 수량 조절 + 소계 -->
+          <div class="app-cart-item__controls">
+            <form action="/shop/cart/update" method="post"
+                  class="app-cart-qty" id="qtyForm_<%= it.product_id %>">
+              <% if (!isGuest) { %>
+                <input type="hidden" name="cartItemId" value="<%= it.cart_item_id %>">
+              <% } %>
+              <input type="hidden" name="productId" value="<%= it.product_id %>">
+              <button class="app-cart-qty__btn" type="button"
+                      data-qty-dec="qty_<%= it.product_id %>"
+                      aria-label="수량 감소">−</button>
+              <input class="app-cart-qty__num" id="qty_<%= it.product_id %>"
+                     name="quantity" type="number"
+                     min="1" value="<%= it.quantity %>"
+                     data-unit-price="<%= it.price || 0 %>"
+                     data-subtotal-id="sub_<%= it.product_id %>"
+                     readonly>
+              <button class="app-cart-qty__btn" type="button"
+                      data-qty-inc="qty_<%= it.product_id %>"
+                      aria-label="수량 증가">+</button>
+              <!-- 변경 적용: 체크 아이콘 submit -->
+              <button type="submit"
+                      style="width:30px;height:30px;border:none;background:var(--c-accent);color:#fff;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:4px;"
+                      aria-label="수량 변경 적용">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </form>
+            <span class="app-cart-item__price" id="sub_<%= it.product_id %>">
+              <%= Number((it.price || 0) * (it.quantity || 0)).toLocaleString() %>원
+            </span>
+          </div>
+        </div><!-- /info -->
+
+        <!-- 삭제 버튼 -->
+        <form action="/shop/cart/remove" method="post" style="flex-shrink:0;">
+          <% if (!isGuest) { %>
+            <input type="hidden" name="cartItemId" value="<%= it.cart_item_id %>">
+          <% } %>
+          <input type="hidden" name="productId" value="<%= it.product_id %>">
+          <button class="app-cart-remove" type="submit" aria-label="<%= it.name %> 삭제">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round"/>
+            </svg>
+          </button>
         </form>
+
+      </div><!-- /app-cart-item -->
+    <% }); %>
+
+    <!-- 전체 비우기 -->
+    <div style="padding:12px 16px;text-align:right;">
+      <form action="/shop/cart/clear" method="post" class="m-0"
+            onsubmit="return confirm('장바구니를 비울까요?');">
+        <button class="app-btn app-btn--sm"
+                style="color:var(--c-muted);border:1px solid var(--c-border);"
+                type="submit">전체 비우기</button>
+      </form>
+    </div>
+
+  </div><!-- /app-cart-list -->
+
+
+  <!-- ── 주문 요약 ── -->
+  <div class="app-section--pad" style="padding-top:8px;padding-bottom:120px;">
+    <div class="app-order-summary">
+      <div class="app-order-summary__row">
+        <span>총 상품금액</span>
+        <span id="summaryTotal"><%= Number(totalAmount || 0).toLocaleString() %>원</span>
+      </div>
+      <div class="app-order-summary__row">
+        <span>배송비</span>
+        <span>0원</span>
+      </div>
+      <div class="app-order-summary__row app-order-summary__row--total">
+        <span>총 주문금액</span>
+        <span id="summaryFinal"><%= Number(totalAmount || 0).toLocaleString() %>원</span>
       </div>
     </div>
 
-    <% if (cartError) { %>
-      <div class="alert alert-warning mb-4"><%= cartError %></div>
-    <% } %>
-
-    <% if (!items || items.length === 0) { %>
-      <!-- Empty cart -->
-      <div class="cart-empty">
-        <div class="cart-empty__icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-            <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
+    <!-- 비회원 주문 정보 폼 -->
+    <% if (paymentEnabled && isGuest) { %>
+      <div class="app-guest-form">
+        <p class="app-guest-form__title">비회원 주문 정보</p>
+        <div class="app-field">
+          <label class="app-field__label" for="guestName">이름</label>
+          <input class="app-field__input" id="guestName" name="guestName"
+                 form="checkoutForm"
+                 required value="<%= guestInfo?.guestName || '' %>">
         </div>
-        <h3>장바구니가 비어 있어요</h3>
-        <p>마음에 드는 상품을 담아보세요</p>
-        <a href="/shop/products" class="btn btn-primary">상품 보러가기</a>
-      </div>
-    <% } else { %>
-      <div class="row g-4">
-        <!-- Cart items -->
-        <div class="col-12 col-lg-8">
-          <div style="background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);overflow:hidden;">
-            <% items.forEach(function(it) { %>
-              <div style="display:flex;gap:16px;padding:20px 24px;border-bottom:1px solid var(--c-border);align-items:flex-start;">
-                <!-- Thumb -->
-                <div style="width:72px;height:72px;border-radius:var(--r-lg);overflow:hidden;background:var(--c-bg-2);flex-shrink:0;">
-                  <% if (it.image) { %>
-                    <img src="<%= it.image %>" alt="<%= it.name %>" style="width:100%;height:100%;object-fit:cover;display:block;">
-                  <% } %>
-                </div>
-                <!-- Info -->
-                <div style="flex:1;min-width:0;">
-                  <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--c-text);margin-bottom:3px;"><%= it.name %></div>
-                  <div style="font-size:13px;color:var(--c-muted);margin-bottom:12px;">단가: <%= Number(it.price || 0).toLocaleString() %>원</div>
-                  <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <form action="/shop/cart/update" method="post" class="d-flex gap-2 align-items-center">
-                      <% if (!isGuest) { %>
-                        <input type="hidden" name="cartItemId" value="<%= it.cart_item_id %>">
-                      <% } %>
-                      <input type="hidden" name="productId" value="<%= it.product_id %>">
-                      <input type="number" name="quantity" min="1" value="<%= it.quantity %>"
-                        style="width:70px;text-align:center;padding:7px;border:1.5px solid var(--c-border);border-radius:var(--r);font-size:14px;font-family:var(--font-head);font-weight:600;">
-                      <button class="btn btn-outline-primary btn-sm" type="submit">변경</button>
-                    </form>
-                    <form action="/shop/cart/remove" method="post" class="m-0">
-                      <% if (!isGuest) { %>
-                        <input type="hidden" name="cartItemId" value="<%= it.cart_item_id %>">
-                      <% } %>
-                      <input type="hidden" name="productId" value="<%= it.product_id %>">
-                      <button class="cart-remove-btn" type="submit" title="삭제">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-                <!-- Price -->
-                <div style="font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--c-navy);flex-shrink:0;white-space:nowrap;">
-                  <%= Number((it.price || 0) * (it.quantity || 0)).toLocaleString() %>원
-                </div>
-              </div>
-            <% }); %>
-          </div>
+        <div class="app-field">
+          <label class="app-field__label" for="guestEmail">이메일</label>
+          <input class="app-field__input" id="guestEmail" name="guestEmail"
+                 type="email" form="checkoutForm"
+                 placeholder="또는 연락처 입력"
+                 value="<%= guestInfo?.guestEmail || '' %>">
         </div>
-
-        <!-- Summary -->
-        <div class="col-12 col-lg-4">
-          <div class="cart-summary">
-            <div class="cart-summary-title">주문 정보</div>
-            <div class="cart-summary-row">
-              <span>총 상품금액</span>
-              <span><%= Number(totalAmount || 0).toLocaleString() %>원</span>
-            </div>
-            <div class="cart-summary-row">
-              <span>배송비</span>
-              <span>0원</span>
-            </div>
-            <div class="cart-summary-row total">
-              <span>총 주문금액</span>
-              <span><%= Number(totalAmount || 0).toLocaleString() %>원</span>
-            </div>
-
-            <% if (paymentEnabled) { %>
-              <form action="/shop/checkout/kakao" method="post" class="mt-4">
-                <% if (isGuest) { %>
-                  <div style="background:var(--c-bg-2);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px;">
-                    <div style="font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--c-text);margin-bottom:12px;">비회원 주문 정보</div>
-                    <div class="d-grid gap-2">
-                      <div>
-                        <label class="form-label" style="font-size:12px;">이름</label>
-                        <input class="form-control form-control-sm" name="guestName" required value="<%= guestInfo?.guestName || '' %>">
-                      </div>
-                      <div>
-                        <label class="form-label" style="font-size:12px;">이메일</label>
-                        <input class="form-control form-control-sm" name="guestEmail" type="email" placeholder="또는 연락처 입력" value="<%= guestInfo?.guestEmail || '' %>">
-                      </div>
-                      <div>
-                        <label class="form-label" style="font-size:12px;">연락처</label>
-                        <input class="form-control form-control-sm" name="guestPhone" placeholder="010-0000-0000" value="<%= guestInfo?.guestPhone || '' %>">
-                      </div>
-                    </div>
-                  </div>
-                <% } %>
-                <button class="btn btn-primary w-100" type="submit" style="padding:13px;">주문서 작성</button>
-              </form>
-            <% } else { %>
-              <button class="btn btn-outline-secondary w-100 mt-4" disabled style="padding:13px;">결제 미설정 (관리자 문의)</button>
-            <% } %>
-          </div>
+        <div class="app-field">
+          <label class="app-field__label" for="guestPhone">연락처</label>
+          <input class="app-field__input" id="guestPhone" name="guestPhone"
+                 form="checkoutForm"
+                 placeholder="010-0000-0000"
+                 value="<%= guestInfo?.guestPhone || '' %>">
         </div>
       </div>
     <% } %>
-
   </div>
-</div>
+
+
+  <!-- ── Sticky 결제 CTA ── -->
+  <div class="app-cart-cta">
+    <div class="app-cart-cta__inner">
+      <% if (paymentEnabled) { %>
+        <%# 비회원 필드는 위 guest-form의 input들이 form="checkoutForm"으로 연결됨 %>
+        <form action="/shop/checkout/kakao" method="post"
+              id="checkoutForm" style="flex:1;display:flex;">
+          <button class="app-btn app-btn--primary" type="submit"
+                  style="flex:1;font-size:16px;font-weight:700;">
+            주문서 작성
+            <span style="font-size:14px;font-weight:400;opacity:.85;margin-left:6px;">
+              (<span id="ctaTotal"><%= Number(totalAmount || 0).toLocaleString() %></span>원)
+            </span>
+          </button>
+        </form>
+      <% } else { %>
+        <button class="app-btn app-btn--outline" style="flex:1;" disabled>
+          결제 미설정 (관리자 문의)
+        </button>
+      <% } %>
+    </div>
+  </div><!-- /app-cart-cta -->
+
+<% } %><!-- /if items -->
+
+
+<!-- ── 수량 변경 시 소계 실시간 업데이트 ── -->
+<script>
+(function () {
+  'use strict';
+
+  /* 수량 input change → 소계 업데이트 */
+  document.addEventListener('change', function (e) {
+    var input = e.target;
+    if (input.tagName !== 'INPUT' || input.type !== 'number') return;
+
+    var unitPrice  = parseInt(input.getAttribute('data-unit-price')) || 0;
+    var subtotalId = input.getAttribute('data-subtotal-id');
+    if (!subtotalId) return;
+
+    var qty      = Math.max(1, parseInt(input.value) || 1);
+    var subtotal = unitPrice * qty;
+    var el = document.getElementById(subtotalId);
+    if (el) el.textContent = subtotal.toLocaleString() + '원';
+
+    /* 주문 합계 재계산 */
+    recalcTotal();
+  });
+
+  function recalcTotal() {
+    var total = 0;
+    document.querySelectorAll('[data-unit-price]').forEach(function (input) {
+      var unit = parseInt(input.getAttribute('data-unit-price')) || 0;
+      var qty  = Math.max(1, parseInt(input.value) || 1);
+      total += unit * qty;
+    });
+    var fmt = total.toLocaleString();
+    ['summaryTotal','summaryFinal','ctaTotal'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = (id === 'ctaTotal') ? fmt : fmt + '원';
+    });
+  }
+})();
+</script>
 
 <%- include('../layouts/shop-bottom') %>

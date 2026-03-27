@@ -1,5 +1,21 @@
 <%- include('partials/admin-header', { title: '대시보드', subtitle: '운영 현황을 한눈에', active: 'dashboard', user }) %>
 
+<!-- 페이지 타이틀 -->
+<div class="adm-page-head">
+    <div>
+        <h1 class="adm-page-head__title">대시보드</h1>
+        <p class="adm-page-head__sub">운영 현황을 한눈에</p>
+    </div>
+    <div class="adm-page-head__actions">
+        <a href="/admin/products/new" class="btn btn-primary btn-sm" style="gap:5px;display:inline-flex;align-items:center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>새 상품
+        </a>
+        <a href="/admin/orders" class="btn btn-outline-secondary btn-sm">주문 보기</a>
+    </div>
+</div>
+
 <%
 const statsSafe = (typeof stats !== 'undefined' && stats) ? stats : {};
 const chartSafe = (typeof chartData !== 'undefined' && chartData) ? chartData : {};

@@ -1,13 +1,18 @@
 <%- include('partials/admin-header', { title: '상품 관리' , subtitle: '상품 등록/수정/삭제' , active: 'products' }) %>
 
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="adm-page-head">
         <div>
-            <h3 class="mb-1">상품 목록</h3>
+            <h1 class="adm-page-head__title">상품 관리</h1>
+            <p class="adm-page-head__sub">상품 등록/수정/삭제</p>
         </div>
-
-        <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-primary btn-sm" href="/admin/products/new">+ 새 상품</a>
-            <a class="btn btn-outline-primary btn-sm" href="/admin/products/import">엑셀 업로드</a>
+        <div class="adm-page-head__actions">
+            <a class="btn btn-primary btn-sm" href="/admin/products/new"
+               style="gap:5px;display:inline-flex;align-items:center;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>새 상품
+            </a>
+            <a class="btn btn-outline-secondary btn-sm" href="/admin/products/import">엑셀 업로드</a>
         </div>
     </div>
 

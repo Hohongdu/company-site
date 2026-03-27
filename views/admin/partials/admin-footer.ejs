@@ -1,19 +1,85 @@
-</main>
-</div>
-</div>
+            </main><!-- /admin-main -->
+        </div><!-- /admin-shell -->
+    </div><!-- /container-fluid -->
 
-<footer class="container py-4">
-    <div class="admin-muted small d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <span>© <%= new Date().getFullYear() %> Admin Console</span>
-        <span class="d-flex align-items-center gap-2">
-            <span class="admin-tag">관리자 전용</span>
-            <span class="admin-tag">보안 주의</span>
-        </span>
-    </div>
-</footer>
+    <!-- ══ FOOTER ════════════════════════════════════════════ -->
+    <footer class="container py-3" style="margin-bottom:72px;">
+        <div class="admin-muted small d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span>© <%= new Date().getFullYear() %> Admin Console</span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="admin-tag">관리자 전용</span>
+                <span class="admin-tag">보안 주의</span>
+            </span>
+        </div>
+    </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/admin.js"></script>
+    <!-- ══ MOBILE BOTTOM NAV (≤992px) ════════════════════════ -->
+    <%
+      const _active = (typeof active !== 'undefined') ? active : '';
+    %>
+    <nav class="adm-mob-nav" aria-label="관리자 하단 메뉴">
+        <div class="adm-mob-nav__inner">
+
+            <a class="adm-mob-nav__tab <%= _active === 'dashboard' ? 'active' : '' %>"
+               href="/admin/dashboard" style="position:relative;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="<%= _active === 'dashboard' ? '2.5' : '1.8' %>">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                대시보드
+            </a>
+
+            <a class="adm-mob-nav__tab <%= _active === 'products' ? 'active' : '' %>"
+               href="/admin/products" style="position:relative;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="<%= _active === 'products' ? '2.5' : '1.8' %>">
+                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+                상품
+            </a>
+
+            <a class="adm-mob-nav__tab <%= _active === 'orders' ? 'active' : '' %>"
+               href="/admin/orders" style="position:relative;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="<%= _active === 'orders' ? '2.5' : '1.8' %>">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                    <rect x="9" y="3" width="6" height="4" rx="2"/>
+                    <line x1="9" y1="12" x2="15" y2="12"/>
+                    <line x1="9" y1="16" x2="13" y2="16"/>
+                </svg>
+                주문
+            </a>
+
+            <a class="adm-mob-nav__tab <%= _active === 'inquiries' ? 'active' : '' %>"
+               href="/admin/inquiries" style="position:relative;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="<%= _active === 'inquiries' ? '2.5' : '1.8' %>">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                </svg>
+                문의
+            </a>
+
+            <a class="adm-mob-nav__tab"
+               href="/admin/products/new" style="position:relative;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                등록
+            </a>
+
+        </div>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/admin.js"></script>
+
 </body>
-
 </html>
