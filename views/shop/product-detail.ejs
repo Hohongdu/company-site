@@ -1,164 +1,268 @@
-<%- include('../layouts/shop-top', { title: product.name, active: 'products' }) %>
+<%- include('../layouts/shop-top', {
+  title: product.name,
+  active: 'products',
+  showBack: true,
+  backUrl: '/shop/products'
+}) %>
 
-<div class="shop-page">
-  <div class="container">
+<!-- ─────────────────────────────────────────────
+   상품 상세 화면
+   구조: 풀블리드 이미지 → 상품 정보 → 구매 CTA(sticky bottom) → 리뷰 → 연관 상품
+   app-main에 has-bottom-cta 클래스 추가 → 콘텐츠가 CTA 뒤에 숨지 않도록 패딩
+   ───────────────────────────────────────────── -->
+<script>
+/* has-bottom-cta 클래스를 app-main에 추가 */
+document.getElementById('app-main').classList.add('has-bottom-cta');
+</script>
 
-    <!-- Breadcrumb + actions -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-      <a href="/shop/products" class="btn btn-sm btn-outline-secondary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:4px;">
-          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        목록으로
-      </a>
-      <div class="d-flex gap-2 flex-wrap">
-        <a href="/shop/cart" class="btn btn-sm btn-outline-dark">장바구니</a>
-        <% if (user) { %>
-          <form action="/shop/wishlist/toggle" method="post" class="m-0">
-            <input type="hidden" name="productId" value="<%= product.id %>">
-            <button class="btn btn-sm <%= wished ? 'btn-danger' : 'btn-outline-secondary' %>" type="submit">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="<%= wished ? 'currentColor' : 'none' %>" style="display:inline;vertical-align:-1px;margin-right:3px;">
-                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              </svg>
-              <%= wished ? '찜 해제' : '찜하기' %>
-            </button>
-          </form>
-        <% } %>
-      </div>
+<!-- ── 상품 이미지 ── -->
+<div class="app-detail-img">
+  <% if (product.image) { %>
+    <img src="<%= product.image %>" alt="<%= product.name %>" loading="eager">
+  <% } else { %>
+    <div class="app-product-card__placeholder" style="height:100%;border-radius:0;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M3 9l4-4 4 4 4-4 4 4" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
-
-    <!-- Product main -->
-    <div class="row g-4 mb-5">
-      <!-- Image -->
-      <div class="col-12 col-lg-6">
-        <div class="product-detail-img">
-          <img src="<%= product.image || '' %>" alt="<%= product.name %>"
-            onerror="this.style.display='none';"
-            style="width:100%;height:100%;object-fit:cover;">
-        </div>
-      </div>
-
-      <!-- Info -->
-      <div class="col-12 col-lg-6">
-        <div class="product-detail-badge">
-          <%= product.category_name || '미분류' %>
-        </div>
-        <h1 class="product-detail-name"><%= product.name %></h1>
-        <% if (product.code) { %>
-          <p class="product-detail-spec">코드: <strong><%= product.code %></strong></p>
-        <% } %>
-        <% if (product.spec) { %>
-          <div style="background:var(--c-bg-2);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:20px;">
-            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--c-muted);margin-bottom:6px;">규격/스펙</div>
-            <div style="font-size:14px;color:var(--c-text);font-weight:500;"><%= product.spec %></div>
-          </div>
-        <% } %>
-
-        <!-- Rating -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-          <div style="font-size:13px;color:var(--c-muted);">
-            평점 <strong style="color:var(--c-text)"><%= reviewStats?.avg_rating ? Number(reviewStats.avg_rating).toFixed(1) : '0.0' %></strong>
-            (<%= reviewStats?.review_count || 0 %>건)
-          </div>
-        </div>
-
-        <div class="product-detail-price">
-          <%= Number(product.price || 0).toLocaleString() %><small>원</small>
-        </div>
-
-        <hr class="product-detail-divider">
-
-        <form action="/shop/cart/add" method="post" class="product-add-form">
-          <input type="hidden" name="productId" value="<%= product.id %>">
-          <input type="number" name="quantity" min="1" value="1" class="form-control product-add-qty" style="width:90px;">
-          <button class="btn btn-primary flex-grow-1" type="submit" style="padding:12px;">장바구니 담기</button>
-        </form>
-
-        <p style="font-size:12px;color:var(--c-muted-2);margin-top:12px;">비회원도 장바구니 사용 가능 (세션 종료 시 초기화)</p>
-
-        <% if (product.description) { %>
-          <hr class="product-detail-divider">
-          <div class="product-desc"><%= product.description %></div>
-        <% } %>
-      </div>
-    </div>
-
-    <!-- Reviews -->
-    <div style="background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);padding:32px;margin-bottom:24px;" id="reviews">
-      <h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--c-text);margin-bottom:20px;">리뷰/평점</h3>
-      <% if (user) { %>
-        <form class="row g-2 mb-4" method="post" action="/shop/products/<%= product.id %>/reviews">
-          <div class="col-md-2 col-sm-4">
-            <select class="form-select" name="rating" required>
-              <option value="">평점</option>
-              <option value="5">5점</option>
-              <option value="4">4점</option>
-              <option value="3">3점</option>
-              <option value="2">2점</option>
-              <option value="1">1점</option>
-            </select>
-          </div>
-          <div class="col-md-8 col-sm-12">
-            <input class="form-control" name="content" placeholder="리뷰 내용을 입력해주세요." required>
-          </div>
-          <div class="col-md-2 col-sm-4">
-            <button class="btn btn-primary w-100" type="submit">등록</button>
-          </div>
-        </form>
-      <% } else { %>
-        <div class="alert alert-info mb-4">리뷰를 작성하려면 <a href="/auth/login">로그인</a>해주세요.</div>
-      <% } %>
-
-      <% if (!reviews || reviews.length === 0) { %>
-        <p style="color:var(--c-muted);font-size:14px;">등록된 리뷰가 없습니다.</p>
-      <% } else { %>
-        <div class="d-grid gap-3">
-          <% reviews.forEach(function(review) { %>
-            <div style="padding:16px;background:var(--c-bg-2);border-radius:var(--r-lg);">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong style="font-size:14px;color:var(--c-text);"><%= review.user_name || '고객' %></strong>
-                <span style="font-family:var(--font-head);font-size:12px;font-weight:700;color:var(--c-accent);">★ <%= review.rating %>점</span>
-              </div>
-              <div style="font-size:12px;color:var(--c-muted-2);margin-bottom:8px;"><%= new Date(review.created_at).toLocaleDateString('ko-KR') %></div>
-              <div style="font-size:14px;color:var(--c-text-2);"><%= review.content %></div>
-            </div>
-          <% }); %>
-        </div>
-      <% } %>
-    </div>
-
-    <!-- Related -->
-    <% if (related && related.length > 0) { %>
-      <div style="background:#fff;border:1px solid var(--c-border);border-radius:var(--r-xl);padding:32px;">
-        <h3 style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--c-text);margin-bottom:20px;">연관 상품</h3>
-        <div class="product-grid">
-          <% related.forEach(function(item) { %>
-            <div class="product-card">
-              <a href="/shop/products/<%= item.id %>">
-                <div class="product-thumb">
-                  <% if (item.image) { %>
-                    <img src="<%= item.image %>" alt="<%= item.name %>">
-                  <% } else { %>
-                    <div class="product-thumb-placeholder">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                    </div>
-                  <% } %>
-                </div>
-              </a>
-              <div class="product-body">
-                <div class="product-name"><a href="/shop/products/<%= item.id %>" style="color:inherit;text-decoration:none;"><%= item.name %></a></div>
-                <div class="product-price"><%= Number(item.price || 0).toLocaleString() %><span>원</span></div>
-                <div class="product-actions">
-                  <a class="btn btn-outline-primary btn-sm w-100" href="/shop/products/<%= item.id %>">상세보기</a>
-                </div>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-      </div>
-    <% } %>
-
-  </div>
+  <% } %>
 </div>
+
+<!-- ── 상품 정보 영역 ── -->
+<div class="app-detail-body">
+
+  <!-- 카테고리 배지 -->
+  <% if (product.category_name) { %>
+    <span class="app-detail-badge"><%= product.category_name %></span>
+  <% } %>
+
+  <!-- 상품명 -->
+  <h1 class="app-detail-name"><%= product.name %></h1>
+
+  <!-- 평점 -->
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+    <span style="font-size:14px;color:var(--c-accent);font-weight:700;">★</span>
+    <span style="font-size:14px;font-weight:600;color:var(--c-text);">
+      <%= reviewStats?.avg_rating ? Number(reviewStats.avg_rating).toFixed(1) : '0.0' %>
+    </span>
+    <span style="font-size:13px;color:var(--c-muted);">
+      (<%= reviewStats?.review_count || 0 %>건)
+    </span>
+    <% if (user) { %>
+      <a href="#reviews" style="font-size:12px;color:var(--c-accent);margin-left:auto;">리뷰 쓰기</a>
+    <% } %>
+  </div>
+
+  <!-- 가격 -->
+  <div class="app-detail-price">
+    <%= Number(product.price || 0).toLocaleString() %><span>원</span>
+  </div>
+
+  <!-- 규격/스펙 -->
+  <% if (product.code || product.spec) { %>
+    <div class="app-spec-box">
+      <% if (product.code) { %>
+        <div style="margin-bottom:10px;">
+          <div class="app-spec-box__label">제품코드</div>
+          <div class="app-spec-box__value"><%= product.code %></div>
+        </div>
+      <% } %>
+      <% if (product.spec) { %>
+        <div>
+          <div class="app-spec-box__label">규격/스펙</div>
+          <div class="app-spec-box__value"><%= product.spec %></div>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+
+  <!-- 상품 설명 -->
+  <% if (product.description) { %>
+    <div style="margin-top:16px;font-size:14px;color:var(--c-text-2);line-height:1.7;">
+      <%= product.description %>
+    </div>
+  <% } %>
+
+  <!-- 찜하기 (로그인 유저만) -->
+  <% if (user) { %>
+    <form action="/shop/wishlist/toggle" method="post" style="margin-top:20px;">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+      <button class="app-btn <%= wished ? 'app-btn--primary' : 'app-btn--outline' %>"
+              type="submit"
+              style="width:100%;gap:6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24"
+             fill="<%= wished ? 'currentColor' : 'none' %>" aria-hidden="true">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <%= wished ? '찜 해제' : '찜하기' %>
+      </button>
+    </form>
+  <% } %>
+
+  <!-- 안내 문구 -->
+  <p style="font-size:12px;color:var(--c-muted-2);margin-top:12px;text-align:center;">
+    비회원도 장바구니 사용 가능 (세션 종료 시 초기화)
+  </p>
+
+</div><!-- /app-detail-body -->
+
+
+<!-- ══════════════════════════════════════════
+   리뷰 섹션
+══════════════════════════════════════════ -->
+<div class="app-section--pad" id="reviews">
+
+  <div class="app-sec-head">
+    <div>
+      <h2 class="app-sec-title">리뷰/평점</h2>
+      <p class="app-sec-sub">총 <%= reviewStats?.review_count || 0 %>건</p>
+    </div>
+  </div>
+
+  <!-- 리뷰 작성 폼 -->
+  <% if (user) { %>
+    <form class="app-review-write" method="post"
+          action="/shop/products/<%= product.id %>/reviews">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <select class="app-field__input" name="rating" required
+                style="flex:0 0 90px;">
+          <option value="">평점</option>
+          <option value="5">★ 5점</option>
+          <option value="4">★ 4점</option>
+          <option value="3">★ 3점</option>
+          <option value="2">★ 2점</option>
+          <option value="1">★ 1점</option>
+        </select>
+        <input class="app-field__input" name="content"
+               placeholder="리뷰 내용을 입력해주세요." required
+               style="flex:1;">
+      </div>
+      <button class="app-btn app-btn--primary" type="submit" style="width:100%;">
+        리뷰 등록
+      </button>
+    </form>
+  <% } else { %>
+    <div class="app-alert app-alert--info" style="margin-bottom:16px;">
+      리뷰를 작성하려면 <a href="/auth/login" style="color:var(--c-accent);font-weight:600;">로그인</a>해주세요.
+    </div>
+  <% } %>
+
+  <!-- 리뷰 목록 -->
+  <% if (!reviews || reviews.length === 0) { %>
+    <div class="app-empty" style="padding:24px 0;">
+      <p class="app-empty__desc">등록된 리뷰가 없습니다.</p>
+    </div>
+  <% } else { %>
+    <% reviews.forEach(function(review) { %>
+      <div class="app-review-card">
+        <div class="app-review-card__head">
+          <strong class="app-review-card__name"><%= review.user_name || '고객' %></strong>
+          <span class="app-review-card__rating">★ <%= review.rating %>점</span>
+        </div>
+        <div class="app-review-card__date">
+          <%= new Date(review.created_at).toLocaleDateString('ko-KR') %>
+        </div>
+        <div class="app-review-card__content"><%= review.content %></div>
+      </div>
+    <% }); %>
+  <% } %>
+
+</div><!-- /reviews -->
+
+
+<!-- ══════════════════════════════════════════
+   연관 상품 — 가로 스크롤
+══════════════════════════════════════════ -->
+<% if (related && related.length > 0) { %>
+  <div class="app-related">
+    <div class="app-sec-head" style="padding:0 16px;">
+      <h2 class="app-sec-title">연관 상품</h2>
+      <a class="app-sec-more" href="/shop/products">전체 보기 →</a>
+    </div>
+    <div class="app-related-scroll">
+      <% related.forEach(function(item) { %>
+        <div class="app-related-card">
+          <a href="/shop/products/<%= item.id %>" class="app-related-card__thumb"
+             aria-label="<%= item.name %> 상세 보기">
+            <% if (item.image) { %>
+              <img src="<%= item.image %>" alt="<%= item.name %>" loading="lazy">
+            <% } else { %>
+              <div class="app-product-card__placeholder" style="height:100%;border-radius:var(--r-lg);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2"
+                        stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </div>
+            <% } %>
+          </a>
+          <div class="app-related-card__body">
+            <div class="app-related-card__name">
+              <a href="/shop/products/<%= item.id %>"
+                 style="color:inherit;text-decoration:none;"><%= item.name %></a>
+            </div>
+            <div class="app-related-card__price">
+              <%= Number(item.price || 0).toLocaleString() %><span>원</span>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+<% } %>
+
+<!-- 하단 여백 (sticky CTA 높이만큼) -->
+<div style="height:16px;"></div>
+
+
+<!-- ══════════════════════════════════════════
+   Sticky 하단 구매 CTA
+   form POST → /shop/cart/add (기존 동작)
+   수량 조절은 shop-bottom.ejs의 공통 핸들러(data-qty-inc/dec) 사용
+══════════════════════════════════════════ -->
+<div class="app-bottom-cta" id="detailBottomCta">
+  <form action="/shop/cart/add" method="post" id="detailCartForm"
+        style="width:100%;">
+    <input type="hidden" name="productId" value="<%= product.id %>">
+
+    <div class="app-bottom-cta__inner">
+
+      <!-- 수량 조절 -->
+      <div class="app-qty">
+        <button class="app-qty__btn" type="button"
+                data-qty-dec="detailQty" aria-label="수량 감소">−</button>
+        <input class="app-qty__input" id="detailQty" name="quantity"
+               type="number" min="1" value="1" readonly>
+        <button class="app-qty__btn" type="button"
+                data-qty-inc="detailQty" aria-label="수량 증가">+</button>
+      </div>
+
+      <!-- 장바구니 담기 버튼 -->
+      <button class="app-btn app-btn--outline" type="submit"
+              form="detailCartForm"
+              style="flex:1;min-width:0;"
+              aria-label="장바구니 담기">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
+                stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round"/>
+        </svg>
+        담기
+      </button>
+
+      <!-- 바로 구매(문의) 버튼 -->
+      <a class="app-btn app-btn--primary"
+         href="/shop/inquiries"
+         style="flex:1.6;min-width:0;">
+        문의/구매
+      </a>
+
+    </div>
+  </form>
+</div><!-- /detailBottomCta -->
 
 <%- include('../layouts/shop-bottom') %>

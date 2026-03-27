@@ -1,60 +1,194 @@
-</main>
+</main><!-- /app-main -->
 
-<footer class="shop-footer">
-  <div class="container shop-footer__inner">
-    <span class="shop-footer__copy">© <%= new Date().getFullYear() %> ENERMADE. All rights reserved.</span>
-    <div class="shop-footer__links">
-      <a href="/about" data-i18n-auto>회사 소개</a>
-      <a href="/shop/inquiries" data-i18n-auto>문의하기</a>
-      <a href="/shop/orders/guest" data-i18n-auto>주문 조회</a>
+<!-- ─────────────────────────────────────────────
+   하단 탭바 (Bottom Navigation)
+   4개 탭: 홈 / 상품 / 장바구니 / 마이페이지
+   is-active 클래스는 shop-top.ejs에서 계산된 변수를 사용
+   ───────────────────────────────────────────── -->
+<nav class="app-bottom-nav" role="navigation" aria-label="주 내비게이션">
+
+  <!-- 홈 탭 -->
+  <a class="app-tab <%= isHome ? 'is-active' : '' %>" href="/shop" aria-label="홈">
+    <div class="app-tab__icon">
+      <% if (isHome) { %>
+        <!-- 활성화: 채운 아이콘 -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-3-2z"/>
+          <polyline points="9,22 9,12 15,12 15,22" fill="none" stroke="white" stroke-width="1.5"/>
+        </svg>
+      <% } else { %>
+        <!-- 비활성화: 선 아이콘 -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <polyline points="9,22 9,12 15,12 15,22"
+                    stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      <% } %>
     </div>
-  </div>
-</footer>
+    <span class="app-tab__label">홈</span>
+  </a>
 
+  <!-- 상품 탭 -->
+  <a class="app-tab <%= isProducts ? 'is-active' : '' %>" href="/shop/products" aria-label="상품 목록">
+    <div class="app-tab__icon">
+      <% if (isProducts) { %>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+          <circle cx="7" cy="7" r="1.5" fill="white"/>
+        </svg>
+      <% } else { %>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round"/>
+        </svg>
+      <% } %>
+    </div>
+    <span class="app-tab__label">상품</span>
+  </a>
+
+  <!-- 장바구니 탭 -->
+  <a class="app-tab <%= isCart ? 'is-active' : '' %>"
+     href="/shop/cart"
+     aria-label="장바구니<%= safeCartCount > 0 ? ' (' + safeCartCount + '개)' : '' %>">
+    <div class="app-tab__icon">
+      <% if (safeCartCount > 0) { %>
+        <span class="app-tab-badge"><%= safeCartCount %></span>
+      <% } %>
+      <% if (isCart) { %>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="white" stroke-width="1.5"/>
+        </svg>
+      <% } else { %>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      <% } %>
+    </div>
+    <span class="app-tab__label">장바구니</span>
+  </a>
+
+  <!-- 마이페이지 탭 -->
+  <a class="app-tab <%= isAccount ? 'is-active' : '' %>"
+     href="<%= user ? '/shop/account' : '/auth/login' %>"
+     aria-label="<%= user ? '마이페이지' : '로그인' %>">
+    <div class="app-tab__icon">
+      <% if (isAccount) { %>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      <% } else { %>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      <% } %>
+    </div>
+    <span class="app-tab__label"><%= user ? '마이' : '로그인' %></span>
+  </a>
+
+</nav><!-- /app-bottom-nav -->
+
+<!-- ─────────────────────────────────────────────
+   JS 로딩 — 반드시 이 순서 유지
+   ───────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 전역 관리자 여부 전달 (main.js에서 사용) -->
 <script>window.__SITE_USER_IS_ADMIN = <%- (user && user.is_admin) ? 'true' : 'false' %>;</script>
+<!-- i18n 번역 시스템 등 전역 스크립트 -->
 <script src="/js/main.js"></script>
+
+<!-- ─────────────────────────────────────────────
+   앱 공통 JS — 바텀시트 열기/닫기
+   페이지별 시트는 각 페이지 인라인 스크립트에서 초기화
+   ───────────────────────────────────────────── -->
 <script>
 (function () {
-  const toggle   = document.getElementById('shopMobileToggle');
-  const drawer   = document.getElementById('shopMobDrawer');
-  const backdrop = document.getElementById('shopMobBackdrop');
-  const closeBtn = document.getElementById('shopMobClose');
+  'use strict';
 
-  function openShopDrawer() {
-    drawer   && drawer.classList.add('open');
-    backdrop && backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    toggle   && toggle.setAttribute('aria-label', '메뉴 닫기');
-  }
-  function closeShopDrawer() {
-    drawer   && drawer.classList.remove('open');
-    backdrop && backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-    toggle   && toggle.setAttribute('aria-label', '메뉴 열기');
-  }
+  /* 바텀시트 공개 API — 페이지에서 window.AppSheet.open/close 로 호출 가능 */
+  window.AppSheet = {
+    open: function (sheetId, overlayId) {
+      var sheet   = document.getElementById(sheetId);
+      var overlay = document.getElementById(overlayId);
+      if (sheet)   sheet.classList.add('is-open');
+      if (overlay) overlay.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    },
+    close: function (sheetId, overlayId) {
+      var sheet   = document.getElementById(sheetId);
+      var overlay = document.getElementById(overlayId);
+      if (sheet)   sheet.classList.remove('is-open');
+      if (overlay) overlay.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+  };
 
-  toggle   && toggle.addEventListener('click', function () {
-    drawer && drawer.classList.contains('open') ? closeShopDrawer() : openShopDrawer();
+  /* 바텀시트 — data 속성 기반 자동 바인딩
+     [data-sheet-open="sheetId"]  클릭 시 열기
+     [data-sheet-close]            클릭 시 닫기
+     [data-sheet-overlay]          오버레이 클릭 시 닫기                */
+  document.addEventListener('click', function (e) {
+    /* 열기 */
+    var openTarget = e.target.closest('[data-sheet-open]');
+    if (openTarget) {
+      var sid = openTarget.getAttribute('data-sheet-open');
+      var oid = openTarget.getAttribute('data-sheet-overlay') || 'appSheetOverlay';
+      window.AppSheet.open(sid, oid);
+      return;
+    }
+    /* 닫기 버튼 */
+    var closeTarget = e.target.closest('[data-sheet-close]');
+    if (closeTarget) {
+      var sheet = closeTarget.closest('.app-sheet');
+      if (sheet) {
+        sheet.classList.remove('is-open');
+        document.querySelectorAll('.app-sheet-overlay.is-open').forEach(function (o) {
+          o.classList.remove('is-open');
+        });
+        document.body.style.overflow = '';
+      }
+      return;
+    }
+    /* 오버레이 클릭 닫기 */
+    if (e.target.classList.contains('app-sheet-overlay')) {
+      e.target.classList.remove('is-open');
+      document.querySelectorAll('.app-sheet.is-open').forEach(function (s) {
+        s.classList.remove('is-open');
+      });
+      document.body.style.overflow = '';
+    }
   });
-  closeBtn  && closeBtn.addEventListener('click', closeShopDrawer);
-  backdrop  && backdrop.addEventListener('click', closeShopDrawer);
 
-  // 웹 전환시 사이드바 닫기
-  window.addEventListener('resize', function () {
-    if (window.innerWidth >= 992) closeShopDrawer();
+  /* 수량 조절 공통 핸들러 (+/-버튼)
+     data-qty-target="inputId" 를 가진 버튼 */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-qty-inc],[data-qty-dec]');
+    if (!btn) return;
+    var targetId = btn.getAttribute('data-qty-inc') || btn.getAttribute('data-qty-dec');
+    var input = targetId
+      ? document.getElementById(targetId)
+      : btn.closest('.app-qty, .app-cart-qty')?.querySelector('input');
+    if (!input) return;
+    var val = parseInt(input.value) || 1;
+    var min = parseInt(input.min) || 1;
+    if (btn.hasAttribute('data-qty-inc')) input.value = val + 1;
+    if (btn.hasAttribute('data-qty-dec')) input.value = Math.max(min, val - 1);
+    /* 커스텀 이벤트 발생 — 장바구니 실시간 합계 업데이트에 활용 */
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   });
 
-  /* Dark mode toggle */
-  const dmBtn = document.getElementById('darkModeToggle');
-  if (dmBtn) {
-    dmBtn.addEventListener('click', function () {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      localStorage.setItem('site_theme', isDark ? 'light' : 'dark');
-    });
-  }
 })();
 </script>
+
 </body>
 </html>
