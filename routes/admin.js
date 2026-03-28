@@ -8,6 +8,8 @@ const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { sendInquiryReplyEmail } = require('../services/notification.service');
+const { sendMail, isConfigured: isEmailConfigured, getDriverName } = require('../services/email.service');
+const searchLogService = require('../services/search-log.service');
 let sharp = null;
 try {
 	sharp = require('sharp');
@@ -1214,5 +1216,89 @@ router.post('/inquiries/:id/reply', async (req, res) => {
 	}
 });
 
+
+// =============================================
+// 검색 통계
+// =============================================
+
+// 페이지 뷰
+router.get('/search-stats', requireAdmin, async (req, res) => {
+	try {
+		const days = Number(req.query.days || 30);
+
+		const [summary, topKeywords, noHitKeywords, dailyVolume] = await Promise.all([
+			searchLogService.getSummary({ days }),
+			searchLogService.getTopKeywords({ days, limit: 20 }),
+			searchLogService.getNoHitKeywords({ days, limit: 20 }),
+			searchLogService.getDailySearchVolume({ days }),
+		]);
+
+		res.render('admin/search-stats', {
+			title: '검색 통계',
+			active: 'search-stats',
+			summary,
+			topKeywords,
+			noHitKeywords,
+			dailyVolume,
+			days,
+		});
+	} catch (err) {
+		console.error('[admin/search-stats]', err);
+		res.status(500).send('검색 통계 조회 오류');
+	}
+});
+
+// JSON API (차트 갱신용)
+router.get('/api/search-stats', requireAdmin, async (req, res) => {
+	try {
+		const days = Number(req.query.days || 30);
+
+		const [summary, topKeywords, noHitKeywords, dailyVolume] = await Promise.all([
+			searchLogService.getSummary({ days }),
+			searchLogService.getTopKeywords({ days, limit: 20 }),
+			searchLogService.getNoHitKeywords({ days, limit: 20 }),
+			searchLogService.getDailySearchVolume({ days }),
+		]);
+
+		res.json({ ok: true, days, summary, topKeywords, noHitKeywords, dailyVolume });
+	} catch (err) {
+		console.error('[admin/api/search-stats]', err);
+		res.status(500).json({ ok: false, error: err.message });
+	}
+});
+
+// =============================================
+// 이메일 드라이버 테스트
+// =============================================
+
+router.post('/test-email', requireAdmin, async (req, res) => {
+	const adminEmail =
+		process.env.ADMIN_EMAIL ||
+		process.env.EMAIL_FROM ||
+		process.env.SMTP_USER ||
+		process.env.NCP_EMAIL_SENDER;
+
+	if (!adminEmail) {
+		return res.status(400).json({ ok: false, error: 'ADMIN_EMAIL / EMAIL_FROM 환경변수가 없습니다.' });
+	}
+
+	if (!isEmailConfigured()) {
+		return res.status(400).json({
+			ok: false,
+			driver: getDriverName(),
+			error: `현재 드라이버(${getDriverName()})가 올바르게 설정되지 않았습니다.`,
+		});
+	}
+
+	const result = await sendMail({
+		to: adminEmail,
+		subject: '[ENERMADE] 이메일 드라이버 테스트',
+		html: `<p>이 메일은 관리자 대시보드에서 발송한 테스트 메일입니다.</p>
+               <p>드라이버: <strong>${getDriverName()}</strong></p>
+               <p>발송 시각: ${new Date().toLocaleString('ko-KR')}</p>`,
+	});
+
+	return res.json({ ...result, driver: getDriverName(), to: adminEmail });
+});
 
 module.exports = router;

@@ -79,6 +79,8 @@
     </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>window.__SITE_USER_IS_ADMIN = <%- (typeof user !== 'undefined' && user && user.is_admin) ? 'true' : 'false' %>;</script>
+    <script src="/js/main.js"></script>
     <script src="/js/admin.js"></script>
 
 </body>

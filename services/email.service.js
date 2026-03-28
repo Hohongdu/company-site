@@ -1,64 +1,65 @@
 // services/email.service.js
-// Gmail SMTP를 통한 이메일 발송 서비스
-// 설정: .env에 SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM 설정 필요
+// 이메일 드라이버 라우터 — EMAIL_DRIVER 환경변수에 따라 백엔드를 선택한다.
+//
+//   EMAIL_DRIVER=smtp  → services/smtp-email.service.js (Gmail / 일반 SMTP, 기본값)
+//   EMAIL_DRIVER=ncp   → services/ncp-email.service.js  (NCP Outbound Mailer REST API)
+//   EMAIL_DRIVER=none  → 발송 비활성화 (개발/테스트 환경)
+//
+// 모든 소비자(notification.service 등)는 이 파일만 import하면 된다.
 
 'use strict';
 
-const nodemailer = require('nodemailer');
+const DRIVER = (process.env.EMAIL_DRIVER || 'smtp').toLowerCase();
 
-// ── 설정 ──────────────────────────────────────────────
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
-const EMAIL_FROM = process.env.EMAIL_FROM || SMTP_USER || 'no-reply@example.com';
+let _driver;
 
-// SMTP 설정이 있는지 여부
-const isConfigured = () => Boolean(SMTP_USER && SMTP_PASS);
+switch (DRIVER) {
+	case 'ncp':
+		_driver = require('./ncp-email.service');
+		console.log('[email] Driver: NCP Outbound Mailer');
+		break;
 
-// Transporter: 설정이 있을 때만 생성
-let _transporter = null;
-function getTransporter() {
-	if (!_transporter) {
-		_transporter = nodemailer.createTransport({
-			host: SMTP_HOST,
-			port: SMTP_PORT,
-			secure: SMTP_PORT === 465, // 465는 SSL, 587은 STARTTLS
-			auth: {
-				user: SMTP_USER,
-				pass: SMTP_PASS,
+	case 'none':
+		_driver = {
+			sendMail: async ({ to, subject }) => {
+				console.log(`[email] Driver=none, skipping send to ${to} | subject: ${subject}`);
+				return { ok: false, status: 'DISABLED', error: 'EMAIL_DRIVER=none' };
 			},
-		});
-	}
-	return _transporter;
+			isConfigured: () => false,
+		};
+		console.log('[email] Driver: none (발송 비활성화)');
+		break;
+
+	case 'smtp':
+	default:
+		_driver = require('./smtp-email.service');
+		console.log('[email] Driver: SMTP');
+		break;
 }
 
 /**
- * 이메일 발송
+ * 이메일 발송 (드라이버에 위임)
  * @param {{ to: string, subject: string, html: string, text?: string }} opts
- * @returns {Promise<{ ok: boolean, messageId?: string, error?: string }>}
+ * @returns {Promise<{ ok: boolean, status: string, messageId?: string, error?: string }>}
  */
-async function sendMail({ to, subject, html, text }) {
-	if (!isConfigured()) {
-		console.warn('[email] SMTP not configured (SMTP_USER/SMTP_PASS missing). Skipping send.');
-		return { ok: false, status: 'DISABLED', error: 'SMTP 설정이 없습니다.' };
-	}
-
-	try {
-		const info = await getTransporter().sendMail({
-			from: `"ENERMADE" <${EMAIL_FROM}>`,
-			to,
-			subject,
-			html,
-			text: text || html.replace(/<[^>]+>/g, ''), // HTML 태그 제거한 텍스트 fallback
-		});
-
-		console.log(`[email] Sent to ${to}: ${info.messageId}`);
-		return { ok: true, status: 'SENT', messageId: info.messageId };
-	} catch (err) {
-		console.error('[email] Send failed:', err.message);
-		return { ok: false, status: 'FAILED', error: String(err.message || err) };
-	}
+async function sendMail(opts) {
+	return _driver.sendMail(opts);
 }
 
-module.exports = { sendMail, isConfigured };
+/**
+ * 현재 드라이버가 올바르게 설정되어 있는지 여부
+ * @returns {boolean}
+ */
+function isConfigured() {
+	return _driver.isConfigured();
+}
+
+/**
+ * 현재 활성 드라이버 이름 반환 (관리자 테스트용)
+ * @returns {string}
+ */
+function getDriverName() {
+	return DRIVER;
+}
+
+module.exports = { sendMail, isConfigured, getDriverName };

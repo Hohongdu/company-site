@@ -112,9 +112,71 @@ exports.sendNewInquiryToAdmin = async (payload) => {
 	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 문의: ${name}님`, html });
 };
 
+// ── 4. 주문 완료 확인 이메일 ────────────────────────────
+/**
+ * @param {{
+ *   to: string,
+ *   name?: string,
+ *   orderId: number|string,
+ *   orderItems: Array<{ name: string, quantity: number, price: number }>,
+ *   totalAmount: number,
+ *   paymentMethod?: string
+ * }} payload
+ */
+exports.sendOrderConfirmEmail = async (payload) => {
+	const { to, name, orderId, orderItems = [], totalAmount, paymentMethod } = payload;
+
+	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: '메일 드라이버 미설정' };
+
+	const greeting = name ? `${name}님,` : '안녕하세요,';
+	const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+	const fmt = (n) => Number(n || 0).toLocaleString('ko-KR');
+
+	const itemRows = orderItems
+		.map(
+			(item) => `
+      <tr>
+        <td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${item.name}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #f0f0f0;text-align:center;">${item.quantity}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #f0f0f0;text-align:right;">₩${fmt(item.price * item.quantity)}</td>
+      </tr>`,
+		)
+		.join('');
+
+	const html = wrapHtml(
+		'주문이 완료되었습니다',
+		`<p>${greeting} 주문이 정상적으로 접수되었습니다.</p>
+		<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;">
+			<thead>
+				<tr style="border-bottom:2px solid #eee;">
+					<th style="padding:8px 0;text-align:left;color:#666;">상품명</th>
+					<th style="padding:8px 0;text-align:center;color:#666;">수량</th>
+					<th style="padding:8px 0;text-align:right;color:#666;">금액</th>
+				</tr>
+			</thead>
+			<tbody>${itemRows}</tbody>
+		</table>
+		<div class="highlight" style="text-align:right;">결제 금액: ₩${fmt(totalAmount)}</div>
+		${paymentMethod ? `<p style="color:#666;font-size:13px;">결제 수단: ${paymentMethod}</p>` : ''}
+		<p style="margin-top:24px;">
+			<a href="${baseUrl}/shop/orders/${orderId}"
+			   style="background:#111;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
+				주문 상세 확인하기
+			</a>
+		</p>`,
+	);
+
+	return sendMail({
+		to,
+		subject: `[ENERMADE] 주문 완료 (#${orderId})`,
+		html,
+	});
+};
+
 // ── 5. 파일 전송 알림 (기존 stub 유지) ────────────────
 exports.sendFileTransferEmail = async (payload) => {
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: '메일 드라이버 미설정' };
 	return sendMail({
 		to: payload.to,
 		subject: '[ENERMADE] 파일 전송 알림',

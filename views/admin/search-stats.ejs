@@ -1,0 +1,257 @@
+<%- include('partials/admin-header', { title: '검색 통계', active: 'search-stats', user }) %>
+
+<div class="adm-page-head">
+    <div>
+        <h1 class="adm-page-head__title">검색 통계</h1>
+        <p class="adm-page-head__sub">고객 검색 키워드 분석 및 무결과 리포트</p>
+    </div>
+    <div class="adm-page-head__actions d-flex gap-2 align-items-center">
+        <!-- 기간 선택 -->
+        <form method="GET" action="/admin/search-stats" class="d-flex gap-2 align-items-center mb-0">
+            <label class="small text-muted mb-0">최근</label>
+            <select name="days" class="form-select form-select-sm" style="width:90px;" onchange="this.form.submit()">
+                <% [7,14,30,60,90].forEach(d => { %>
+                <option value="<%= d %>" <%= days === d ? 'selected' : '' %>><%= d %>일</option>
+                <% }) %>
+            </select>
+        </form>
+        <!-- 이메일 테스트 버튼 -->
+        <button id="testEmailBtn" class="btn btn-outline-secondary btn-sm">📧 메일 테스트</button>
+    </div>
+</div>
+
+<!-- ── KPI 카드 ─────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 fw-bold text-primary"><%= summary.total.toLocaleString() %></div>
+                <div class="small text-muted mt-1">총 검색 수</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 fw-bold text-success"><%= summary.uniqueKeywords.toLocaleString() %></div>
+                <div class="small text-muted mt-1">유니크 키워드</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 fw-bold <%= summary.noHitRate > 30 ? 'text-danger' : 'text-warning' %>">
+                    <%= summary.noHitRate %>%
+                </div>
+                <div class="small text-muted mt-1">무결과 비율</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-3">
+                <div class="fs-2 fw-bold text-info"><%= summary.loginRate %>%</div>
+                <div class="small text-muted mt-1">로그인 검색 비율</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── 일별 검색량 차트 ─────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-semibold">일별 검색량</h6>
+        <span class="badge text-bg-secondary">최근 <%= days %>일</span>
+    </div>
+    <div class="card-body">
+        <canvas id="searchVolumeChart" height="80"></canvas>
+    </div>
+</div>
+
+<!-- ── 테이블 2열 ─────────────────────────────────── -->
+<div class="row g-3">
+
+    <!-- 인기 검색어 -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-semibold">🔍 인기 검색어 TOP 20</h6>
+                <span class="badge text-bg-primary"><%= topKeywords.length %>개</span>
+            </div>
+            <% if (topKeywords.length === 0) { %>
+            <div class="card-body text-center text-muted py-5">
+                <p class="mb-0">검색 데이터가 없습니다.</p>
+            </div>
+            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:32px;">#</th>
+                            <th>키워드</th>
+                            <th class="text-end" style="width:80px;">검색수</th>
+                            <th class="text-end" style="width:80px;">평균 결과</th>
+                            <th style="width:40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% topKeywords.forEach((kw, idx) => { %>
+                        <tr>
+                            <td class="text-muted small"><%= idx + 1 %></td>
+                            <td class="fw-medium"><%= kw.keyword %></td>
+                            <td class="text-end">
+                                <span class="badge text-bg-light border"><%= kw.search_count %></span>
+                            </td>
+                            <td class="text-end small text-muted"><%= Math.round(kw.avg_results) %></td>
+                            <td>
+                                <a href="/shop/products?q=<%= encodeURIComponent(kw.keyword) %>"
+                                   target="_blank" class="btn btn-outline-secondary btn-sm py-0 px-1"
+                                   title="상품몰에서 검색해보기">↗</a>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- 무결과 키워드 -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-semibold">⚠️ 무결과 키워드 (상품 추가 힌트)</h6>
+                <span class="badge text-bg-danger"><%= noHitKeywords.length %>개</span>
+            </div>
+            <% if (noHitKeywords.length === 0) { %>
+            <div class="card-body text-center text-muted py-5">
+                <p class="mb-1 fw-semibold text-success">👍 모든 검색에서 결과가 있습니다.</p>
+                <p class="small mb-0">고객이 찾지 못한 상품이 없습니다.</p>
+            </div>
+            <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:32px;">#</th>
+                            <th>검색어</th>
+                            <th class="text-end" style="width:90px;">검색 횟수</th>
+                            <th style="width:90px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% noHitKeywords.forEach((kw, idx) => { %>
+                        <tr>
+                            <td class="text-muted small"><%= idx + 1 %></td>
+                            <td class="fw-medium text-danger"><%= kw.keyword %></td>
+                            <td class="text-end">
+                                <span class="badge text-bg-danger"><%= kw.search_count %>회</span>
+                            </td>
+                            <td>
+                                <a href="/admin/products/new?name=<%= encodeURIComponent(kw.keyword) %>"
+                                   class="btn btn-outline-primary btn-sm py-0 px-2"
+                                   title="이 키워드로 상품 등록">+ 등록</a>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% } %>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── 메일 테스트 토스트 ──────────────────────────── -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+    <div id="emailToast" class="toast" role="alert">
+        <div class="toast-header">
+            <strong class="me-auto" id="toastTitle">메일 테스트</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastBody"></div>
+    </div>
+</div>
+
+<!-- ── Chart.js ───────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    // 서버에서 내려온 일별 데이터
+    const raw = <%- JSON.stringify(dailyVolume) %>;
+
+    const labels = raw.map(r => r.date ? String(r.date).slice(0, 10) : '');
+    const totals = raw.map(r => Number(r.total || 0));
+    const noHits = raw.map(r => Number(r.no_hit || 0));
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+    const labelColor = isDark ? '#a1a1aa' : '#6b7280';
+
+    const ctx = document.getElementById('searchVolumeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: '전체 검색',
+                    data: totals,
+                    backgroundColor: 'rgba(59,130,246,.7)',
+                    borderRadius: 4,
+                },
+                {
+                    label: '무결과',
+                    data: noHits,
+                    backgroundColor: 'rgba(239,68,68,.65)',
+                    borderRadius: 4,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { color: labelColor } },
+                tooltip: { mode: 'index', intersect: false },
+            },
+            scales: {
+                x: { stacked: false, grid: { color: gridColor }, ticks: { color: labelColor, maxTicksLimit: 10 } },
+                y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, precision: 0 } },
+            },
+        },
+    });
+
+    // ── 메일 테스트 버튼 ──
+    const btn = document.getElementById('testEmailBtn');
+    const toast = document.getElementById('emailToast');
+    const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = '발송 중…';
+        try {
+            const res = await fetch('/admin/test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const data = await res.json();
+            document.getElementById('toastTitle').textContent = data.ok ? '✅ 발송 성공' : '❌ 발송 실패';
+            document.getElementById('toastBody').innerHTML =
+                `드라이버: <strong>${data.driver || '-'}</strong><br>` +
+                (data.ok
+                    ? `수신: ${data.to}<br>messageId: ${data.messageId || '-'}`
+                    : `오류: ${data.error || '알 수 없음'}`);
+            bsToast.show();
+        } catch (e) {
+            document.getElementById('toastTitle').textContent = '❌ 네트워크 오류';
+            document.getElementById('toastBody').textContent = e.message;
+            bsToast.show();
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📧 메일 테스트';
+        }
+    });
+})();
+</script>
+
+<%- include('partials/admin-footer') %>
