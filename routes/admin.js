@@ -624,7 +624,8 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 /* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
-router.post('/products/:id/delete', async (req, res) => {
+// CRIT-6: csrfProtection 추가 — CSRF 공격으로 상품 무단 삭제 방지
+router.post('/products/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
@@ -935,7 +936,8 @@ router.get('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories', async (req, res) => {
+// CRIT-6: csrfProtection 추가 — CSRF 공격으로 카테고리 무단 추가 방지
+router.post('/categories', csrfProtection, async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
 		const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -950,7 +952,8 @@ router.post('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories/:id/delete', async (req, res) => {
+// CRIT-6: csrfProtection 추가 — CSRF 공격으로 카테고리 무단 삭제 방지
+router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 
@@ -1160,7 +1163,8 @@ router.get('/inquiries', async (req, res) => {
 	}
 });
 
-router.post('/inquiries/:id/reply', async (req, res) => {
+// CRIT-5: csrfProtection 추가 — CSRF 공격으로 관리자 명의 답변 무단 전송 방지
+router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();

@@ -259,18 +259,21 @@ app.listen(PORT, () => {
 	console.log(`Server running at http://127.0.0.1:${PORT}`);
 });
 // ===============================
-// 카카오페이 결제 (orders 기반)
+// 카카오페이 결제 (orders 기반) — 레거시 라우트
+// 실제 쇼핑몰 결제는 /shop/checkout/kakao 에서 처리.
+// 이 라우트는 단일 상품 직접 결제용으로만 사용.
 // ===============================
 
-// 결제 준비
+// HIGH-5 수정: total_amount를 product_price(단가) → total_amount(실제 주문금액)로 변경
+// HIGH-6 수정: cancel/fail 핸들러에 AND user_id = ? 소유자 확인 추가
 app.post('/payments/ready', requireLogin, async (req, res) => {
 	try {
 		const { orderId, method } = req.body;
 		const userId = req.session.user.id;
 
-		// 1) 주문 + 상품 정보 조회
+		// 1) 주문 + 상품 정보 조회 (소유자 확인 포함)
 		const [rows] = await db.execute(
-			`SELECT o.*, p.name AS product_name, p.price AS product_price
+			`SELECT o.*, p.name AS product_name
        FROM orders o
        JOIN products p ON o.product_id = p.id
        WHERE o.id = ? AND o.user_id = ?
@@ -292,6 +295,12 @@ app.post('/payments/ready', requireLogin, async (req, res) => {
 		if (!KAKAO_ADMIN_KEY) return res.status(500).send('KAKAO_ADMIN_KEY가 없습니다(.env 확인).');
 		if (!BASE_URL) return res.status(500).send('BASE_URL이 없습니다(.env 확인).');
 
+		// 결제할 금액: total_amount 우선, 없으면 product_price (단, 단가와 총액 중 적절한 것)
+		const payAmount = order.total_amount || order.product_price;
+		if (!payAmount || Number(payAmount) <= 0) {
+			return res.status(400).send('결제 금액이 올바르지 않습니다.');
+		}
+
 		// 3) 카카오페이 결제 준비 API 호출
 		const kakaoResponse = await axios.post(
 			'https://kapi.kakao.com/v1/payment/ready',
@@ -301,7 +310,7 @@ app.post('/payments/ready', requireLogin, async (req, res) => {
 				partner_user_id: String(userId),
 				item_name: order.product_name,
 				quantity: '1',
-				total_amount: String(order.product_price),
+				total_amount: String(payAmount), // HIGH-5: 단가 대신 실제 주문금액 사용
 				vat_amount: '0',
 				tax_free_amount: '0',
 				approval_url: `${BASE_URL}/payments/kakao/success?orderId=${order.id}`,
@@ -393,13 +402,17 @@ app.get('/payments/kakao/success', requireLogin, async (req, res) => {
 	}
 });
 
-// 결제 취소
+// 결제 취소 — HIGH-6: AND user_id = ? 소유자 확인 추가 (타인 주문 취소 방지)
 app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 	try {
 		const { orderId } = req.query;
+		const userId = req.session.user.id;
 
 		if (orderId) {
-			await db.execute(`UPDATE orders SET status = 'CANCELED' WHERE id = ?`, [orderId]);
+			await db.execute(
+				`UPDATE orders SET status = 'CANCELED' WHERE id = ? AND user_id = ?`,
+				[orderId, userId],
+			);
 		}
 		return res.redirect('/shop/cart?notice=cancel');
 	} catch (e) {
@@ -408,13 +421,17 @@ app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 	}
 });
 
-// 결제 실패
+// 결제 실패 — HIGH-6: AND user_id = ? 소유자 확인 추가 (타인 주문 실패 처리 방지)
 app.get('/payments/kakao/fail', requireLogin, async (req, res) => {
 	try {
 		const { orderId } = req.query;
+		const userId = req.session.user.id;
 
 		if (orderId) {
-			await db.execute(`UPDATE orders SET status = 'FAILED' WHERE id = ?`, [orderId]);
+			await db.execute(
+				`UPDATE orders SET status = 'FAILED' WHERE id = ? AND user_id = ?`,
+				[orderId, userId],
+			);
 		}
 		return res.redirect('/shop/cart?notice=fail');
 	} catch (e) {

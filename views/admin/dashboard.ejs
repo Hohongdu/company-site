@@ -31,6 +31,9 @@ const chartPayload = {
     inquiries: Array.isArray(chartSafe.inquiries) ? chartSafe.inquiries : [],
     revenue:   Array.isArray(chartSafe.revenue)   ? chartSafe.revenue   : []
 };
+// CRIT-4 XSS 방어: JSON.stringify는 </script>를 이스케이프하지 않으므로
+// <  →  \u003c 로 치환해 스크립트 블록 탈출 공격을 차단한다
+const chartPayloadJson = JSON.stringify(chartPayload).replace(/</g, '\\u003c');
 %>
 
 <!-- KPI 카드 -->
@@ -304,7 +307,7 @@ const chartPayload = {
 
 <script>
 (function () {
-    const data = <%- JSON.stringify(chartPayload) %>;
+    const data = <%- chartPayloadJson %>;
 
     function drawLine(canvas, labels, values, color) {
         if (!canvas || !labels.length) return;

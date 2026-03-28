@@ -60,18 +60,14 @@ router.post('/forgot', async (req, res) => {
 			});
 		}
 
-		// 2) 임시 비밀번호 생성 (숫자+영문 대소문자 10자리)
+		// 2) 임시 비밀번호 생성 — Math.random() 대신 crypto.randomInt 사용 (암호학적으로 안전)
 		const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 		const tempPassword = Array.from(
 			{ length: 10 },
-			() => chars[Math.floor(Math.random() * chars.length)],
+			() => chars[crypto.randomInt(chars.length)],
 		).join('');
 
-		// 3) bcrypt 해싱 후 DB 업데이트
-		const hashed = await bcrypt.hash(tempPassword, 10);
-		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
-
-		// 4) 이메일 발송 (실패해도 사용자에게 성공 메시지 - 임시 비밀번호는 이미 변경됨)
+		// 3) 이메일 먼저 발송 — 성공한 경우에만 DB 업데이트 (실패 시 계정 잠금 방지)
 		const emailResult = await sendTemporaryPasswordEmail({
 			to: email,
 			name: user.name,
@@ -79,8 +75,19 @@ router.post('/forgot', async (req, res) => {
 		});
 
 		if (!emailResult.ok) {
+			// 이메일 발송 실패 → DB는 변경하지 않음. 기존 비밀번호 유지.
 			console.warn(`[forgot] Email send failed for ${email}:`, emailResult.error);
+			// 보안상 성공 메시지 반환 (이메일 존재 여부 노출 방지)
+			return res.render('auth/forgot', {
+				csrfToken: req.csrfToken(),
+				message: SUCCESS_MSG,
+				messageType: 'success',
+			});
 		}
+
+		// 4) 이메일 발송 성공 후에만 DB 업데이트
+		const hashed = await bcrypt.hash(tempPassword, 10);
+		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
 
 		return res.render('auth/forgot', {
 			csrfToken: req.csrfToken(),

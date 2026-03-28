@@ -219,7 +219,11 @@
             <!-- ══ MAIN CONTENT ════════════════════════════════ -->
             <main class="admin-main">
                 <%# Figma generated page partial — if exists %>
-                <% if (typeof figmaPageHasExports !== 'undefined' && figmaPageHasExports && typeof figmaPagePartialName !== 'undefined' && figmaPagePartialName) { %>
+                <%# HIGH-9: figmaPagePartialName 화이트리스트 검증으로 path traversal 방지
+                    허용 패턴: 영숫자, 하이픈, 언더스코어만 허용 (. / \ 등 경로 문자 차단) %>
+                <% if (typeof figmaPageHasExports !== 'undefined' && figmaPageHasExports &&
+                       typeof figmaPagePartialName !== 'undefined' && figmaPagePartialName &&
+                       /^[a-zA-Z0-9_-]+$/.test(figmaPagePartialName)) { %>
                     <%- include('../../partials/generated/figma-pages/' + figmaPagePartialName) %>
                 <% } %>
 

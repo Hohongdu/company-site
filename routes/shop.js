@@ -1,5 +1,6 @@
 const express = require('express');
-// bcrypt는 shop 라우터에서 사용하지 않으므로 제거
+const bcrypt = require('bcrypt'); // 계정 비밀번호 변경(/account/profile)에 사용
+const crypto = require('crypto'); // 주문번호 암호학적 난수 생성
 const csurf = require('../lib/csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
@@ -138,11 +139,11 @@ async function logSearch(keyword, userId) {
 	}
 }
 
+// 주문번호 생성 — crypto.randomBytes 사용 (Math.random 충돌 위험 제거)
+// 형식: ORD-{13자리 타임스탬프}-{8자리 HEX 난수} → 충돌 확률 1/4,294,967,296
 function generateOrderNumber() {
-	const rand = Math.floor(Math.random() * 1000)
-		.toString()
-		.padStart(3, '0');
-	return `ORD-${Date.now()}-${rand}`;
+	const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
+	return `ORD-${Date.now()}-${randomHex}`;
 }
 
 async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
@@ -262,9 +263,9 @@ router.get('/', async (req, res) => {
 	}
 });
 
+// MED-4: ensureProductVisibilityColumn() 제거 — 모듈 로드 시 IIFE에서 1회 실행됨
 router.get('/products', async (req, res) => {
 	try {
-		await ensureProductVisibilityColumn();
 		const categorySlug = req.query.category || 'all';
 		const q = (req.query.q || '').trim();
 
@@ -319,13 +320,10 @@ router.get('/products', async (req, res) => {
 	}
 });
 
+// MED-4: ensure* 함수 제거 — 모듈 로드 IIFE에서 이미 실행됨
 router.get('/products/:id', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
-
-		await ensureProductVisibilityColumn();
-		await ensureReviewTable();
-		await ensureWishlistTable();
 
 		const [rows] = await db.execute(
 			`
@@ -527,7 +525,8 @@ router.post('/cart/add', async (req, res) => {
 	}
 });
 
-// cart update
+// cart update — CRIT-1: 소유자 확인 추가 (AND cart_id = ?)
+// cartItemId만으로 UPDATE하면 다른 사용자의 아이템도 수정 가능했음
 router.post('/cart/update', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
@@ -535,7 +534,13 @@ router.post('/cart/update', async (req, res) => {
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			await db.execute('UPDATE cart_items SET quantity = ? WHERE id = ?', [quantity, cartItemId]);
+			if (!cartItemId) return res.redirect('/shop/cart');
+			// 반드시 현재 사용자의 cart_id 조건을 추가해 다른 사용자 아이템 수정 차단
+			const cartId = await ensureUserCartId(req.session.user.id);
+			await db.execute(
+				'UPDATE cart_items SET quantity = ? WHERE id = ? AND cart_id = ?',
+				[quantity, cartItemId, cartId],
+			);
 			return res.redirect('/shop/cart');
 		}
 
@@ -548,14 +553,21 @@ router.post('/cart/update', async (req, res) => {
 	}
 });
 
-// cart remove
+// cart remove — CRIT-1: 소유자 확인 추가 (AND cart_id = ?)
+// cartItemId만으로 DELETE하면 다른 사용자의 아이템도 삭제 가능했음
 router.post('/cart/remove', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			await db.execute('DELETE FROM cart_items WHERE id = ?', [cartItemId]);
+			if (!cartItemId) return res.redirect('/shop/cart');
+			// 반드시 현재 사용자의 cart_id 조건을 추가해 다른 사용자 아이템 삭제 차단
+			const cartId = await ensureUserCartId(req.session.user.id);
+			await db.execute(
+				'DELETE FROM cart_items WHERE id = ? AND cart_id = ?',
+				[cartItemId, cartId],
+			);
 			return res.redirect('/shop/cart');
 		}
 
@@ -660,17 +672,54 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 			return res.status(400).send('결제 승인 정보가 없습니다.');
 		}
 
-		const approvalResult = await kakaoPayService.approve({
-			tid: sessionPayment.tid,
-			orderId: sessionPayment.orderNumber,
-			userId: req.session.user?.id,
-			pgToken,
-		});
+		// CRIT-2 멱등성 보장: PENDING 상태인 주문만 PAID로 전환 가능
+		// 이미 처리된 주문은 affectedRows = 0 → 이중결제 방지
+		const [guardResult] = await db.execute(
+			`UPDATE orders SET status = 'PAYING' WHERE id = ? AND status = 'PENDING'`,
+			[sessionPayment.orderId],
+		);
+		if (guardResult.affectedRows === 0) {
+			// 이미 처리됐거나 존재하지 않는 주문
+			req.session.kakaoPay = null;
+			return res.status(409).render('shop/payment-fail', {
+				message: '이미 처리된 주문입니다. 중복 결제가 차단되었습니다.',
+			});
+		}
+
+		let approvalResult;
+		try {
+			approvalResult = await kakaoPayService.approve({
+				tid: sessionPayment.tid,
+				orderId: sessionPayment.orderNumber,
+				userId: req.session.user?.id,
+				pgToken,
+			});
+		} catch (approveErr) {
+			// 카카오 승인 API 실패 → PAYING → PENDING 으로 롤백
+			await db.execute(
+				`UPDATE orders SET status = 'PENDING' WHERE id = ?`,
+				[sessionPayment.orderId],
+			);
+			throw approveErr;
+		}
+
+		// MED-6 금액 교차검증: 카카오에서 승인된 금액과 세션의 주문 금액 일치 여부 확인
+		const approvedAmount = approvalResult?.amount?.total;
+		if (approvedAmount && Number(approvedAmount) !== Number(sessionPayment.totalAmount)) {
+			console.error(
+				`[결제 이상] 승인금액(${approvedAmount}) ≠ 주문금액(${sessionPayment.totalAmount}), orderId=${sessionPayment.orderId}`,
+			);
+			await db.execute(
+				`UPDATE orders SET status = 'PENDING' WHERE id = ?`,
+				[sessionPayment.orderId],
+			);
+			return res.status(400).render('shop/payment-fail', {
+				message: '결제 금액이 일치하지 않습니다. 관리자에게 문의해주세요.',
+			});
+		}
 
 		await db.execute(
-			`UPDATE orders
-       SET status = 'PAID'
-       WHERE id = ?`,
+			`UPDATE orders SET status = 'PAID' WHERE id = ?`,
 			[sessionPayment.orderId],
 		);
 
@@ -800,7 +849,9 @@ router.post('/orders/guest', async (req, res) => {
 	}
 });
 
-router.get('/orders/:orderNumber', async (req, res) => {
+// HIGH-7: requireLogin 추가 — 비인증 사용자는 DB 조회 없이 즉시 리다이렉트
+// 이전에는 비인증 요청도 DB까지 도달해 주문 존재 여부를 추론 가능했음
+router.get('/orders/:orderNumber', requireLogin, async (req, res) => {
 	try {
 		const orderNumber = String(req.params.orderNumber || '').trim();
 		const detail = await fetchOrderDetailByNumber(orderNumber);
@@ -809,7 +860,8 @@ router.get('/orders/:orderNumber', async (req, res) => {
 			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
 		}
 
-		if (!req.session.user || detail.order.user_id !== req.session.user.id) {
+		// 로그인된 사용자이지만 본인 주문이 아닌 경우 차단
+		if (detail.order.user_id !== req.session.user.id) {
 			return res.status(403).render('404', { message: '접근 권한이 없습니다.' });
 		}
 
