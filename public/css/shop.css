@@ -1303,3 +1303,26 @@ html, body { overflow-x: hidden; max-width: 100%; }
     justify-content: center;
   }
 }
+
+/* ══════════════════════════════════════
+   다크모드 오버라이드
+══════════════════════════════════════ */
+/* 주문 상태 뱃지 - 라이트 배경 → 반투명으로 */
+[data-theme="dark"] .order-status-badge.pending   { background: rgba(217,119,6,.15);  color: #fcd34d; }
+[data-theme="dark"] .order-status-badge.paid      { background: rgba(22,163,74,.15);  color: #86efac; }
+[data-theme="dark"] .order-status-badge.cancelled { background: rgba(220,38,38,.15);  color: #fca5a5; }
+[data-theme="dark"] .order-status-badge.shipping  { background: rgba(234,88,12,.15);  color: var(--c-accent); }
+
+/* 결제 결과 아이콘 */
+[data-theme="dark"] .payment-result__icon.success { background: rgba(22,163,74,.15); }
+[data-theme="dark"] .payment-result__icon.fail    { background: rgba(220,38,38,.15); }
+
+/* 계정 네비게이션 - 하드코딩 #fff7ed → 다크 대체 */
+[data-theme="dark"] .acct-nav-link:hover  { background: rgba(234,88,12,.15) !important; color: var(--c-accent) !important; border-color: rgba(234,88,12,.3) !important; }
+[data-theme="dark"] .acct-nav-link.is-active { background: rgba(234,88,12,.18) !important; color: var(--c-accent) !important; border-color: rgba(234,88,12,.35) !important; }
+
+/* 위험 카드 */
+[data-theme="dark"] .acct-card--danger { background: rgba(220,38,38,.1) !important; border-color: rgba(220,38,38,.3) !important; }
+
+/* 삭제 버튼 hover */
+[data-theme="dark"] .app-cart-remove:hover { background: rgba(220,38,38,.2) !important; }

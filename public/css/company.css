@@ -1076,3 +1076,22 @@ html, body {
   .hero__badge-num { font-size: 16px; }
   .notice-row { flex-wrap: wrap; gap: 8px; }
 }
+
+/* ══════════════════════════════════════
+   다크모드 오버라이드
+══════════════════════════════════════ */
+/* 모바일 드로어 - is-active의 라이트 오렌지 배경 → 다크 대체 */
+[data-theme="dark"] .mob-drawer__link.is-active { background: rgba(234,88,12,.15) !important; color: var(--c-accent) !important; }
+[data-theme="dark"] .mob-drawer__link:hover { background: var(--c-bg-3) !important; color: var(--c-text) !important; }
+[data-theme="dark"] .mob-drawer__btn-admin { background: rgba(234,88,12,.15) !important; }
+
+/* 공지사항 카테고리 뱃지 */
+[data-theme="dark"] .notice-row__cat.product { background: rgba(234,88,12,.15) !important; color: var(--c-accent) !important; }
+[data-theme="dark"] .notice-row__cat.general { background: var(--c-bg-3) !important; color: var(--c-muted) !important; }
+
+/* 공지사항 필터 버튼 */
+[data-theme="dark"] .notice-filter-btn { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; color: var(--c-text-2) !important; }
+
+/* 계정 탭 네비게이션 */
+[data-theme="dark"] .account-tab-nav a.active { background: rgba(234,88,12,.15) !important; color: var(--c-accent) !important; }
+[data-theme="dark"] .account-tab-nav a:hover  { background: var(--c-bg-3) !important; color: var(--c-text) !important; }
