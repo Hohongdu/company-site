@@ -105,9 +105,9 @@
                                 <th style="min-width:220px;">상품명</th>
                                 <th style="min-width:160px;">카테고리</th>
                                 <th style="min-width:120px;" class="text-end">가격</th>
-                                <th style="min-width:120px;">재고</th>
-                                <th style="min-width:140px;">상태</th>
-                                <th style="min-width:220px;">관리</th>
+                                <th style="min-width:190px;">재고</th>
+                                <th style="min-width:190px;">상태</th>
+                                <th style="min-width:250px;">관리</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,48 +141,44 @@
                                                 <td data-label="재고">
                                                     <% const stockQty = Number(p.stock_quantity || 0); %>
                                                     <% if (stockQty <= 0) { %>
-                                                        <span class="badge text-bg-danger">품절</span>
+                                                        <span class="adm-stock-badge adm-stock-badge--out">품절</span>
                                                     <% } else if (stockQty <= lowStockThreshold) { %>
-                                                        <span class="badge text-bg-warning">재고 부족</span>
+                                                        <span class="adm-stock-badge adm-stock-badge--low">재고 부족</span>
                                                     <% } else { %>
-                                                        <span class="badge text-bg-success">재고 있음</span>
+                                                        <span class="adm-stock-badge adm-stock-badge--in">재고 있음</span>
                                                     <% } %>
-                                                    <div class="d-flex gap-2 align-items-center mt-1 flex-wrap admin-inline">
-                                                        <input class="form-control form-control-sm js-stock-input" type="number" min="0"
-                                                            value="<%= stockQty %>" data-id="<%= p.id %>" style="width:90px;">
-                                                        <button class="btn btn-sm btn-outline-secondary js-stock-save"
+                                                    <div class="d-flex gap-2 align-items-center mt-1 flex-wrap">
+                                                        <input class="form-control js-stock-input" type="number" min="0"
+                                                            value="<%= stockQty %>" data-id="<%= p.id %>" style="width:110px;">
+                                                        <button class="btn btn-outline-secondary js-stock-save adm-tbl-btn"
                                                             type="button" data-id="<%= p.id %>">저장</button>
                                                     </div>
                                                 </td>
                                                 <td class="admin-cell-status" data-label="상태">
-                                                    <div class="d-flex gap-2 align-items-center admin-inline flex-wrap">
-                                                        <select class="form-select form-select-sm js-visibility-select"
+                                                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                                                        <select class="form-select js-visibility-select"
                                                             data-id="<%= p.id %>">
-                                                            <option value="ACTIVE" <%= p.visibility_status !== 'HIDDEN' ? 'selected' : '' %>>
-                                                                판매중
-                                                            </option>
-                                                            <option value="HIDDEN" <%= p.visibility_status === 'HIDDEN' ? 'selected' : '' %>>
-                                                                숨김
-                                                            </option>
+                                                            <option value="ACTIVE" <%= p.visibility_status !== 'HIDDEN' ? 'selected' : '' %>>판매중</option>
+                                                            <option value="HIDDEN" <%= p.visibility_status === 'HIDDEN' ? 'selected' : '' %>>숨김</option>
                                                         </select>
-                                                        <button class="btn btn-sm btn-outline-secondary js-visibility-save"
+                                                        <button class="btn btn-outline-secondary js-visibility-save adm-tbl-btn"
                                                             type="button" data-id="<%= p.id %>">변경</button>
                                                     </div>
                                                 </td>
                                                 <td data-label="관리">
-                                                    <div class="d-flex gap-2 flex-wrap admin-actions">
-                                                        <a class="btn btn-sm btn-outline-primary"
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <a class="btn btn-outline-primary adm-tbl-btn"
                                                             href="/admin/products/<%= p.id %>/edit">수정</a>
 
                                                         <!-- ✅ 삭제 폼 (중첩 아님) + CSRF 포함 -->
                                                         <form action="/admin/products/<%= p.id %>/delete" method="post"
                                                             onsubmit="return confirm('삭제할까요?');">
                                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                            <button class="btn btn-sm btn-outline-danger"
+                                                            <button class="btn btn-outline-danger adm-tbl-btn"
                                                                 type="submit">삭제</button>
                                                         </form>
 
-                                                        <a class="btn btn-sm btn-outline-secondary"
+                                                        <a class="btn btn-outline-secondary adm-tbl-btn"
                                                             href="/shop/products/<%= p.id %>" target="_blank">샵에서 보기</a>
                                                     </div>
                                                 </td>
