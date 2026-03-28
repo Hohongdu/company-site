@@ -140,6 +140,16 @@
 .app-header__btn:hover,
 .app-header__btn.is-active { background: rgba(255,255,255,.1); color: #fff; }
 
+/* 회사 홈페이지 이동 버튼 — 오른쪽에 구분선으로 분리 */
+.app-header__btn--site {
+  color: rgba(255,255,255,.5);
+  margin-right: 4px;
+  border-right: 1px solid rgba(255,255,255,.15);
+  border-radius: 0;
+  padding-right: 6px;
+}
+.app-header__btn--site:hover { background: none; color: #fff; }
+
 /* 장바구니 배지 — 헤더용 */
 .app-header-badge {
   position: absolute;

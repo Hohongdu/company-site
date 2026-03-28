@@ -80,6 +80,15 @@ const safeCartCount = Number(cartCount || 0);
   <!-- 헤더 우측 도구 버튼들 -->
   <div class="app-header__tools">
 
+    <%# 회사 홈페이지 이동 버튼 %>
+    <a class="app-header__btn app-header__btn--site" href="/" aria-label="회사 홈페이지로 이동" title="ENERMADE 회사 홈">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"
+              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M9 21V12h6v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
     <%# 검색 버튼 — 상품 목록 페이지로 이동 %>
     <a class="app-header__btn" href="/shop/products" aria-label="상품 검색">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
