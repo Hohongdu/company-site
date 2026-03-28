@@ -1114,6 +1114,33 @@ router.post('/orders/guest', guestOrderLookupLimiter, async (req, res) => {
 	}
 });
 
+router.get('/orders/:orderNumber/payment', async (req, res) => {
+	try {
+		const orderNumber = String(req.params.orderNumber || '').trim();
+		const detail = await fetchOrderDetailByNumber(orderNumber);
+
+		if (!detail?.order) {
+			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
+		}
+
+		if (!req.session.user || detail.order.user_id !== req.session.user.id) {
+			return res.status(403).render('404', { message: '접근 권한이 없습니다.' });
+		}
+
+		if (!detail.payment) {
+			return res.redirect('/shop/orders/' + orderNumber);
+		}
+
+		return res.render('shop/payment-detail', {
+			order: detail.order,
+			payment: detail.payment,
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send('결제 상세 조회 오류');
+	}
+});
+
 router.get('/orders/:orderNumber', async (req, res) => {
 	try {
 		const orderNumber = String(req.params.orderNumber || '').trim();

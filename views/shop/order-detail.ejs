@@ -100,6 +100,20 @@
                 <%= payment?.status === 'SUCCESS' ? '결제 완료' : (payment?.status || '미결제') %>
               </span>
             </div>
+            <% if (payment) { %>
+            <div style="padding:8px 0;border-bottom:1px solid var(--c-border,#e2e8f0);">
+              <a href="/shop/orders/<%= order.order_number %>/payment"
+                 style="display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--c-muted);text-decoration:none;">
+                <span>결제 상세</span>
+                <span style="display:flex;align-items:center;gap:2px;color:#555;">
+                  상세보기
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18l6-6-6-6" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </a>
+            </div>
+            <% } %>
             <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--c-text);padding:12px 0 0;">
               <span>최종 결제금액</span>
               <span style="color:var(--c-accent,#ea580c);"><%= Number(order.total_amount || 0).toLocaleString() %>원</span>
