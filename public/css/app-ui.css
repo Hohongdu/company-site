@@ -76,8 +76,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  text-decoration: none;
   min-width: 0;
+}
+.app-header__brand-home,
+.app-header__brand-shop {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
 }
 .app-header__brand-name {
   font-family: var(--font-head);

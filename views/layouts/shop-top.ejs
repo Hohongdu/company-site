@@ -66,11 +66,15 @@ const safeCartCount = Number(cartCount || 0);
       <span class="app-header__title"><%= pageTitle %></span>
 
   <% } else { %>
-    <!-- 홈/목록 페이지: 브랜드 로고 -->
-    <a class="app-header__brand" href="/shop" aria-label="ENERMADE 쇼핑몰 홈">
-      <span class="app-header__brand-name">ENERMADE</span>
-      <span class="app-header__brand-tag">SHOP</span>
-    </a>
+    <!-- 홈/목록 페이지: ENERMADE → 회사 홈, SHOP → 쇼핑몰 홈 -->
+    <div class="app-header__brand">
+      <a href="/" class="app-header__brand-home" aria-label="ENERMADE 회사 홈페이지">
+        <span class="app-header__brand-name">ENERMADE</span>
+      </a>
+      <a href="/shop" class="app-header__brand-shop" aria-label="ENERMADE 쇼핑몰 홈">
+        <span class="app-header__brand-tag">SHOP</span>
+      </a>
+    </div>
   <% } %>
 
   <!-- 헤더 우측 도구 버튼들 -->
