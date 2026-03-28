@@ -843,13 +843,19 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 		await fs.unlink(req.file.path).catch(() => {});
 
 		// 4) upload_histories 업데이트
-		const status = failCount > 0 ? (successCount > 0 ? 'FAILED' : 'FAILED') : 'SUCCESS';
+		// LOW 수정: 삼중 조건 오류 수정 — 부분 성공은 'PARTIAL', 전체 실패는 'FAILED', 전체 성공은 'SUCCESS'
+		const status = failCount === 0 ? 'SUCCESS' : successCount > 0 ? 'PARTIAL' : 'FAILED';
 		await db.execute(`UPDATE upload_histories SET status=?, success_count=?, fail_count=? WHERE id=?`, [status, successCount, failCount, uploadId]);
 
 		// 5) 같은 페이지로 돌아가서 알림 표시
 		return res.redirect(`/admin/products/import?ok=1&uploadId=${uploadId}&success=${successCount}&fail=${failCount}`);
 	} catch (err) {
-		console.error(err);
+		console.error('[상품 임포트]', err);
+
+		// LOW 수정: 에러 시에도 temp 파일 삭제 (파일 누적 방지)
+		if (req.file?.path) {
+			await fs.unlink(req.file.path).catch(() => {});
+		}
 
 		// 실패 시에도 히스토리 업데이트(가능하면)
 		if (uploadId) {

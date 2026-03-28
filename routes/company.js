@@ -57,8 +57,9 @@ router.get('/notices', async (req, res) => {
 		);
 		return res.render('company/notices', { notices, query: q, type });
 	} catch (err) {
-		console.error(err);
-		return res.status(500).send('공지 목록 로딩 오류');
+		console.error('[공지 목록]', err);
+		// HIGH-C 수정: plain text 대신 500 뷰 렌더링
+		return res.status(500).render('500', { message: '공지 목록을 불러오는 중 오류가 발생했습니다.' });
 	}
 });
 
@@ -81,8 +82,8 @@ router.get('/notices/:id', async (req, res) => {
 		if (!notice) return res.status(404).render('404', { message: '공지 없음' });
 		return res.render('company/notice-detail', { notice });
 	} catch (err) {
-		console.error(err);
-		return res.status(500).send('공지 상세 로딩 오류');
+		console.error('[공지 상세]', err);
+		return res.status(500).render('500', { message: '공지 상세를 불러오는 중 오류가 발생했습니다.' });
 	}
 });
 

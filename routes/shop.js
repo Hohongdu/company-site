@@ -92,8 +92,10 @@ async function ensurePaymentMethodTable() {
 
 async function ensureOrderStatusEnum() {
 	try {
+		// CRIT-A 수정: 'PAYING' 추가 — 결제 멱등성 가드(UPDATE status='PAYING')에 필요
+		// 'PAYING' 이 없으면 MySQL strict mode에서 UPDATE 자체가 예외를 던져 결제 전체가 파손됨
 		await db.execute(
-			`ALTER TABLE orders MODIFY status ENUM('PENDING','PAID','CANCELED','FAILED','CANCEL_REQUESTED') NOT NULL DEFAULT 'PENDING'`,
+			`ALTER TABLE orders MODIFY status ENUM('PENDING','PAYING','PAID','CANCELED','FAILED','CANCEL_REQUESTED') NOT NULL DEFAULT 'PENDING'`,
 		);
 	} catch (err) {
 		const message = String(err?.message || '');
@@ -117,27 +119,10 @@ async function ensureCouponTable() {
 	);
 }
 
-async function ensureSearchLogsTable() {
-	await db.execute(
-		`CREATE TABLE IF NOT EXISTS search_logs (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      keyword VARCHAR(255) NOT NULL,
-      user_id INT DEFAULT NULL,
-      searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      INDEX idx_keyword (keyword),
-      INDEX idx_searched_at (searched_at)
-    )`,
-	);
-}
-
-async function logSearch(keyword, userId) {
-	try {
-		await ensureSearchLogsTable();
-		await db.execute('INSERT INTO search_logs (keyword, user_id) VALUES (?, ?)', [keyword, userId || null]);
-	} catch (e) {
-		// 로깅 실패는 조용히 무시
-	}
-}
+// HIGH-A 수정: 로컬 logSearch / ensureSearchLogsTable 제거
+// search-log.service.js 가 더 풍부한 스키마(normalized_kw NOT NULL 등)로 동일 테이블을 관리하므로
+// 로컬 INSERT는 NOT NULL 제약에 걸려 매 검색마다 silent DB error가 발생했음
+// → 서비스의 searchLogService.logSearch() 단일 호출로 통합
 
 // 주문번호 생성 — crypto.randomBytes 사용 (Math.random 충돌 위험 제거)
 // 형식: ORD-{13자리 타임스탬프}-{8자리 HEX 난수} → 충돌 확률 1/4,294,967,296
@@ -289,8 +274,7 @@ router.get('/products', async (req, res) => {
 		if (q) {
 			where.push('(p.name LIKE ? OR p.code LIKE ? OR p.spec LIKE ?)');
 			params.push(`%${q}%`, `%${q}%`, `%${q}%`);
-			// 검색어 비동기 로깅 (성능 영향 없음)
-			logSearch(q, req.session?.user?.id);
+			// HIGH-A 수정: 로컬 logSearch 제거 — 아래 searchLogService.logSearch() 로 통합
 		}
 
 		if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
@@ -315,8 +299,9 @@ router.get('/products', async (req, res) => {
 			query: q,
 		});
 	} catch (err) {
-		console.error(err);
-		res.status(500).send('상품 목록 오류');
+		console.error('[상품 목록]', err);
+		// HIGH-C 수정: shop/error 뷰로 표시 (레이아웃 일관성)
+		return renderShopError(res, '상품 목록을 불러오는 중 오류가 발생했습니다.', 500, '/shop');
 	}
 });
 
@@ -384,8 +369,8 @@ router.get('/products/:id', async (req, res) => {
 			related,
 		});
 	} catch (err) {
-		console.error(err);
-		res.status(500).send('상품 상세 오류');
+		console.error('[상품 상세]', err);
+		return renderShopError(res, '상품 정보를 불러오는 중 오류가 발생했습니다.', 500, '/shop/products');
 	}
 });
 
@@ -480,8 +465,8 @@ router.get('/cart', async (req, res) => {
 			cartError,
 		});
 	} catch (err) {
-		console.error(err);
-		res.status(500).send('장바구니 오류');
+		console.error('[장바구니]', err);
+		return renderShopError(res, '장바구니를 불러오는 중 오류가 발생했습니다.', 500, '/shop');
 	}
 });
 
