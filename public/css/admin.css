@@ -1039,29 +1039,37 @@ body.admin-wrap {
    PRODUCT TABLE — Stock badges & uniform table controls
    ============================================================ */
 
-/* 재고 상태 뱃지 (재고 있음 / 품절 / 재고 부족) */
+/* 재고 상태 뱃지 — "재고 있음"(최장) 기준으로 width 고정해 레이아웃 흔들림 방지 */
 .adm-stock-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 14px;
+    padding: 7px 16px;
     border-radius: var(--radius);
     font-size: 13px;
     font-weight: 700;
     white-space: nowrap;
-    min-width: 72px;
+    width: 92px;          /* 재고 있음 / 재고 부족 / 품절 모두 동일 width */
     line-height: 1;
+    box-sizing: border-box;
 }
 .adm-stock-badge--in  { background: #16a34a; color: #fff; }
 .adm-stock-badge--out { background: #dc2626; color: #fff; }
 .adm-stock-badge--low { background: #d97706; color: #fff; }
 
-/* 상품 테이블 전용 버튼 — 크기 통일 */
+/* 상품 테이블 전용 버튼 — 크기 통일 (수정 / 삭제 / 샵에서 보기 / 저장 / 변경) */
 .adm-tbl-btn {
-    min-width: 76px;
+    min-width: 90px;
     text-align: center;
     font-weight: 600;
     white-space: nowrap;
+}
+
+/* 상품 테이블 셀렉트 — 글자 길이에 맞게 자동 너비 */
+.adm-tbl-select {
+    width: auto !important;   /* Bootstrap form-select의 width:100% 오버라이드 */
+    min-width: 90px;
+    flex-shrink: 0;
 }
 
 /* ============================================================
