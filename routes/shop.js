@@ -1,10 +1,11 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
+// bcrypt는 shop 라우터에서 사용하지 않으므로 제거
 const csurf = require('../lib/csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
 const kakaoPayService = require('../services/kakaopay.service');
 const { requireLogin } = require('../middleware/auth');
+const searchLogService = require('../services/search-log.service');
 
 const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
@@ -221,9 +222,29 @@ async function fetchOrderDetailByNumber(orderNumber) {
 	return { order, items, payment };
 }
 
-router.get('/', async (req, res) => {
+// =============================================
+// 스키마 초기화 — 서버 시작 시 1회만 실행
+// 각 라우트 핸들러 내부에서 매 요청마다 호출하면
+// ALTER TABLE이 반복 실행되어 성능 저하 발생
+// =============================================
+(async () => {
 	try {
 		await ensureProductVisibilityColumn();
+		await ensureReviewTable();
+		await ensureWishlistTable();
+		await ensureNotificationSettingsTable();
+		await ensureAddressTable();
+		await ensurePaymentMethodTable();
+		await ensureOrderStatusEnum();
+		await ensureCouponTable();
+		console.log('[shop] 스키마 초기화 완료');
+	} catch (err) {
+		console.error('[shop] 스키마 초기화 실패:', err);
+	}
+})();
+
+router.get('/', async (req, res) => {
+	try {
 		const [categories] = await db.execute('SELECT * FROM categories ORDER BY name ASC');
 		const [latest] = await db.execute(`
       SELECT p.*, c.name AS category_name
@@ -275,6 +296,16 @@ router.get('/products', async (req, res) => {
 		sql += ' ORDER BY p.created_at DESC';
 
 		const [products] = await db.execute(sql, params);
+
+		// 검색어가 있을 때만 비동기 로깅 (응답 속도에 영향 없음)
+		if (q) {
+			searchLogService.logSearch({
+				keyword: q,
+				resultCount: products.length,
+				req,
+				categoryFilter: categorySlug !== 'all' ? categorySlug : null,
+			});
+		}
 
 		res.render('shop/products', {
 			products,

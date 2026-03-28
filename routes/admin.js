@@ -8,6 +8,8 @@ const fssync = require('fs');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { sendInquiryReplyEmail } = require('../services/notification.service');
+const { sendMail, isConfigured: isEmailConfigured, getDriverName } = require('../services/email.service');
+const searchLogService = require('../services/search-log.service');
 let sharp = null;
 try {
 	sharp = require('sharp');
@@ -1254,54 +1256,71 @@ router.get('/visit-logs', requireAdmin, async (req, res) => {
 // ─── 검색어 통계 ────────────────────────────────────────────
 router.get('/search-stats', requireAdmin, async (req, res) => {
 	try {
-		const period = req.query.period || '30'; // days
-		const days = Math.min(Number(period) || 30, 365);
+		const days = Number(req.query.days || 30);
 
-		// 인기 검색어 TOP 20
-		const [topKeywords] = await db.execute(
-			`SELECT keyword, COUNT(*) AS cnt, MAX(searched_at) AS last_searched
-       FROM search_logs
-       WHERE searched_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-       GROUP BY keyword ORDER BY cnt DESC LIMIT 20`,
-			[days],
-		);
-
-		// 일별 검색 수 (최근 30일)
-		const [dailyStats] = await db.execute(
-			`SELECT DATE(searched_at) AS day, COUNT(*) AS cnt
-       FROM search_logs
-       WHERE searched_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-       GROUP BY DATE(searched_at) ORDER BY day ASC`,
-		);
+		const [summary, topKeywords, noHitKeywords, dailyVolume] = await Promise.all([
+			searchLogService.getSummary({ days }),
+			searchLogService.getTopKeywords({ days, limit: 20 }),
+			searchLogService.getNoHitKeywords({ days, limit: 20 }),
+			searchLogService.getDailySearchVolume({ days }),
+		]);
 
 		res.render('admin/search-stats', {
-			title: '검색어 통계', active: 'search-stats',
-			topKeywords, dailyStats, period: days, user: req.session.user,
+			title: '검색 통계',
+			active: 'search-stats',
+			summary,
+			topKeywords,
+			noHitKeywords,
+			dailyVolume,
+			days,
 		});
 	} catch (err) {
-		console.error('[search-stats]', err);
-		// 테이블이 없으면 빈 데이터로 렌더
-		res.render('admin/search-stats', {
-			title: '검색어 통계', active: 'search-stats',
-			topKeywords: [], dailyStats: [], period: 30, user: req.session.user,
-		});
+		console.error('[admin/search-stats]', err);
+		res.status(500).send('검색 통계 조회 오류');
 	}
 });
 
-// 검색어 통계 Excel/CSV 내보내기
+// JSON API (차트 갱신용)
+router.get('/api/search-stats', requireAdmin, async (req, res) => {
+	try {
+		const days = Number(req.query.days || 30);
+
+		const [summary, topKeywords, noHitKeywords, dailyVolume] = await Promise.all([
+			searchLogService.getSummary({ days }),
+			searchLogService.getTopKeywords({ days, limit: 20 }),
+			searchLogService.getNoHitKeywords({ days, limit: 20 }),
+			searchLogService.getDailySearchVolume({ days }),
+		]);
+
+		res.json({ ok: true, days, summary, topKeywords, noHitKeywords, dailyVolume });
+	} catch (err) {
+		console.error('[admin/api/search-stats]', err);
+		res.status(500).json({ ok: false, error: err.message });
+	}
+});
+
+// 검색어 통계 Excel 내보내기
 router.get('/search-stats/export', requireAdmin, async (req, res) => {
 	try {
-		const [rows] = await db.execute(
-			`SELECT keyword, COUNT(*) AS count, MIN(searched_at) AS first_searched, MAX(searched_at) AS last_searched
-       FROM search_logs GROUP BY keyword ORDER BY count DESC`,
-		);
+		const days = Number(req.query.days || 365);
+		const topKw = await searchLogService.getTopKeywords({ days, limit: 1000 });
+		const noHit = await searchLogService.getNoHitKeywords({ days, limit: 1000 });
 
 		const wb = xlsx.utils.book_new();
-		const wsData = [['검색어', '검색 횟수', '첫 검색', '마지막 검색']].concat(
-			rows.map(r => [r.keyword, r.count, r.first_searched, r.last_searched]),
+
+		const topSheet = xlsx.utils.aoa_to_sheet(
+			[['검색어', '검색 횟수', '평균 결과수']].concat(
+				topKw.map(r => [r.keyword, r.search_count, Math.round(r.avg_results)]),
+			),
 		);
-		const ws = xlsx.utils.aoa_to_sheet(wsData);
-		xlsx.utils.book_append_sheet(wb, ws, '검색어통계');
+		xlsx.utils.book_append_sheet(wb, topSheet, '인기검색어');
+
+		const noHitSheet = xlsx.utils.aoa_to_sheet(
+			[['무결과 검색어', '검색 횟수']].concat(
+				noHit.map(r => [r.keyword, r.search_count]),
+			),
+		);
+		xlsx.utils.book_append_sheet(wb, noHitSheet, '무결과키워드');
 
 		const buf = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
 		res.setHeader('Content-Disposition', `attachment; filename="search-stats-${Date.now()}.xlsx"`);
@@ -1311,6 +1330,37 @@ router.get('/search-stats/export', requireAdmin, async (req, res) => {
 		console.error('[search-stats export]', err);
 		res.status(500).send('내보내기 오류가 발생했습니다.');
 	}
+});
+
+// ─── 이메일 드라이버 테스트 ─────────────────────────────────
+router.post('/test-email', requireAdmin, async (req, res) => {
+	const adminEmail =
+		process.env.ADMIN_EMAIL ||
+		process.env.EMAIL_FROM ||
+		process.env.SMTP_USER ||
+		process.env.NCP_EMAIL_SENDER;
+
+	if (!adminEmail) {
+		return res.status(400).json({ ok: false, error: 'ADMIN_EMAIL / EMAIL_FROM 환경변수가 없습니다.' });
+	}
+
+	if (!isEmailConfigured()) {
+		return res.status(400).json({
+			ok: false,
+			driver: getDriverName(),
+			error: `현재 드라이버(${getDriverName()})가 올바르게 설정되지 않았습니다.`,
+		});
+	}
+
+	const result = await sendMail({
+		to: adminEmail,
+		subject: '[ENERMADE] 이메일 드라이버 테스트',
+		html: `<p>이 메일은 관리자 대시보드에서 발송한 테스트 메일입니다.</p>
+               <p>드라이버: <strong>${getDriverName()}</strong></p>
+               <p>발송 시각: ${new Date().toLocaleString('ko-KR')}</p>`,
+	});
+
+	return res.json({ ...result, driver: getDriverName(), to: adminEmail });
 });
 
 module.exports = router;

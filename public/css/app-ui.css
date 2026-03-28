@@ -1532,3 +1532,30 @@
   height: 1px;
   background: var(--c-border);
 }
+
+/* ── 다크모드 버튼: shop 탭바(64px) 위로 올리기 ── */
+/* .app-wrap = shop-top.ejs의 body 클래스 */
+.app-wrap .dark-widget {
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+/* ── 다크모드: shop 앱 UI 요소 ── */
+[data-theme="dark"] .app-header {
+  background: #18181b !important;
+  border-bottom-color: #3f3f46 !important;
+}
+[data-theme="dark"] .app-header__brand-name,
+[data-theme="dark"] .app-header__title { color: #fafafa !important; }
+[data-theme="dark"] .app-header__btn { color: rgba(255,255,255,.7) !important; }
+[data-theme="dark"] .app-bottom-nav { background: #18181b !important; border-top-color: #3f3f46 !important; }
+[data-theme="dark"] .app-tab { color: var(--c-muted) !important; }
+[data-theme="dark"] .app-tab.is-active { color: var(--c-accent) !important; }
+[data-theme="dark"] .app-card { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .app-section { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-field__input { background: var(--c-bg-3) !important; border-color: var(--c-border) !important; color: var(--c-text) !important; }
+[data-theme="dark"] .app-field__label { color: var(--c-muted) !important; }
+[data-theme="dark"] .app-bottom-cta,
+[data-theme="dark"] .app-cart-cta { background: var(--c-bg-2) !important; border-top-color: #3f3f46 !important; }
+[data-theme="dark"] .app-sheet { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-sheet__head { border-bottom-color: #3f3f46 !important; }
+[data-theme="dark"] .app-wrap { background: var(--c-bg) !important; }

@@ -385,8 +385,8 @@ app.get('/payments/kakao/success', requireLogin, async (req, res) => {
 			[order.id],
 		);
 
-		// 4) 주문 상세로 이동
-		return res.redirect('/orders/' + order.id);
+		// 4) 주문 상세로 이동 (shop 라우터가 처리하는 경로)
+		return res.redirect('/shop/orders/' + order.id);
 	} catch (err) {
 		console.error(err.response?.data || err);
 		return res.status(500).send('결제 승인 중 오류가 발생했습니다.');
@@ -401,7 +401,7 @@ app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 		if (orderId) {
 			await db.execute(`UPDATE orders SET status = 'CANCELED' WHERE id = ?`, [orderId]);
 		}
-		return res.send('결제가 취소되었습니다.');
+		return res.redirect('/shop/cart?notice=cancel');
 	} catch (e) {
 		console.error(e);
 		return res.status(500).send('취소 처리 중 오류가 발생했습니다.');
@@ -416,7 +416,7 @@ app.get('/payments/kakao/fail', requireLogin, async (req, res) => {
 		if (orderId) {
 			await db.execute(`UPDATE orders SET status = 'FAILED' WHERE id = ?`, [orderId]);
 		}
-		return res.send('결제가 실패했습니다.');
+		return res.redirect('/shop/cart?notice=fail');
 	} catch (e) {
 		console.error(e);
 		return res.status(500).send('실패 처리 중 오류가 발생했습니다.');
