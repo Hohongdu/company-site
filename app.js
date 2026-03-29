@@ -48,7 +48,12 @@ app.use(helmet({ contentSecurityPolicy: false }));
 // =====================
 // 세션
 // =====================
+// [M-5] SESSION_SECRET 미설정 시: 운영 환경에서는 서버 시작 자체를 거부
+// 알려진 시크릿('change_me_in_env')으로 세션에 서명하면 공격자가 세션 토큰 위조 가능
 if (!process.env.SESSION_SECRET) {
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error('[FATAL] SESSION_SECRET must be set in .env for production. Refusing to start.');
+	}
 	console.warn('[WARN] SESSION_SECRET is empty. Set it in .env for production safety.');
 }
 
@@ -348,13 +353,19 @@ app.get('/payments/kakao/success', requireLogin, async (req, res) => {
 app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 	try {
 		const { orderId } = req.query;
+		const userId = req.session.user.id;
 
 		if (orderId) {
-			await db.execute(`UPDATE orders SET status = 'CANCELED' WHERE id = ?`, [orderId]);
+			// [C-6 IDOR 수정] AND user_id = ? 추가: 반드시 본인 주문만 취소 처리
+			// orderId만으로 UPDATE하면 숫자 조작으로 타인의 주문 상태 변경 가능
+			await db.execute(
+				`UPDATE orders SET status = 'CANCELED' WHERE id = ? AND user_id = ?`,
+				[orderId, userId],
+			);
 		}
 		return res.redirect('/shop/cart?notice=cancel');
 	} catch (e) {
-		console.error(e);
+		console.error('[kakao/cancel]', e);
 		return res.status(500).send('취소 처리 중 오류가 발생했습니다.');
 	}
 });
@@ -363,13 +374,18 @@ app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 app.get('/payments/kakao/fail', requireLogin, async (req, res) => {
 	try {
 		const { orderId } = req.query;
+		const userId = req.session.user.id;
 
 		if (orderId) {
-			await db.execute(`UPDATE orders SET status = 'FAILED' WHERE id = ?`, [orderId]);
+			// [C-6 IDOR 수정] AND user_id = ? 추가
+			await db.execute(
+				`UPDATE orders SET status = 'FAILED' WHERE id = ? AND user_id = ?`,
+				[orderId, userId],
+			);
 		}
 		return res.redirect('/shop/cart?notice=fail');
 	} catch (e) {
-		console.error(e);
+		console.error('[kakao/fail]', e);
 		return res.status(500).send('실패 처리 중 오류가 발생했습니다.');
 	}
 });

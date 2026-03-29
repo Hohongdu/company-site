@@ -1,5 +1,7 @@
 const express = require('express');
-// bcrypt는 shop 라우터에서 사용하지 않으므로 제거
+// [P0 버그수정] bcrypt 제거 주석이 잘못됨 — /account/profile 비밀번호 변경에서 실제 사용 중
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');       // [H-3] 주문번호 CSPRNG 생성에 사용
 const csurf = require('../lib/csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
@@ -117,9 +119,10 @@ async function ensureCouponTable() {
 }
 
 function generateOrderNumber() {
-	const rand = Math.floor(Math.random() * 1000)
-		.toString()
-		.padStart(3, '0');
+	// [H-3] Math.random() → crypto.randomBytes(): 예측 불가능한 CSPRNG 사용
+	// Math.random은 시드 예측 가능 → 공격자가 주문번호 열거 공격 가능
+	// crypto.randomBytes(4).toString('hex') = 8자리 16진수 (약 42억 가지 경우의 수)
+	const rand = crypto.randomBytes(4).toString('hex');
 	return `ORD-${Date.now()}-${rand}`;
 }
 
@@ -511,7 +514,13 @@ router.post('/cart/update', async (req, res) => {
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			await db.execute('UPDATE cart_items SET quantity = ? WHERE id = ?', [quantity, cartItemId]);
+			// [C-1 IDOR 수정] AND cart_id = ? 추가: 반드시 현재 사용자의 장바구니 아이템만 수정
+			// 소유권 검사 없이 cartItemId만으로 UPDATE하면 타인의 장바구니 항목 수정 가능
+			const cartId = await ensureUserCartId(req.session.user.id);
+			await db.execute(
+				'UPDATE cart_items SET quantity = ? WHERE id = ? AND cart_id = ?',
+				[quantity, cartItemId, cartId],
+			);
 			return res.redirect('/shop/cart');
 		}
 
@@ -531,7 +540,12 @@ router.post('/cart/remove', async (req, res) => {
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			await db.execute('DELETE FROM cart_items WHERE id = ?', [cartItemId]);
+			// [C-1 IDOR 수정] AND cart_id = ? 추가: 현재 사용자의 장바구니 아이템만 삭제 가능
+			const cartId = await ensureUserCartId(req.session.user.id);
+			await db.execute(
+				'DELETE FROM cart_items WHERE id = ? AND cart_id = ?',
+				[cartItemId, cartId],
+			);
 			return res.redirect('/shop/cart');
 		}
 
@@ -876,6 +890,11 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 		}
 
 		if (password) {
+			// [M-6] bcrypt는 72바이트 초과 입력을 조용히 잘라냄 — 미리 검사해야 함
+			// 72자 초과 비밀번호는 truncation 후 충돌 가능 + 매우 긴 입력은 이벤트 루프 차단
+			if (password.length > 72) {
+				return res.redirect('/shop/account?error=비밀번호는 72자 이하로 입력해주세요.');
+			}
 			const hashedPw = await bcrypt.hash(password, 10);
 			await db.execute('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, hashedPw, userId]);
 		} else {

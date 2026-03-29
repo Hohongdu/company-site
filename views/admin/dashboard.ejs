@@ -304,7 +304,14 @@ const chartPayload = {
 
 <script>
 (function () {
-    const data = <%- JSON.stringify(chartPayload) %>;
+    // [H-1] JSON.stringify XSS 방지: </script> 삽입 공격 차단
+    // JSON.stringify는 <, >, &, / 를 이스케이프하지 않음
+    // Unicode escape(\u003c 등)는 JSON 파싱에 영향 없이 script 컨텍스트 탈출을 막음
+    const data = <%- JSON.stringify(chartPayload)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+        .replace(/&/g, '\\u0026')
+        .replace(/\//g, '\\u002f') %>;
 
     function drawLine(canvas, labels, values, color) {
         if (!canvas || !labels.length) return;
