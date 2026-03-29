@@ -46,8 +46,8 @@
   --sh-lg: 0 8px 32px rgba(0,0,0,.10);
   --sh-xl: 0 16px 48px rgba(0,0,0,.12);
 
-  --section-py:    96px;
-  --section-py-sm: 60px;
+  --section-py:    72px;   /* 96px → 72px: 데스크탑 섹션 수직 여백 25% 감소 */
+  --section-py-sm: 48px;  /* 60px → 48px */
 
   --font-head: 'Sora', 'Noto Sans KR', sans-serif;
   --font-body: 'Noto Sans KR', 'Sora', sans-serif;
@@ -496,7 +496,7 @@ hr { border-color: var(--c-border); opacity: 1; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  :root { --section-py: 60px; --section-py-sm: 40px; }
+  :root { --section-py: 48px; --section-py-sm: 32px; } /* 모바일: 60/40 → 48/32 */
   .btn-lg { padding: 11px 24px; font-size: 14px; }
 }
 
