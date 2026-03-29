@@ -181,7 +181,7 @@
 <script>
 (function () {
     // 서버에서 내려온 일별 데이터
-    // [H-1] XSS 방지: search_logs의 키워드는 사용자 입력값 → </script> 삽입 공격 차단
+    // [H-1] XSS 방지: search_logs의 키워드는 사용자 입력값 → <\/script> 삽입 공격 차단
     const raw = <%- JSON.stringify(dailyVolume)
         .replace(/</g, '\\u003c')
         .replace(/>/g, '\\u003e')
