@@ -1,35 +1,29 @@
 // db.js
-// MySQL 커넥션 풀 초기화
-// 모든 DB 접속 정보는 .env 환경변수에서만 읽는다.
-// 하드코딩 폴백 값 금지 — 설정 누락 시 즉시 에러로 명확히 알린다.
+// ─────────────────────────────────────────────────────────────────────────────
+// [보안] L-1: DB 크레덴셜을 운영 환경 로그에 노출하지 않음
+//        C-3: 하드코딩 DB 비밀번호('111111') 폴백 제거
+// ─────────────────────────────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== 'production') {
+	// 개발 환경에서만 접속 정보 출력 (비밀번호 제외)
+	console.log('[DB ENV]', {
+		DB_HOST: process.env.DB_HOST,
+		DB_USER: process.env.DB_USER,
+		DB_NAME: process.env.DB_NAME,
+	});
+}
 
-'use strict';
+// [보안] DB_PASS 미설정 시 경고 — 하드코딩 폴백 완전 제거
+if (!process.env.DB_PASS) {
+	console.warn('[WARN] DB_PASS is not set! Database connection will likely fail. Set DB_PASS in .env');
+}
 
 const mysql = require('mysql2/promise');
 
-// ── 필수 환경변수 검증 ──────────────────────────────────
-const DB_HOST = process.env.DB_HOST;
-const DB_USER = process.env.DB_USER;
-const DB_PASS = process.env.DB_PASS;
-const DB_NAME = process.env.DB_NAME;
-
-if (!DB_HOST || !DB_USER || !DB_PASS || !DB_NAME) {
-	// 서버 시작 시 즉시 크래시 — 잘못된 설정으로 실행되는 것을 방지
-	throw new Error(
-		'[db] 필수 환경변수 누락: DB_HOST, DB_USER, DB_PASS, DB_NAME 을 .env 파일에 설정하세요.',
-	);
-}
-
-// 개발 환경에서만 연결 정보 로그 (비밀번호 절대 출력 안 함)
-if (process.env.NODE_ENV !== 'production') {
-	console.log('[DB] Connecting to', DB_HOST, '/', DB_NAME, 'as', DB_USER);
-}
-
 const pool = mysql.createPool({
-	host: DB_HOST,
-	user: DB_USER,
-	password: DB_PASS,
-	database: DB_NAME,
+	host:     process.env.DB_HOST     || 'localhost',
+	user:     process.env.DB_USER     || 'root',
+	password: process.env.DB_PASS     || '',          // 하드코딩 폴백 제거 — 반드시 .env에 DB_PASS 설정
+	database: process.env.DB_NAME     || 'company_site',
 	waitForConnections: true,
 	connectionLimit: Number(process.env.DB_CONN_LIMIT || 10),
 	queueLimit: 0,

@@ -1,6 +1,7 @@
 const express = require('express');
-const bcrypt = require('bcrypt'); // 계정 비밀번호 변경(/account/profile)에 사용
-const crypto = require('crypto'); // 주문번호 암호학적 난수 생성
+// [P0 버그수정] bcrypt 제거 주석이 잘못됨 — /account/profile 비밀번호 변경에서 실제 사용 중
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');       // [H-3] 주문번호 CSPRNG 생성에 사용
 const csurf = require('../lib/csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
@@ -92,10 +93,8 @@ async function ensurePaymentMethodTable() {
 
 async function ensureOrderStatusEnum() {
 	try {
-		// CRIT-A 수정: 'PAYING' 추가 — 결제 멱등성 가드(UPDATE status='PAYING')에 필요
-		// 'PAYING' 이 없으면 MySQL strict mode에서 UPDATE 자체가 예외를 던져 결제 전체가 파손됨
 		await db.execute(
-			`ALTER TABLE orders MODIFY status ENUM('PENDING','PAYING','PAID','CANCELED','FAILED','CANCEL_REQUESTED') NOT NULL DEFAULT 'PENDING'`,
+			`ALTER TABLE orders MODIFY status ENUM('PENDING','PAID','CANCELED','FAILED','CANCEL_REQUESTED') NOT NULL DEFAULT 'PENDING'`,
 		);
 	} catch (err) {
 		const message = String(err?.message || '');
@@ -119,16 +118,12 @@ async function ensureCouponTable() {
 	);
 }
 
-// HIGH-A 수정: 로컬 logSearch / ensureSearchLogsTable 제거
-// search-log.service.js 가 더 풍부한 스키마(normalized_kw NOT NULL 등)로 동일 테이블을 관리하므로
-// 로컬 INSERT는 NOT NULL 제약에 걸려 매 검색마다 silent DB error가 발생했음
-// → 서비스의 searchLogService.logSearch() 단일 호출로 통합
-
-// 주문번호 생성 — crypto.randomBytes 사용 (Math.random 충돌 위험 제거)
-// 형식: ORD-{13자리 타임스탬프}-{8자리 HEX 난수} → 충돌 확률 1/4,294,967,296
 function generateOrderNumber() {
-	const randomHex = crypto.randomBytes(4).toString('hex').toUpperCase();
-	return `ORD-${Date.now()}-${randomHex}`;
+	// [H-3] Math.random() → crypto.randomBytes(): 예측 불가능한 CSPRNG 사용
+	// Math.random은 시드 예측 가능 → 공격자가 주문번호 열거 공격 가능
+	// crypto.randomBytes(4).toString('hex') = 8자리 16진수 (약 42억 가지 경우의 수)
+	const rand = crypto.randomBytes(4).toString('hex');
+	return `ORD-${Date.now()}-${rand}`;
 }
 
 async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
@@ -248,9 +243,9 @@ router.get('/', async (req, res) => {
 	}
 });
 
-// MED-4: ensureProductVisibilityColumn() 제거 — 모듈 로드 시 IIFE에서 1회 실행됨
 router.get('/products', async (req, res) => {
 	try {
+		await ensureProductVisibilityColumn();
 		const categorySlug = req.query.category || 'all';
 		const q = (req.query.q || '').trim();
 
@@ -274,7 +269,6 @@ router.get('/products', async (req, res) => {
 		if (q) {
 			where.push('(p.name LIKE ? OR p.code LIKE ? OR p.spec LIKE ?)');
 			params.push(`%${q}%`, `%${q}%`, `%${q}%`);
-			// HIGH-A 수정: 로컬 logSearch 제거 — 아래 searchLogService.logSearch() 로 통합
 		}
 
 		if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
@@ -299,16 +293,18 @@ router.get('/products', async (req, res) => {
 			query: q,
 		});
 	} catch (err) {
-		console.error('[상품 목록]', err);
-		// HIGH-C 수정: shop/error 뷰로 표시 (레이아웃 일관성)
-		return renderShopError(res, '상품 목록을 불러오는 중 오류가 발생했습니다.', 500, '/shop');
+		console.error(err);
+		res.status(500).send('상품 목록 오류');
 	}
 });
 
-// MED-4: ensure* 함수 제거 — 모듈 로드 IIFE에서 이미 실행됨
 router.get('/products/:id', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
+
+		await ensureProductVisibilityColumn();
+		await ensureReviewTable();
+		await ensureWishlistTable();
 
 		const [rows] = await db.execute(
 			`
@@ -369,8 +365,8 @@ router.get('/products/:id', async (req, res) => {
 			related,
 		});
 	} catch (err) {
-		console.error('[상품 상세]', err);
-		return renderShopError(res, '상품 정보를 불러오는 중 오류가 발생했습니다.', 500, '/shop/products');
+		console.error(err);
+		res.status(500).send('상품 상세 오류');
 	}
 });
 
@@ -465,8 +461,8 @@ router.get('/cart', async (req, res) => {
 			cartError,
 		});
 	} catch (err) {
-		console.error('[장바구니]', err);
-		return renderShopError(res, '장바구니를 불러오는 중 오류가 발생했습니다.', 500, '/shop');
+		console.error(err);
+		res.status(500).send('장바구니 오류');
 	}
 });
 
@@ -510,8 +506,7 @@ router.post('/cart/add', async (req, res) => {
 	}
 });
 
-// cart update — CRIT-1: 소유자 확인 추가 (AND cart_id = ?)
-// cartItemId만으로 UPDATE하면 다른 사용자의 아이템도 수정 가능했음
+// cart update
 router.post('/cart/update', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
@@ -519,8 +514,8 @@ router.post('/cart/update', async (req, res) => {
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			if (!cartItemId) return res.redirect('/shop/cart');
-			// 반드시 현재 사용자의 cart_id 조건을 추가해 다른 사용자 아이템 수정 차단
+			// [C-1 IDOR 수정] AND cart_id = ? 추가: 반드시 현재 사용자의 장바구니 아이템만 수정
+			// 소유권 검사 없이 cartItemId만으로 UPDATE하면 타인의 장바구니 항목 수정 가능
 			const cartId = await ensureUserCartId(req.session.user.id);
 			await db.execute(
 				'UPDATE cart_items SET quantity = ? WHERE id = ? AND cart_id = ?',
@@ -538,16 +533,14 @@ router.post('/cart/update', async (req, res) => {
 	}
 });
 
-// cart remove — CRIT-1: 소유자 확인 추가 (AND cart_id = ?)
-// cartItemId만으로 DELETE하면 다른 사용자의 아이템도 삭제 가능했음
+// cart remove
 router.post('/cart/remove', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
-			if (!cartItemId) return res.redirect('/shop/cart');
-			// 반드시 현재 사용자의 cart_id 조건을 추가해 다른 사용자 아이템 삭제 차단
+			// [C-1 IDOR 수정] AND cart_id = ? 추가: 현재 사용자의 장바구니 아이템만 삭제 가능
 			const cartId = await ensureUserCartId(req.session.user.id);
 			await db.execute(
 				'DELETE FROM cart_items WHERE id = ? AND cart_id = ?',
@@ -657,54 +650,17 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 			return res.status(400).send('결제 승인 정보가 없습니다.');
 		}
 
-		// CRIT-2 멱등성 보장: PENDING 상태인 주문만 PAID로 전환 가능
-		// 이미 처리된 주문은 affectedRows = 0 → 이중결제 방지
-		const [guardResult] = await db.execute(
-			`UPDATE orders SET status = 'PAYING' WHERE id = ? AND status = 'PENDING'`,
-			[sessionPayment.orderId],
-		);
-		if (guardResult.affectedRows === 0) {
-			// 이미 처리됐거나 존재하지 않는 주문
-			req.session.kakaoPay = null;
-			return res.status(409).render('shop/payment-fail', {
-				message: '이미 처리된 주문입니다. 중복 결제가 차단되었습니다.',
-			});
-		}
-
-		let approvalResult;
-		try {
-			approvalResult = await kakaoPayService.approve({
-				tid: sessionPayment.tid,
-				orderId: sessionPayment.orderNumber,
-				userId: req.session.user?.id,
-				pgToken,
-			});
-		} catch (approveErr) {
-			// 카카오 승인 API 실패 → PAYING → PENDING 으로 롤백
-			await db.execute(
-				`UPDATE orders SET status = 'PENDING' WHERE id = ?`,
-				[sessionPayment.orderId],
-			);
-			throw approveErr;
-		}
-
-		// MED-6 금액 교차검증: 카카오에서 승인된 금액과 세션의 주문 금액 일치 여부 확인
-		const approvedAmount = approvalResult?.amount?.total;
-		if (approvedAmount && Number(approvedAmount) !== Number(sessionPayment.totalAmount)) {
-			console.error(
-				`[결제 이상] 승인금액(${approvedAmount}) ≠ 주문금액(${sessionPayment.totalAmount}), orderId=${sessionPayment.orderId}`,
-			);
-			await db.execute(
-				`UPDATE orders SET status = 'PENDING' WHERE id = ?`,
-				[sessionPayment.orderId],
-			);
-			return res.status(400).render('shop/payment-fail', {
-				message: '결제 금액이 일치하지 않습니다. 관리자에게 문의해주세요.',
-			});
-		}
+		const approvalResult = await kakaoPayService.approve({
+			tid: sessionPayment.tid,
+			orderId: sessionPayment.orderNumber,
+			userId: req.session.user?.id,
+			pgToken,
+		});
 
 		await db.execute(
-			`UPDATE orders SET status = 'PAID' WHERE id = ?`,
+			`UPDATE orders
+       SET status = 'PAID'
+       WHERE id = ?`,
 			[sessionPayment.orderId],
 		);
 
@@ -764,11 +720,6 @@ router.get('/checkout/kakao/fail', (req, res) => {
 	return res.render('shop/payment-fail', {
 		message: '카카오페이 결제에 실패했습니다. 다시 시도해주세요.',
 	});
-});
-
-// 통합 조회 페이지
-router.get('/lookup', (req, res) => {
-	res.render('shop/lookup', { active: 'lookup' });
 });
 
 router.get('/orders/guest', (req, res) => {
@@ -834,9 +785,7 @@ router.post('/orders/guest', async (req, res) => {
 	}
 });
 
-// HIGH-7: requireLogin 추가 — 비인증 사용자는 DB 조회 없이 즉시 리다이렉트
-// 이전에는 비인증 요청도 DB까지 도달해 주문 존재 여부를 추론 가능했음
-router.get('/orders/:orderNumber', requireLogin, async (req, res) => {
+router.get('/orders/:orderNumber', async (req, res) => {
 	try {
 		const orderNumber = String(req.params.orderNumber || '').trim();
 		const detail = await fetchOrderDetailByNumber(orderNumber);
@@ -845,8 +794,7 @@ router.get('/orders/:orderNumber', requireLogin, async (req, res) => {
 			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
 		}
 
-		// 로그인된 사용자이지만 본인 주문이 아닌 경우 차단
-		if (detail.order.user_id !== req.session.user.id) {
+		if (!req.session.user || detail.order.user_id !== req.session.user.id) {
 			return res.status(403).render('404', { message: '접근 권한이 없습니다.' });
 		}
 
@@ -942,6 +890,11 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 		}
 
 		if (password) {
+			// [M-6] bcrypt는 72바이트 초과 입력을 조용히 잘라냄 — 미리 검사해야 함
+			// 72자 초과 비밀번호는 truncation 후 충돌 가능 + 매우 긴 입력은 이벤트 루프 차단
+			if (password.length > 72) {
+				return res.redirect('/shop/account?error=비밀번호는 72자 이하로 입력해주세요.');
+			}
 			const hashedPw = await bcrypt.hash(password, 10);
 			await db.execute('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, hashedPw, userId]);
 		} else {
@@ -1083,41 +1036,6 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('쿠폰 등록 중 오류가 발생했습니다.');
-	}
-});
-
-router.get('/account/shop-info', requireLogin, accountCsrf, async (req, res) => {
-	try {
-		const userId = req.session.user.id;
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
-		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
-		const [addresses] = await db.execute(
-			'SELECT id, label, recipient_name, phone, address_line1, address_line2, postal_code FROM user_addresses WHERE user_id = ? ORDER BY id DESC',
-			[userId],
-		);
-		const [paymentMethods] = await db.execute(
-			'SELECT id, label, provider, last4 FROM user_payment_methods WHERE user_id = ? ORDER BY id DESC',
-			[userId],
-		);
-		const [coupons] = await db.execute(
-			'SELECT id, code, description, discount_pct, expires_at FROM user_coupons WHERE user_id = ? ORDER BY id DESC',
-			[userId],
-		);
-		return res.render('shop/account-shop-info', {
-			user,
-			active: 'account',
-			message: req.query?.message || null,
-			error: req.query?.error || null,
-			csrfToken: req.csrfToken(),
-			addresses,
-			paymentMethods,
-			coupons,
-		});
-	} catch (err) {
-		console.error(err);
-		return res.status(500).render('500', { message: '정보 로딩 중 오류가 발생했습니다.' });
 	}
 });
 

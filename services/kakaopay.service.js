@@ -12,13 +12,22 @@ function getKakaoPayConfig() {
 	};
 }
 
+// [H-7] TC0ONETIME 경고: 서버 시작 시 1회만 출력 (요청마다 반복 금지)
+// TC0ONETIME은 카카오페이 테스트 CID — 실결제 불가, 운영 환경에서 사용 금지
+let _configChecked = false;
 function isConfigured() {
 	const { adminKey, cid } = getKakaoPayConfig();
-	console.log('[KakaoPay]', {
-		hasAdminKey: Boolean(adminKey),
-		cid,
-		adminKeyPreview: adminKey ? adminKey.slice(0, 6) + '***' : '(empty)',
-	});
+
+	// [L-2] isConfigured()는 카트 조회마다 호출됨 → console.log 제거 (admin key 앞 6자 반복 노출 방지)
+	if (!_configChecked) {
+		_configChecked = true;
+		if (!adminKey) {
+			console.warn('[KakaoPay] KAKAO_ADMIN_KEY가 설정되지 않았습니다. 결제 기능이 비활성화됩니다.');
+		}
+		if (cid === 'TC0ONETIME') {
+			console.warn('[KakaoPay][경고] KAKAO_CID가 테스트 CID(TC0ONETIME)입니다. 운영 환경에서는 실제 CID를 .env에 설정하세요.');
+		}
+	}
 	return Boolean(adminKey && cid);
 }
 
