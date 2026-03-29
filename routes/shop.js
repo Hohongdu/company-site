@@ -1119,20 +1119,22 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 
 router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 	const userId = req.session.user.id;
+
+	// [E-1] 사용자 존재 확인을 getConnection() 전에 실행: 불필요한 connection 점유 방지
+	await ensureAddressTable();
+	await ensurePaymentMethodTable();
+	await ensureCouponTable();
+	await ensureWishlistTable();
+	await ensureReviewTable();
+	await ensureNotificationSettingsTable();
+	const [[user]] = await db.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+
+	if (!user) {
+		return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
+	}
+
 	const connection = await db.getConnection();
 	try {
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
-		await ensureWishlistTable();
-		await ensureReviewTable();
-		await ensureNotificationSettingsTable();
-		const [[user]] = await connection.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
-
-		if (!user) {
-			return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
-		}
-
 		await connection.beginTransaction();
 
 		await connection.execute(
@@ -1166,8 +1168,13 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 			res.redirect('/?deleted=1');
 		});
 	} catch (err) {
-		await connection.rollback();
-		console.error(err);
+		// [E-1] rollback 실패 자체도 로깅: 원래 에러가 숨겨지지 않도록 별도 try-catch
+		try {
+			await connection.rollback();
+		} catch (rbErr) {
+			console.error('[account/delete] rollback 실패:', rbErr);
+		}
+		console.error('[account/delete]', err);
 		return res.status(500).send('회원 탈퇴 처리 중 오류가 발생했습니다.');
 	} finally {
 		connection.release();

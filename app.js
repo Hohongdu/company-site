@@ -92,12 +92,9 @@ app.use((req, res, next) => {
 });
 
 app.use('/auth', csrfProtection);
-app.use('/admin', (req, res, next) => {
-	if (req.method === 'GET' || !req.is('multipart/form-data')) {
-		return csrfProtection(req, res, next);
-	}
-	return next();
-});
+// [C-4] 멀티파트 우회 제거: 모든 /admin 요청에 CSRF 적용.
+// multipart 폼은 form action에 ?_csrf=TOKEN 쿼리로 토큰 전달 (lib/csurf.js가 req.query._csrf 지원).
+app.use('/admin', csrfProtection);
 
 // EJS에서 csrfToken 바로 사용 가능하게 주입
 app.use((req, res, next) => {

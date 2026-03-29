@@ -13,10 +13,9 @@
     <div class="card shadow-sm">
         <div class="card-body">
             <!-- ✅ 폼은 딱 1개만 -->
-            <form id="productNewForm" action="/admin/products/new" method="post" enctype="multipart/form-data"
-                class="row g-3">
-                <!-- ✅ CSRF (제출되는 폼에 반드시 포함) -->
-                <input type="hidden" name="_csrf" value="<%= csrfToken || ''%>">
+            <!-- [C-4] multipart 폼: body 파싱 전 CSRF 검증을 위해 토큰을 쿼리 파라미터로 전달 -->
+            <form id="productNewForm" action="/admin/products/new?_csrf=<%= encodeURIComponent(csrfToken || '') %>"
+                method="post" enctype="multipart/form-data" class="row g-3">
 
                 <div class="col-12">
                     <label class="form-label small text-muted">상품 코드(code) *</label>

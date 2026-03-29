@@ -1,6 +1,6 @@
 <%- include('partials/admin-header', { title: '엑셀 업로드' , active: 'import' }) %>
-    <form action="/admin/products/import" method="post" enctype="multipart/form-data" class="d-grid gap-2">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <!-- [C-4] multipart: CSRF 토큰을 쿼리 파라미터로 전달 -->
+    <form action="/admin/products/import?_csrf=<%= encodeURIComponent(csrfToken) %>" method="post" enctype="multipart/form-data" class="d-grid gap-2">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
                 <h3 class="mb-1">엑셀 업로드</h3>
@@ -28,7 +28,8 @@
                     </div>
                 </div>
 
-                <form action="/admin/products/import" method="post" enctype="multipart/form-data" class="vstack gap-3">
+                <!-- [C-4] 두 번째 업로드 폼도 쿼리 파라미터로 CSRF 전달 -->
+                <form action="/admin/products/import?_csrf=<%= encodeURIComponent(csrfToken) %>" method="post" enctype="multipart/form-data" class="vstack gap-3">
                     <div>
                         <label class="form-label">엑셀 파일(.xlsx)</label>
                         <input class="form-control" type="file" name="file" accept=".xlsx,.xls" required>

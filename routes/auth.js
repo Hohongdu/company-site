@@ -1,11 +1,43 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
 const { sendTemporaryPasswordEmail } = require('../services/notification.service');
 
 const router = express.Router();
+
+// [M-1] 로그인 브루트포스 방지: 15분 내 20회 초과 시 차단
+const loginLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 20,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		res.status(429).render('auth/login', {
+			returnTo: '',
+			csrfToken: req.csrfToken ? req.csrfToken() : '',
+			query: req.query,
+			error: '로그인 시도 횟수가 너무 많습니다. 15분 후 다시 시도해주세요.',
+		});
+	},
+});
+
+// [M-1] 비밀번호 찾기 스팸 방지: 1시간 내 5회 초과 시 차단
+const forgotLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 5,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	message: { error: '요청 횟수가 너무 많습니다. 1시간 후 다시 시도해주세요.' },
+	handler: (req, res) => {
+		res.render('auth/forgot', {
+			csrfToken: req.csrfToken ? req.csrfToken() : '',
+			message: '요청 횟수가 너무 많습니다. 1시간 후 다시 시도해주세요.',
+		});
+	},
+});
 
 const sanitizeReturnTo = (value) => {
 	if (typeof value !== 'string') return '';
@@ -32,7 +64,7 @@ router.get('/forgot', (req, res) => {
 });
 
 
-router.post('/forgot', async (req, res) => {
+router.post('/forgot', forgotLimiter, async (req, res) => {
 	const SUCCESS_MSG = '입력하신 이메일 주소로 임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.';
 
 	try {
@@ -125,7 +157,7 @@ router.post('/register', async (req, res) => {
 	}
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
 	try {
 		const { email, password } = req.body;
 

@@ -502,7 +502,8 @@ router.get('/products/new', async (req, res) => {
 	}
 });
 
-router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+// [C-4] app.js에서 app.use('/admin', csrfProtection)로 통합됨 → 라우트 레벨 중복 제거
+router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
 		await ensureProductStockColumn();
@@ -565,7 +566,8 @@ router.get('/products/:id/edit', async (req, res) => {
 	}
 });
 
-router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+// [C-4] 라우트 레벨 중복 csrfProtection 제거 (app.js에서 통합)
+router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
@@ -742,7 +744,8 @@ router.get('/products/import', csrfProtection, async (req, res) => {
 	}
 });
 
-router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
+// [C-4] 라우트 레벨 중복 csrfProtection 제거 (app.js에서 통합; 토큰은 ?_csrf 쿼리로 전달)
+router.post('/products/import', upload.single('file'), async (req, res) => {
 	let uploadId = null;
 
 	try {
@@ -769,10 +772,24 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 		const [categories] = await db.execute('SELECT id, name FROM categories');
 		const categoryMap = new Map(categories.map((c) => [c.name, c.id]));
 
+		// [P-3] N+1 최적화: 루프 전에 엑셀의 모든 code를 한 번에 조회해 Map으로 캐싱
+		// 기존: 행마다 SELECT id FROM products WHERE code = ? → N번 DB 쿼리
+		// 개선: 루프 전 단일 IN 쿼리로 기존 products 조회 → 루프 내 O(1) Map 조회
+		const incomingCodes = rows.map((r) => (r.code ? String(r.code).trim() : null)).filter(Boolean);
+		const existingProductMap = new Map(); // code → product id
+		if (incomingCodes.length > 0) {
+			const placeholders = incomingCodes.map(() => '?').join(',');
+			const [existingProducts] = await db.execute(
+				`SELECT id, code FROM products WHERE code IN (${placeholders})`,
+				incomingCodes,
+			);
+			for (const p of existingProducts) existingProductMap.set(p.code, p.id);
+		}
+
 		let successCount = 0;
 		let failCount = 0;
 
-		// 3) 처리
+		// 3) 처리 (루프 내 SELECT 제거 → 쓰기 쿼리만 실행)
 		for (let i = 0; i < rows.length; i++) {
 			try {
 				const r = rows[i];
@@ -787,22 +804,20 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 
 				if (!name) throw new Error('상품명이 누락되었습니다.');
 
-				// code가 있으면 upsert 느낌으로 처리
-				if (code) {
-					const [[existing]] = await db.execute('SELECT id FROM products WHERE code = ? LIMIT 1', [code]);
-					if (existing) {
-						await db.execute(`UPDATE products SET name=?, description=?, price=?, spec=?, image=?, category_id=? WHERE id=?`, [
-							name,
-							description,
-							price,
-							spec,
-							image || null,
-							categoryId,
-							existing.id,
-						]);
-						successCount++;
-						continue;
-					}
+				// [P-3] 루프 내 SELECT 제거: Map 캐시에서 O(1) 조회
+				if (code && existingProductMap.has(code)) {
+					const existingId = existingProductMap.get(code);
+					await db.execute(`UPDATE products SET name=?, description=?, price=?, spec=?, image=?, category_id=? WHERE id=?`, [
+						name,
+						description,
+						price,
+						spec,
+						image || null,
+						categoryId,
+						existingId,
+					]);
+					successCount++;
+					continue;
 				}
 
 				await db.execute(
@@ -810,11 +825,13 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					[code, name, description, price, spec, image || null, categoryId],
 				);
+				// 새로 삽입된 code도 Map에 추가 (동일 파일 내 중복 code 처리)
+				if (code) existingProductMap.set(code, null);
 				successCount++;
 			} catch (e) {
 				failCount++;
 
-				// 실패 row 저장 (테이블 컬럼명은 너 DB에 맞춰 유지)
+				// 실패 row 저장
 				await db.execute(
 					`INSERT INTO upload_history_rows (upload_id, row_number, code, name, category_name, price, spec, image, description, reason)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -931,7 +948,8 @@ router.get('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories', async (req, res) => {
+// [M-2] 명시적 CSRF 보호 (app-level 외 이중 방어)
+router.post('/categories', csrfProtection, async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
 		const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -946,7 +964,8 @@ router.post('/categories', async (req, res) => {
 	}
 });
 
-router.post('/categories/:id/delete', async (req, res) => {
+// [M-2] 명시적 CSRF 보호
+router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 
@@ -1156,7 +1175,8 @@ router.get('/inquiries', async (req, res) => {
 	}
 });
 
-router.post('/inquiries/:id/reply', async (req, res) => {
+// [M-2] 명시적 CSRF 보호
+router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();

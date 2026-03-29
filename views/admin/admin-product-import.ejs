@@ -35,10 +35,9 @@
                                 <div class="card-body">
                                     <h5 class="mb-3">업로드 반영</h5>
 
-                                    <!-- ✅ form 하나만 -->
-                                    <form action="/admin/products/import" method="post" enctype="multipart/form-data"
-                                        class="d-grid gap-2">
-                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <!-- [C-4] multipart: CSRF 토큰을 쿼리 파라미터로 전달 -->
+                                    <form action="/admin/products/import?_csrf=<%= encodeURIComponent(csrfToken) %>"
+                                        method="post" enctype="multipart/form-data" class="d-grid gap-2">
 
                                         <div>
                                             <label class="form-label small text-muted">엑셀 파일</label>
