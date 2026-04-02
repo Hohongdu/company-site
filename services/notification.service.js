@@ -5,6 +5,17 @@
 
 const { sendMail, isConfigured } = require('./email.service');
 
+// ── HTML 이스케이프 헬퍼 ──────────────────────────────
+// [M-7] 이메일 템플릿 XSS 방지: 사용자 입력 데이터를 HTML에 직접 삽입 전 이스케이프 필수
+function escapeHtml(str) {
+	return String(str || '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#x27;');
+}
+
 // ── 공통 HTML 래퍼 ─────────────────────────────────────
 function wrapHtml(title, bodyHtml) {
 	return `
@@ -43,17 +54,17 @@ exports.sendInquiryReplyEmail = async (payload) => {
 	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
 	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
 
-	const greeting = name ? `${name}님,` : '안녕하세요,';
+	const greeting = name ? `${escapeHtml(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
 		'문의 답변 도착',
 		`<p>${greeting} 문의하신 내용에 대한 답변이 등록되었습니다.</p>
-		<p><strong>문의 제목:</strong> ${inquiryTitle}</p>
+		<p><strong>문의 제목:</strong> ${escapeHtml(inquiryTitle)}</p>
 		<p><strong>답변 내용:</strong></p>
-		<div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;">${replyContent.replace(/\n/g, '<br>')}</div>
+		<div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;">${escapeHtml(replyContent).replace(/\n/g, '<br>')}</div>
 		<p style="margin-top:24px;">추가 문의사항이 있으시면 홈페이지 문의 페이지를 이용해주세요.</p>`,
 	);
 
-	return sendMail({ to, subject: `[ENERMADE] 문의 답변: ${inquiryTitle}`, html });
+	return sendMail({ to, subject: `[ENERMADE] 문의 답변: ${escapeHtml(inquiryTitle)}`, html });
 };
 
 // ── 2. 임시 비밀번호 발송 ──────────────────────────────
@@ -66,11 +77,11 @@ exports.sendTemporaryPasswordEmail = async (payload) => {
 	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
 	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
 
-	const greeting = name ? `${name}님,` : '안녕하세요,';
+	const greeting = name ? `${escapeHtml(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
 		'임시 비밀번호 발급',
 		`<p>${greeting} 요청하신 임시 비밀번호가 발급되었습니다.</p>
-		<div class="highlight">${tempPassword}</div>
+		<div class="highlight">${escapeHtml(tempPassword)}</div>
 		<p>로그인 후 <strong>반드시 비밀번호를 변경</strong>해주세요.</p>
 		<p style="color:#e74c3c;font-size:13px;">본인이 요청하지 않은 경우 이 메일을 무시하시고, 계정 보안을 확인해주세요.</p>`,
 	);
@@ -96,11 +107,11 @@ exports.sendNewInquiryToAdmin = async (payload) => {
 		'새 문의가 접수되었습니다',
 		`<p>새로운 문의가 웹사이트를 통해 접수되었습니다.</p>
 		<table style="width:100%;border-collapse:collapse;font-size:14px;">
-			<tr><td style="padding:8px 0;color:#666;width:90px;">문의자</td><td style="padding:8px 0;font-weight:600;">${name}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;">이메일</td><td style="padding:8px 0;">${email}</td></tr>
-			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${id}</td></tr>` : ''}
+			<tr><td style="padding:8px 0;color:#666;width:90px;">문의자</td><td style="padding:8px 0;font-weight:600;">${escapeHtml(name)}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;">이메일</td><td style="padding:8px 0;">${escapeHtml(email)}</td></tr>
+			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${Number(id)}</td></tr>` : ''}
 		</table>
-		<div class="highlight" style="background:#fff7ed;border-left:4px solid #ea580c;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;line-height:1.7;">${message.replace(/\n/g, '<br>')}</div>
+		<div class="highlight" style="background:#fff7ed;border-left:4px solid #ea580c;padding:12px 16px;border-radius:4px;margin:16px 0;font-size:14px;line-height:1.7;">${escapeHtml(message).replace(/\n/g, '<br>')}</div>
 		<p style="margin-top:20px;">
 			<a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/inquiries"
 			   style="background:#ea580c;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">

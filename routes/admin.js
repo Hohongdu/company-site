@@ -138,7 +138,23 @@ async function ensureOrderShippingColumns() {
 /* =========================
    업로드/이미지 설정
 ========================= */
-const upload = multer({ dest: 'uploads/' });
+// [H-4] Excel 업로드 제한: 파일 타입 및 크기 검증 추가
+// 관리자 세션이 탈취되더라도 임의 파일 업로드/디스크 고갈 방지
+const upload = multer({
+	dest: 'uploads/',
+	limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+	fileFilter: (req, file, cb) => {
+		const allowedMimes = [
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+			'application/vnd.ms-excel', // .xls
+		];
+		if (allowedMimes.includes(file.mimetype)) {
+			cb(null, true);
+		} else {
+			cb(new Error('Excel 파일(.xlsx, .xls)만 업로드 가능합니다.'), false);
+		}
+	},
+});
 
 
 
@@ -1283,7 +1299,8 @@ router.get('/api/search-stats', requireAdmin, async (req, res) => {
 		res.json({ ok: true, days, summary, topKeywords, noHitKeywords, dailyVolume });
 	} catch (err) {
 		console.error('[admin/api/search-stats]', err);
-		res.status(500).json({ ok: false, error: err.message });
+		// [M-9] 에러 메시지 직접 노출 방지: SQL 구문/테이블명 등 내부 정보 유출 차단
+		res.status(500).json({ ok: false, error: '검색 통계 조회 중 오류가 발생했습니다.' });
 	}
 });
 

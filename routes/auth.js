@@ -24,6 +24,19 @@ const loginLimiter = rateLimit({
 	},
 });
 
+// [M-2] 회원가입 봇/스팸 방지: 1시간 내 IP당 10회 초과 시 차단
+const registerLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 10,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		res.status(429).render('auth/register', {
+			error: '가입 시도 횟수가 너무 많습니다. 1시간 후 다시 시도해주세요.',
+		});
+	},
+});
+
 // [M-1] 비밀번호 찾기 스팸 방지: 1시간 내 5회 초과 시 차단
 const forgotLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000,
@@ -132,7 +145,7 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 });
 router.get('/register', (req, res) => res.render('auth/register'));
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
 	try {
 		const { name, email, password, passwordConfirm } = req.body;
 

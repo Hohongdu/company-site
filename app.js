@@ -10,11 +10,8 @@ const helmet = require('helmet');
 const crypto = require('crypto');
 const csurf = require('./lib/csurf');
 
-const axios = require('axios');
-
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
-const { requireLogin } = require('./middleware/auth');
 
 const companyRouter = require('./routes/company');
 const authRouter = require('./routes/auth');
@@ -24,8 +21,6 @@ const adminRouter = require('./routes/admin');
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const BASE_URL = process.env.BASE_URL;
-const KAKAO_ADMIN_KEY = process.env.KAKAO_ADMIN_KEY;
-const KAKAO_CID = process.env.KAKAO_CID || 'TC0ONETIME';
 
 
 
@@ -95,6 +90,8 @@ app.use('/auth', csrfProtection);
 // [C-4] 멀티파트 우회 제거: 모든 /admin 요청에 CSRF 적용.
 // multipart 폼은 form action에 ?_csrf=TOKEN 쿼리로 토큰 전달 (lib/csurf.js가 req.query._csrf 지원).
 app.use('/admin', csrfProtection);
+// [C-4] Shop 결제/장바구니/리뷰/위시리스트/문의 POST 라우트 CSRF 보호
+app.use('/shop', csrfProtection);
 
 // EJS에서 csrfToken 바로 사용 가능하게 주입
 app.use((req, res, next) => {
@@ -210,179 +207,4 @@ app.use((err, req, res, next) => {
 // =====================
 app.listen(PORT, () => {
 	console.log(`Server running at http://127.0.0.1:${PORT}`);
-});
-// ===============================
-// 카카오페이 결제 (orders 기반)
-// ===============================
-
-// 결제 준비
-app.post('/payments/ready', requireLogin, async (req, res) => {
-	try {
-		const { orderId, method } = req.body;
-		const userId = req.session.user.id;
-
-		// 1) 주문 + 상품 정보 조회
-		const [rows] = await db.execute(
-			`SELECT o.*, p.name AS product_name, p.price AS product_price
-       FROM orders o
-       JOIN products p ON o.product_id = p.id
-       WHERE o.id = ? AND o.user_id = ?
-       LIMIT 1`,
-			[orderId, userId],
-		);
-
-		if (rows.length === 0) {
-			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
-		}
-
-		const order = rows[0];
-
-		// 2) PG 분기
-		if (method !== 'KAKAO') {
-			return res.status(400).send('현재는 카카오페이만 지원합니다.');
-		}
-
-		if (!KAKAO_ADMIN_KEY) return res.status(500).send('KAKAO_ADMIN_KEY가 없습니다(.env 확인).');
-		if (!BASE_URL) return res.status(500).send('BASE_URL이 없습니다(.env 확인).');
-
-		// 3) 카카오페이 결제 준비 API 호출
-		const kakaoResponse = await axios.post(
-			'https://kapi.kakao.com/v1/payment/ready',
-			new URLSearchParams({
-				cid: KAKAO_CID,
-				partner_order_id: String(order.id),
-				partner_user_id: String(userId),
-				item_name: order.product_name,
-				quantity: '1',
-				total_amount: String(order.product_price),
-				vat_amount: '0',
-				tax_free_amount: '0',
-				approval_url: `${BASE_URL}/payments/kakao/success?orderId=${order.id}`,
-				cancel_url: `${BASE_URL}/payments/kakao/cancel?orderId=${order.id}`,
-				fail_url: `${BASE_URL}/payments/kakao/fail?orderId=${order.id}`,
-			}).toString(),
-			{
-				headers: {
-					'Authorization': `KakaoAK ${KAKAO_ADMIN_KEY}`,
-					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-				},
-			},
-		);
-
-		const { tid, next_redirect_pc_url } = kakaoResponse.data;
-
-		// 4) tid 저장 (approve에서 필요)
-		await db.execute(
-			`UPDATE orders
-       SET pg_tid = ?, payment_method = 'KAKAO'
-       WHERE id = ?`,
-			[tid, order.id],
-		);
-
-		// 5) 카카오 결제 페이지로 이동
-		return res.redirect(next_redirect_pc_url);
-	} catch (err) {
-		console.error(err.response?.data || err);
-		return res.status(500).send('결제 준비 중 오류가 발생했습니다.');
-	}
-});
-
-// 결제 승인 콜백
-app.get('/payments/kakao/success', requireLogin, async (req, res) => {
-	try {
-		const { pg_token, orderId } = req.query;
-		const userId = req.session.user.id;
-
-		if (!pg_token || !orderId) {
-			return res.status(400).send('잘못된 요청입니다.');
-		}
-
-		// 1) 주문에서 tid 가져오기
-		const [rows] = await db.execute('SELECT * FROM orders WHERE id = ? AND user_id = ? LIMIT 1', [orderId, userId]);
-
-		if (rows.length === 0) {
-			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
-		}
-
-		const order = rows[0];
-		if (!order.pg_tid) return res.status(400).send('결제 정보(tid)가 없습니다.');
-
-		// 2) 결제 승인 API 호출
-		const approveResponse = await axios.post(
-			'https://kapi.kakao.com/v1/payment/approve',
-			new URLSearchParams({
-				cid: KAKAO_CID,
-				tid: order.pg_tid,
-				partner_order_id: String(order.id),
-				partner_user_id: String(userId),
-				pg_token: String(pg_token),
-			}).toString(),
-			{
-				headers: {
-					'Authorization': `KakaoAK ${KAKAO_ADMIN_KEY}`,
-					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-				},
-			},
-		);
-		if (process.env.NODE_ENV !== 'production') {
-			console.log('[Kakao approve] query=', req.query);
-			console.log('[Kakao approve] tid=', req.session?.kakaoPay?.tid);
-			console.log('KakaoPay approve result:', approveResponse.data);
-		}
-
-		// 3) 주문 상태 업데이트
-		await db.execute(
-			`UPDATE orders
-       SET status = 'PAID', paid_at = NOW()
-       WHERE id = ?`,
-			[order.id],
-		);
-
-		// 4) 주문 상세로 이동 (shop 라우터가 처리하는 경로)
-		return res.redirect('/shop/orders/' + order.id);
-	} catch (err) {
-		console.error(err.response?.data || err);
-		return res.status(500).send('결제 승인 중 오류가 발생했습니다.');
-	}
-});
-
-// 결제 취소
-app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
-	try {
-		const { orderId } = req.query;
-		const userId = req.session.user.id;
-
-		if (orderId) {
-			// [C-6 IDOR 수정] AND user_id = ? 추가: 반드시 본인 주문만 취소 처리
-			// orderId만으로 UPDATE하면 숫자 조작으로 타인의 주문 상태 변경 가능
-			await db.execute(
-				`UPDATE orders SET status = 'CANCELED' WHERE id = ? AND user_id = ?`,
-				[orderId, userId],
-			);
-		}
-		return res.redirect('/shop/cart?notice=cancel');
-	} catch (e) {
-		console.error('[kakao/cancel]', e);
-		return res.status(500).send('취소 처리 중 오류가 발생했습니다.');
-	}
-});
-
-// 결제 실패
-app.get('/payments/kakao/fail', requireLogin, async (req, res) => {
-	try {
-		const { orderId } = req.query;
-		const userId = req.session.user.id;
-
-		if (orderId) {
-			// [C-6 IDOR 수정] AND user_id = ? 추가
-			await db.execute(
-				`UPDATE orders SET status = 'FAILED' WHERE id = ? AND user_id = ?`,
-				[orderId, userId],
-			);
-		}
-		return res.redirect('/shop/cart?notice=fail');
-	} catch (e) {
-		console.error('[kakao/fail]', e);
-		return res.status(500).send('실패 처리 중 오류가 발생했습니다.');
-	}
 });

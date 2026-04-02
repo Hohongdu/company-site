@@ -88,6 +88,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
   <!-- 찜하기 (로그인 유저만) -->
   <% if (user) { %>
     <form action="/shop/wishlist/toggle" method="post" style="margin-top:20px;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="productId" value="<%= product.id %>">
       <button class="app-btn <%= wished ? 'app-btn--primary' : 'app-btn--outline' %>"
               type="submit"
@@ -126,6 +127,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
   <% if (user) { %>
     <form class="app-review-write" method="post"
           action="/shop/products/<%= product.id %>/reviews">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <select class="app-field__input" name="rating" required
                 style="flex:0 0 90px;">
@@ -225,6 +227,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 <div class="app-bottom-cta" id="detailBottomCta">
   <form action="/shop/cart/add" method="post" id="detailCartForm"
         style="width:100%;">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <input type="hidden" name="productId" value="<%= product.id %>">
 
     <div class="app-bottom-cta__inner">
