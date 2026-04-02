@@ -134,6 +134,7 @@
           <div class="app-product-card__action">
             <%# products.ejs에서는 폼 서밋(기존 동작)을 유지 %>
             <form action="/shop/cart/add" method="post" style="flex:1;display:flex;gap:6px;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <input type="hidden" name="productId" value="<%= p.id %>">
               <input type="hidden" name="quantity" value="1">
               <button class="app-btn app-btn--primary app-btn--sm" type="submit"
