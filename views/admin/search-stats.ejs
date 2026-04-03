@@ -238,7 +238,13 @@
         btn.disabled = true;
         btn.textContent = '발송 중…';
         try {
-            const res = await fetch('/admin/test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const res = await fetch('/admin/test-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': '<%= csrfToken %>'
+                }
+            });
             const data = await res.json();
             document.getElementById('toastTitle').textContent = data.ok ? '✅ 발송 성공' : '❌ 발송 실패';
             document.getElementById('toastBody').innerHTML =

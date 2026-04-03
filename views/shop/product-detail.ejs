@@ -220,8 +220,58 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 
 
 <!-- ══════════════════════════════════════════
+   장바구니 담기 확인 모달
+══════════════════════════════════════════ -->
+<div id="cartAddedOverlay" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.48);z-index:2000;
+  align-items:center;justify-content:center;
+  padding:20px;
+" role="dialog" aria-modal="true" aria-labelledby="cartAddedTitle">
+  <div style="
+    background:var(--c-bg);border-radius:var(--r-xl);
+    padding:28px 24px;max-width:340px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+    text-align:center;
+  ">
+    <!-- 체크 아이콘 -->
+    <div style="
+      width:52px;height:52px;border-radius:50%;
+      background:rgba(22,163,74,.12);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;
+    ">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M20 6L9 17l-5-5" stroke="#16a34a" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h3 id="cartAddedTitle" style="
+      font-size:16px;font-weight:700;
+      color:var(--c-text);margin:0 0 6px;
+    ">장바구니에 담겼습니다</h3>
+    <p style="
+      font-size:13px;color:var(--c-muted);margin:0 0 20px;
+    " id="cartAddedDesc">이어서 쇼핑하시겠습니까?</p>
+    <div style="display:flex;gap:10px;">
+      <button id="cartModalNo" style="
+        flex:1;padding:11px 0;border-radius:var(--r-lg);
+        border:1.5px solid var(--c-border);background:var(--c-bg);
+        color:var(--c-text);font-size:14px;font-weight:600;cursor:pointer;
+      ">아니오 (장바구니)</button>
+      <button id="cartModalYes" style="
+        flex:1;padding:11px 0;border-radius:var(--r-lg);
+        border:none;background:var(--c-accent);
+        color:#fff;font-size:14px;font-weight:600;cursor:pointer;
+      ">예 (계속 쇼핑)</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
    Sticky 하단 구매 CTA
-   form POST → /shop/cart/add (기존 동작)
+   form submit → fetch → 모달 표시 (기존 redirect 대신)
    수량 조절은 shop-bottom.ejs의 공통 핸들러(data-qty-inc/dec) 사용
 ══════════════════════════════════════════ -->
 <div class="app-bottom-cta" id="detailBottomCta">
@@ -244,6 +294,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 
       <!-- 장바구니 담기 버튼 -->
       <button class="app-btn app-btn--outline" type="submit"
+              id="detailAddBtn"
               form="detailCartForm"
               style="flex:1;min-width:0;"
               aria-label="장바구니 담기">
@@ -267,5 +318,109 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
     </div>
   </form>
 </div><!-- /detailBottomCta -->
+
+<script>
+(function () {
+  'use strict';
+
+  var form    = document.getElementById('detailCartForm');
+  var overlay = document.getElementById('cartAddedOverlay');
+  var btnNo   = document.getElementById('cartModalNo');
+  var btnYes  = document.getElementById('cartModalYes');
+  var addBtn  = document.getElementById('detailAddBtn');
+
+  if (!form || !overlay) return;
+
+  /* 모달 열기/닫기 */
+  function openModal(cartCount) {
+    var desc = document.getElementById('cartAddedDesc');
+    if (desc && cartCount > 0) {
+      desc.textContent = '장바구니에 ' + cartCount + '개 담겨있습니다. 이어서 쇼핑하시겠습니까?';
+    }
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    btnYes && btnYes.focus();
+  }
+
+  function closeModal() {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  /* "예" → 현재 페이지 유지 (모달만 닫기) */
+  btnYes && btnYes.addEventListener('click', closeModal);
+
+  /* "아니오" → 장바구니로 이동 */
+  btnNo && btnNo.addEventListener('click', function () {
+    closeModal();
+    window.location.href = '/shop/cart';
+  });
+
+  /* 오버레이 외부 클릭 시 닫기 */
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeModal();
+  });
+
+  /* Escape 키 닫기 */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.style.display === 'flex') closeModal();
+  });
+
+  /* 장바구니 헤더 배지 갱신 */
+  function updateCartBadge(count) {
+    var badges = document.querySelectorAll('.shop-cart-badge, .app-tab-badge');
+    badges.forEach(function (b) {
+      if (count > 0) { b.textContent = count; b.style.display = ''; }
+      else { b.style.display = 'none'; }
+    });
+    var headerBtn = document.querySelector('.app-header__btn[href="/shop/cart"]');
+    if (headerBtn) {
+      var existing = headerBtn.querySelector('.shop-cart-badge');
+      if (count > 0 && !existing) {
+        var span = document.createElement('span');
+        span.className = 'app-header-badge shop-cart-badge';
+        span.textContent = count;
+        headerBtn.appendChild(span);
+      }
+    }
+  }
+
+  /* 폼 submit 인터셉트 */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    if (addBtn) { addBtn.disabled = true; }
+
+    var body = new URLSearchParams();
+    body.append('_csrf',     form.querySelector('[name="_csrf"]').value);
+    body.append('productId', form.querySelector('[name="productId"]').value);
+    body.append('quantity',  document.getElementById('detailQty').value || '1');
+
+    fetch('/shop/cart/add', {
+      method:  'POST',
+      headers: {
+        'Content-Type':     'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: body.toString()
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          updateCartBadge(data.cartCount || 0);
+          openModal(data.cartCount || 0);
+        } else {
+          alert(data.message || '장바구니 담기에 실패했습니다.');
+        }
+      })
+      .catch(function () {
+        alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+      })
+      .finally(function () {
+        if (addBtn) { addBtn.disabled = false; }
+      });
+  });
+})();
+</script>
 
 <%- include('../layouts/shop-bottom') %>

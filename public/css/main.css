@@ -197,7 +197,7 @@ img { max-width: 100%; display: block; }
 .text-bg-light { background: var(--c-bg-2) !important; color: var(--c-text-2) !important; }
 
 /* ── Accordion ── */
-.accordion-item { border: 1px solid var(--c-border); border-radius: var(--r-lg) !important; overflow: hidden; }
+.accordion-item { border: 1px solid var(--c-border); border-radius: var(--r-lg) !important; overflow: hidden; background: var(--c-bg); }
 .accordion-item + .accordion-item { margin-top: 8px; }
 .accordion-button {
   font-family: var(--font-head);
@@ -206,6 +206,7 @@ img { max-width: 100%; display: block; }
   color: var(--c-text);
   background: var(--c-bg);
   padding: 18px 22px;
+  align-items: center;
 }
 .accordion-button:not(.collapsed) {
   background: var(--c-accent-lt);

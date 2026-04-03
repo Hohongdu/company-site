@@ -571,8 +571,8 @@ body.admin-wrap {
 	border-radius: var(--radius-lg);
 }
 .admin-product-table {
-	table-layout: fixed;
-	min-width: 980px;
+	table-layout: auto;
+	min-width: 1050px;
 	font-size: 14px;
 }
 .admin-product-table th,
@@ -1034,3 +1034,25 @@ body.admin-wrap {
     .adm-tbl-mobile td:first-child { padding-top: 0; }
     .adm-tbl-mobile td:last-child  { padding-bottom: 0; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; }
 }
+
+/* ============================================================
+   DARK MODE — Admin
+   ============================================================ */
+[data-theme="dark"] .admin-table thead th {
+    background: var(--c-bg-2, #18181b);
+    color: var(--c-muted, #a1a1aa);
+    border-bottom-color: var(--c-border, #3f3f46);
+}
+[data-theme="dark"] .kpi-card {
+    background: var(--c-bg-2, #18181b);
+    border-color: var(--c-border, #3f3f46);
+}
+[data-theme="dark"] .kpi-card__value { color: var(--c-text, #fafafa); }
+[data-theme="dark"] .kpi-card__label { color: var(--c-muted, #a1a1aa); }
+[data-theme="dark"] .dash-card {
+    background: var(--c-bg-2, #18181b);
+    border-color: var(--c-border, #3f3f46);
+}
+[data-theme="dark"] .admin-table tbody tr { border-bottom-color: var(--c-bg-3, #27272a); }
+[data-theme="dark"] .admin-table tbody tr:hover { background: rgba(255,255,255,.04); }
+[data-theme="dark"] .admin-product-table-wrap { border-color: var(--c-border, #3f3f46); }
