@@ -306,13 +306,16 @@ html, body {
 .login-overlay.open { display: flex; }
 
 .login-box {
-  background: #fff;
+  background: var(--c-bg);
   border-radius: var(--r-xl);
   width: 100%;
   max-width: 400px;
   overflow: hidden;
   box-shadow: var(--sh-xl);
   animation: slideUp .22s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mob-drawer-modal { animation: none !important; }
 }
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(16px); }
@@ -496,7 +499,7 @@ html, body {
   margin-bottom: 4px;
 }
 .hero__stat-num sup { font-size: .9rem; font-weight: 700; }
-.hero__stat-label { font-size: 13px; color: rgba(255,255,255,.45); }
+.hero__stat-label { font-size: 13px; color: rgba(255,255,255,.65); }
 
 /* ══════════════════════════════════════
    FEATURES SECTION
@@ -559,7 +562,7 @@ html, body {
   margin-bottom: 8px;
 }
 .stat-num sup { font-size: 50%; vertical-align: super; }
-.stat-label { font-size: 14px; color: rgba(255,255,255,.45); font-weight: 500; }
+.stat-label { font-size: 14px; color: rgba(255,255,255,.65); font-weight: 500; }
 
 /* ══════════════════════════════════════
    WHY SECTION
@@ -639,7 +642,7 @@ html, body {
 ══════════════════════════════════════ */
 .site-footer {
   background: var(--c-navy);
-  color: rgba(255,255,255,.5);
+  color: rgba(255,255,255,.65);
   padding: 64px 0 0;
 }
 .footer__brand {
@@ -652,14 +655,14 @@ html, body {
   display: block;
 }
 .footer__brand span { color: var(--c-accent); }
-.footer__desc { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.4); }
+.footer__desc { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.65); }
 .footer__heading {
   font-family: var(--font-head);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.55);
   margin-bottom: 16px;
 }
 .footer__links { display: flex; flex-direction: column; gap: 10px; }
@@ -693,7 +696,7 @@ html, body {
   padding: 48px 16px;
 }
 .auth-card {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   padding: 40px 36px;
@@ -778,7 +781,7 @@ html, body {
   padding: 7px 18px;
   border-radius: var(--r-2xl);
   border: 1.5px solid var(--c-border);
-  background: #fff;
+  background: var(--c-bg);
   color: var(--c-text-2);
   cursor: pointer;
   transition: all .18s;
@@ -903,7 +906,7 @@ html, body {
 }
 .contact-info-item__label {
   font-size: 12px;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.6);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
@@ -1006,6 +1009,9 @@ html, body {
   width: max-content;
 }
 .partners-track:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .partners-track { animation: none; }
+}
 .partner-item {
   font-family: var(--font-head);
   font-size: 13px;

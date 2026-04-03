@@ -1559,3 +1559,25 @@
 [data-theme="dark"] .app-sheet { background: var(--c-bg-2) !important; }
 [data-theme="dark"] .app-sheet__head { border-bottom-color: #3f3f46 !important; }
 [data-theme="dark"] .app-wrap { background: var(--c-bg) !important; }
+
+/* Missing overrides — extended dark mode coverage */
+[data-theme="dark"] .app-searchbar { background: var(--c-bg-3) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .app-chip { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .app-filter-btn { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; color: var(--c-text-2) !important; }
+[data-theme="dark"] .app-empty { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-sheet__head { background: var(--c-bg-2) !important; border-bottom-color: var(--c-border) !important; }
+[data-theme="dark"] .app-sheet__footer { background: var(--c-bg-2) !important; border-top-color: var(--c-border) !important; }
+[data-theme="dark"] .app-product-card { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-related-card { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-cart-item { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-order-summary { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .app-guest-form { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-review-write { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-menu-list { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .app-menu-item--danger .app-menu-item__icon { background: rgba(220,38,38,.15) !important; }
+[data-theme="dark"] .app-menu-item__admin .app-menu-item__icon { background: rgba(234,88,12,.15) !important; }
+[data-theme="dark"] .app-alert--info    { background: rgba(8,145,178,.15) !important; }
+[data-theme="dark"] .app-alert--warning { background: rgba(217,119,6,.15) !important; }
+[data-theme="dark"] .app-alert--success { background: rgba(22,163,74,.15) !important; }
+[data-theme="dark"] .app-alert--danger  { background: rgba(220,38,38,.15) !important; }
+[data-theme="dark"] .app-tab-badge { border-color: var(--c-bg-2) !important; }

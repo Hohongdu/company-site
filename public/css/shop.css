@@ -1250,3 +1250,50 @@ html, body { overflow-x: hidden; max-width: 100%; }
     justify-content: center;
   }
 }
+
+/* ══════════════════════════════════════
+   DARK MODE OVERRIDES — shop.css
+   Covers every hardcoded #fff / pastel
+   background that has no token fallback
+══════════════════════════════════════ */
+
+/* Filter chips & sidebar card */
+[data-theme="dark"] .chip { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .sidebar-card { background: var(--c-bg-2) !important; }
+
+/* Product grid */
+[data-theme="dark"] .product-card { background: var(--c-bg-2) !important; }
+
+/* Cart */
+[data-theme="dark"] .cart-remove-btn:hover { background: rgba(220,38,38,.15) !important; }
+[data-theme="dark"] .cart-summary { background: var(--c-bg-2) !important; }
+
+/* Order / inquiry pages */
+[data-theme="dark"] .order-status-badge.pending   { background: rgba(217,119,6,.15) !important; }
+[data-theme="dark"] .order-status-badge.paid      { background: rgba(22,163,74,.15) !important; }
+[data-theme="dark"] .order-status-badge.cancelled { background: rgba(220,38,38,.15) !important; }
+[data-theme="dark"] .payment-result__card { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .payment-result__icon.success { background: rgba(22,163,74,.15) !important; }
+[data-theme="dark"] .payment-result__icon.fail    { background: rgba(220,38,38,.15) !important; }
+[data-theme="dark"] .inquiry-card { background: var(--c-bg-2) !important; }
+
+/* Old shop account sidebar */
+[data-theme="dark"] .shop-account-sidebar { background: var(--c-bg-2) !important; }
+
+/* acct-* block — My Page */
+[data-theme="dark"] .acct-sidebar { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .acct-nav-link:hover  { background: var(--c-bg-3) !important; }
+[data-theme="dark"] .acct-nav-link.is-active { background: var(--c-accent-lt) !important; }
+[data-theme="dark"] .acct-card { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .acct-card--danger { background: rgba(220,38,38,.1) !important; }
+[data-theme="dark"] .acct-card__title { color: var(--c-text) !important; }
+[data-theme="dark"] .acct-addr-item { background: var(--c-bg-3) !important; }
+[data-theme="dark"] .acct-addr-label { color: var(--c-text-2) !important; }
+[data-theme="dark"] .acct-status-badge--pending { background: rgba(217,119,6,.15) !important; }
+[data-theme="dark"] .acct-status-badge--done    { background: rgba(22,163,74,.15) !important; }
+[data-theme="dark"] .acct-status-badge--default { background: var(--c-bg-3) !important; }
+[data-theme="dark"] .acct-inquiry-header { background: var(--c-bg-3) !important; }
+[data-theme="dark"] .acct-inquiry-answer { background: rgba(22,163,74,.08) !important; }
+[data-theme="dark"] .acct-inquiry-title { color: var(--c-text-2) !important; }
+[data-theme="dark"] .acct-card .table thead th { background: var(--c-bg-3) !important; }
+[data-theme="dark"] .acct-card .table tbody tr:hover { background: rgba(255,255,255,.04) !important; }
