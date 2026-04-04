@@ -1212,6 +1212,69 @@ html, body { overflow-x: hidden; max-width: 100%; }
   color: #166534;
 }
 
+/* Sidebar nav group labels (Pi partial-based sidebar) */
+.acct-nav-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0 12px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* Inquiry accordion (Pi version) */
+.acct-accordion-item {
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.acct-accordion-trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #f8f8f8;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.acct-accordion-trigger:hover {
+  background: #f1f5f9;
+}
+
+.acct-accordion-trigger__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.acct-accordion-chevron {
+  flex-shrink: 0;
+  color: #71717a;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+.acct-accordion-trigger.is-open .acct-accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.acct-accordion-body[hidden] {
+  display: none;
+}
+
 /* Table styling in account */
 .acct-card .table thead th {
   background: #f8f8f8;
@@ -1301,4 +1364,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
 [data-theme="dark"] .acct-inquiry-date { color: var(--c-muted) !important; }
 [data-theme="dark"] .acct-inquiry-label { color: var(--c-muted) !important; }
 [data-theme="dark"] .acct-card .table thead th { background: var(--c-bg-3) !important; }
+[data-theme="dark"] .acct-nav-group-label { color: var(--c-muted) !important; }
+[data-theme="dark"] .acct-accordion-trigger { background: var(--c-bg-3) !important; color: var(--c-text) !important; }
+[data-theme="dark"] .acct-accordion-trigger:hover { background: var(--c-bg-2) !important; }
+[data-theme="dark"] .acct-accordion-chevron { color: var(--c-text-2) !important; }
 [data-theme="dark"] .acct-card .table tbody tr:hover { background: rgba(255,255,255,.04) !important; }
