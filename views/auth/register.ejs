@@ -18,13 +18,13 @@
         <div>
           <label class="form-label" for="reg-name">이름</label>
           <input type="text" id="reg-name" name="name" class="form-control"
-            placeholder="이름을 입력하세요" required>
+            placeholder="이름을 입력하세요" value="<%= locals.form?.name || '' %>" required>
         </div>
 
         <div>
           <label class="form-label" for="reg-email">이메일</label>
           <input type="email" id="reg-email" name="email" class="form-control"
-            placeholder="example@company.com" required>
+            placeholder="example@company.com" value="<%= locals.form?.email || '' %>" required>
         </div>
 
         <div>

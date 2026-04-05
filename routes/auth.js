@@ -186,7 +186,13 @@ router.post('/register', registerLimiter, async (req, res) => {
 		return res.redirect('/auth/login');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('회원가입 중 오류 발생');
+		// [LOW-1b] 서버 오류도 폼 렌더링으로 통일 — 이메일 중복(ER_DUP_ENTRY) 등 DB 오류 시 UX 개선
+		const isDupEntry = String(err?.code || err?.message || '').includes('ER_DUP_ENTRY') || String(err?.message || '').includes('Duplicate entry');
+		return res.status(500).render('auth/register', {
+			error: isDupEntry ? '이미 사용 중인 이메일입니다.' : '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+			csrfToken: req.csrfToken ? req.csrfToken() : (req.session?.csrfToken || ''),
+			form: { name, email },
+		});
 	}
 });
 
