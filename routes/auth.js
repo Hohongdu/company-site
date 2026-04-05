@@ -114,11 +114,12 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 			() => chars[crypto.randomInt(chars.length)], // Node.js 14.10+ 지원
 		).join('');
 
-		// 3) bcrypt 해싱 후 DB 업데이트
+		// [CRIT-2] 이메일 발송을 DB 업데이트보다 먼저 시도
+		// 이메일 실패 시 비밀번호를 절대 덮어쓰지 않음 → 공격자의 계정 잠금 공격 차단
+		// 3) bcrypt 해싱
 		const hashed = await bcrypt.hash(tempPassword, 10);
-		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
 
-		// 4) 이메일 발송 (실패해도 사용자에게 성공 메시지 - 임시 비밀번호는 이미 변경됨)
+		// 4) 이메일 발송 먼저 시도
 		const emailResult = await sendTemporaryPasswordEmail({
 			to: email,
 			name: user.name,
@@ -126,8 +127,17 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 		});
 
 		if (!emailResult.ok) {
-			console.warn(`[forgot] Email send failed for ${email}:`, emailResult.error);
+			console.warn(`[forgot] 이메일 발송 실패 — 비밀번호 변경 취소:`, emailResult.error);
+			// 이메일 실패 시 DB 업데이트 안 함 (기존 비밀번호 유지)
+			return res.render('auth/forgot', {
+				csrfToken: req.csrfToken(),
+				message: '이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+				messageType: 'error',
+			});
 		}
+
+		// 5) 이메일 성공 확인 후에만 DB 비밀번호 업데이트
+		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
 
 		return res.render('auth/forgot', {
 			csrfToken: req.csrfToken(),
@@ -150,13 +160,20 @@ router.post('/register', registerLimiter, async (req, res) => {
 		const { name, email, password, passwordConfirm } = req.body;
 
 		// 입력값 기본 검증
+		// [LOW-1] 유효성 오류 시 폼 다시 렌더링 (CSRF 토큰 포함) — 기존 bare text 응답 수정
+		const renderErr = (msg) => res.status(400).render('auth/register', {
+			error: msg,
+			csrfToken: req.csrfToken ? req.csrfToken() : (req.session?.csrfToken || ''),
+			form: { name, email },
+		});
+
 		if (!name || name.trim().length < 2 || name.trim().length > 50)
-			return res.send('이름은 2자 이상 50자 이하로 입력해주세요.');
+			return renderErr('이름은 2자 이상 50자 이하로 입력해주세요.');
 		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-			return res.send('올바른 이메일 주소를 입력해주세요.');
+			return renderErr('올바른 이메일 주소를 입력해주세요.');
 		if (!password || password.length < 8 || password.length > 72)
-			return res.send('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
-		if (password !== passwordConfirm) return res.send('비밀번호가 일치하지 않습니다.');
+			return renderErr('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
+		if (password !== passwordConfirm) return renderErr('비밀번호가 일치하지 않습니다.');
 
 		const hashedPw = await bcrypt.hash(password, 10);
 

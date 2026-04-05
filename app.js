@@ -44,12 +44,19 @@ app.use(helmet({ contentSecurityPolicy: false }));
 // 세션
 // =====================
 // [M-5] SESSION_SECRET 미설정 시: 운영 환경에서는 서버 시작 자체를 거부
-// 알려진 시크릿('change_me_in_env')으로 세션에 서명하면 공격자가 세션 토큰 위조 가능
 if (!process.env.SESSION_SECRET) {
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error('[FATAL] SESSION_SECRET must be set in .env for production. Refusing to start.');
 	}
 	console.warn('[WARN] SESSION_SECRET is empty. Set it in .env for production safety.');
+}
+
+// [HIGH-3] FILE_TRANSFER_TOKEN_SECRET 미설정 시 경고 — 기본값은 공개된 문자열이므로 위조 토큰 가능
+if (!process.env.FILE_TRANSFER_TOKEN_SECRET) {
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error('[FATAL] FILE_TRANSFER_TOKEN_SECRET must be set in .env for production. Refusing to start.');
+	}
+	console.warn('[WARN] FILE_TRANSFER_TOKEN_SECRET not set. Using insecure default — must be set in .env!');
 }
 
 app.use(
@@ -205,6 +212,13 @@ app.use((err, req, res, next) => {
 // =====================
 // Start
 // =====================
-app.listen(PORT, () => {
-	console.log(`Server running at http://127.0.0.1:${PORT}`);
+// [CODEX-1] 서버 시작 전 DB 연결 검증 — 설정 오류를 첫 요청이 아닌 시작 시점에 감지
+db.execute('SELECT 1').then(() => {
+	console.log('[DB] 연결 확인 완료');
+	app.listen(PORT, () => {
+		console.log(`Server running at http://127.0.0.1:${PORT}`);
+	});
+}).catch((err) => {
+	console.error('[FATAL] DB 연결 실패 — 서버를 시작할 수 없습니다:', err.message);
+	process.exit(1);
 });

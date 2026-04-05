@@ -16,6 +16,7 @@ const fileTransferLimiter = rateLimit({
 
 // [H-5] 인증 필수: 비인증 사용자의 무제한 파일 업로드 차단
 router.post('/', requireLogin, fileTransferLimiter, controller.uploadMiddleware, controller.createTransfer);
-router.get('/download', controller.download);
+// [HIGH-2] 다운로드도 인증 필수: URL 공유만으로 비인증 접근 차단
+router.get('/download', requireLogin, controller.download);
 
 module.exports = router;

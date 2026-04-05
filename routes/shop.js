@@ -14,6 +14,22 @@ const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
+// [MED-1] 비회원 주문조회 브루트포스 방지: 1시간 내 IP당 10회 초과 시 차단
+// 주문번호 열거 공격으로 고객 PII 노출 방지
+const guestOrderLookupLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 10,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		res.status(429).render('shop/order-lookup', {
+			error: '조회 횟수가 너무 많습니다. 1시간 후 다시 시도해주세요.',
+			result: null,
+			form: req.body || {},
+		});
+	},
+});
+
 // [M-3] 비회원 문의 스팸 방지: 1시간 내 IP당 5회 초과 시 차단
 const shopInquiryLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000,
@@ -527,7 +543,8 @@ router.get('/cart', async (req, res) => {
 router.post('/cart/add', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
-		const quantity = Math.max(1, Number(req.body.quantity) || 1);
+		// [HIGH-1] 수량 상한 999 적용 — IEEE 754 오버플로우 및 재고 우회 공격 방지
+		const quantity = Math.min(999, Math.max(1, Number(req.body.quantity) || 1));
 		const isAjax = req.xhr || (req.headers.accept || '').includes('application/json') || req.headers['x-requested-with'] === 'XMLHttpRequest';
 
 		if (!productId) {
@@ -725,6 +742,18 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 			return res.status(400).send('결제 승인 정보가 없습니다.');
 		}
 
+		// [HIGH-4] 멱등성 가드: 이미 PAID/FAILED 상태인 주문의 중복 승인 방지
+		// 브라우저 더블클릭, 탭 중복, 네트워크 재시도 등으로 pg_token이 두 번 처리되는 상황 차단
+		const [[orderCheck]] = await db.execute(
+			'SELECT status FROM orders WHERE id = ? LIMIT 1',
+			[sessionPayment.orderId]
+		);
+		if (!orderCheck || orderCheck.status !== 'PENDING') {
+			console.warn(`[kakao-approve] 중복 승인 시도 — orderId=${sessionPayment.orderId}, status=${orderCheck?.status}`);
+			req.session.kakaoPay = null;
+			return res.redirect('/shop/account/orders');
+		}
+
 		const approvalResult = await kakaoPayService.approve({
 			tid: sessionPayment.tid,
 			orderId: sessionPayment.orderNumber,
@@ -832,7 +861,7 @@ router.get('/orders/guest', (req, res) => {
 	});
 });
 
-router.post('/orders/guest', async (req, res) => {
+router.post('/orders/guest', guestOrderLookupLimiter, async (req, res) => {
 	try {
 		const orderNumber = String(req.body.orderNumber || '').trim();
 		const guestEmail = String(req.body.guestEmail || '').trim();
