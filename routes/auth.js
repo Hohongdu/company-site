@@ -153,7 +153,10 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 		});
 	}
 });
-router.get('/register', (req, res) => res.render('auth/register'));
+// [LOW-2] 다른 GET 라우트와 일관되게 csrfToken 명시 전달 — res.locals 미설정 엣지케이스 방어
+router.get('/register', (req, res) => res.render('auth/register', {
+	csrfToken: req.csrfToken ? req.csrfToken() : (req.session?.csrfToken || ''),
+}));
 
 router.post('/register', registerLimiter, async (req, res) => {
 	try {

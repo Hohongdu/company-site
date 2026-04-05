@@ -14,6 +14,15 @@ const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
+// [HIGH-5] 카카오페이 결제 시작 rate limiter: IP당 1분 5회 — 재고 잠금(PENDING) 남발 방지
+const kakaoCheckoutLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: 5,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	message: { ok: false, message: '잠시 후 다시 시도해 주세요.' },
+});
+
 // [MED-1] 비회원 주문조회 브루트포스 방지: 1시간 내 IP당 10회 초과 시 차단
 // 주문번호 열거 공격으로 고객 PII 노출 방지
 const guestOrderLookupLimiter = rateLimit({
@@ -558,7 +567,8 @@ router.post('/cart/add', async (req, res) => {
 			const cartId = await ensureUserCartId(req.session.user.id);
 			const [exist] = await db.execute('SELECT id FROM cart_items WHERE cart_id = ? AND product_id = ? LIMIT 1', [cartId, productId]);
 			if (exist.length) {
-				await db.execute('UPDATE cart_items SET quantity = quantity + ? WHERE id = ?', [quantity, exist[0].id]);
+				// [HIGH-1b] 누적 합계도 999 상한 — LEAST() 로 DB 레벨에서 원자적으로 적용
+				await db.execute('UPDATE cart_items SET quantity = LEAST(quantity + ?, 999) WHERE id = ?', [quantity, exist[0].id]);
 			} else {
 				await db.execute('INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?, ?, ?)', [cartId, productId, quantity]);
 			}
@@ -566,7 +576,8 @@ router.post('/cart/add', async (req, res) => {
 			cartCount = Number(cnt?.cnt || 0);
 		} else {
 			const guestCart = getGuestCart(req);
-			guestCart.items[productId] = (Number(guestCart.items[productId]) || 0) + quantity;
+			// [HIGH-1b] 게스트 카트 누적 합계도 999 상한 적용
+			guestCart.items[productId] = Math.min(999, (Number(guestCart.items[productId]) || 0) + quantity);
 			cartCount = Object.values(guestCart.items).reduce((s, v) => s + (Number(v) || 0), 0);
 		}
 
@@ -584,7 +595,8 @@ router.post('/cart/add', async (req, res) => {
 router.post('/cart/update', async (req, res) => {
 	try {
 		const productId = Number(req.body.productId);
-		const quantity = Math.max(1, Number(req.body.quantity) || 1);
+		// [HIGH-1b] cart/update 도 1~999 범위 강제
+		const quantity = Math.min(999, Math.max(1, Number(req.body.quantity) || 1));
 
 		if (req.session.user) {
 			const cartItemId = Number(req.body.cartItemId);
@@ -648,7 +660,7 @@ router.post('/cart/clear', async (req, res) => {
 	}
 });
 
-router.post('/checkout/kakao', async (req, res) => {
+router.post('/checkout/kakao', kakaoCheckoutLimiter, async (req, res) => {
 	try {
 		if (!kakaoPayService.isConfigured()) {
 			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAO_ADMIN_KEY와 KAKAO_CID를 확인해주세요.');
