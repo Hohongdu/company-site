@@ -375,11 +375,20 @@ router.get('/products', async (req, res) => {
 			});
 		}
 
+		// [NO-HIT RECOVERY] 검색 결과 0건일 때 인기 검색어 제안
+		let noHitSuggestions = [];
+		if (q && products.length === 0) {
+			try {
+				noHitSuggestions = await searchLogService.getTopKeywords({ days: 7, limit: 6 });
+			} catch (_) { /* non-critical: 제안 없어도 페이지는 정상 동작 */ }
+		}
+
 		res.render('shop/products', {
 			products,
 			categories,
 			currentCategory: categorySlug,
 			query: q,
+			noHitSuggestions,
 		});
 	} catch (err) {
 		console.error(err);
@@ -1329,6 +1338,69 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 		return res.status(500).send('회원 탈퇴 처리 중 오류가 발생했습니다.');
 	} finally {
 		connection.release();
+	}
+});
+
+// ══════════════════════════════════════════
+// RFQ (견적 요청 빌더) — 상품상세·장바구니에서 호출
+// ══════════════════════════════════════════
+router.post('/inquiries/rfq', async (req, res) => {
+	try {
+		const productId   = Number(req.body.productId  || 0) || null;
+		const quantity    = Math.max(1, Math.min(9999, Number(req.body.quantity    || 1)));
+		const targetPrice = String(req.body.targetPrice || '').trim().slice(0, 100);
+		const deliveryDate= String(req.body.deliveryDate|| '').trim().slice(0, 50);
+		const companyName = String(req.body.companyName || '').trim().slice(0, 100);
+		const contactName = String(req.body.contactName || '').trim().slice(0, 100);
+		const contactEmail= String(req.body.contactEmail|| '').trim().slice(0, 150);
+		const message     = String(req.body.message     || '').trim().slice(0, 1000);
+
+		if (!contactName || !contactEmail) {
+			return res.status(400).json({ ok: false, message: '담당자명과 이메일은 필수입니다.' });
+		}
+		// 간단한 이메일 형식 검증
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
+		}
+
+		// 상품 이름 조회
+		let productName = '';
+		if (productId) {
+			const [[p]] = await db.execute('SELECT name, code FROM products WHERE id = ? LIMIT 1', [productId]);
+			productName = p ? `${p.name}${p.code ? ` (${p.code})` : ''}` : '';
+		}
+
+		const title = `[견적요청] ${productName || '일반 견적'} × ${quantity}개`;
+		const contentLines = [
+			`회사명: ${companyName || '(미입력)'}`,
+			`담당자: ${contactName}`,
+			`이메일: ${contactEmail}`,
+			`수량: ${quantity}개`,
+			`목표 단가: ${targetPrice || '협의'}`,
+			`희망 납기: ${deliveryDate || '협의'}`,
+		];
+		if (message) {
+			contentLines.push('', '요청사항:', message);
+		}
+		if (productId) {
+			contentLines.push('', `[상품ID: ${productId}]`);
+		}
+		const content = contentLines.join('\n');
+
+		const userId    = req.session?.user?.id  || null;
+		const guestName = userId ? null : contactName;
+		const guestEmail= userId ? null : contactEmail;
+
+		await db.execute(
+			`INSERT INTO inquiries (user_id, guest_name, guest_email, title, content, status, created_at)
+			 VALUES (?, ?, ?, ?, ?, 'NEW', NOW())`,
+			[userId, guestName, guestEmail, title, content],
+		);
+
+		return res.json({ ok: true, message: '견적 요청이 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.' });
+	} catch (err) {
+		console.error('[rfq]', err);
+		return res.status(500).json({ ok: false, message: '견적 요청 처리 중 오류가 발생했습니다.' });
 	}
 });
 
