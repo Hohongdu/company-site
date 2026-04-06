@@ -1259,7 +1259,7 @@ router.post('/cart/bulk', async (req, res) => {
 router.post('/inquiries/sample', async (req, res) => {
 	try {
 		const productId    = Number(req.body.productId    || 0) || null;
-		const quantity     = Math.max(1, Math.min(10, Number(req.body.quantity || 1)));
+		const quantity     = Math.max(1, Math.min(5, Number(req.body.quantity || 1)));
 		const application  = String(req.body.application  || '').trim().slice(0, 200);
 		const testCondition= String(req.body.testCondition|| '').trim().slice(0, 200);
 		const contactName  = String(req.body.contactName  || '').trim().slice(0, 100);
@@ -1268,6 +1268,9 @@ router.post('/inquiries/sample', async (req, res) => {
 
 		if (!contactName || !contactEmail) {
 			return res.status(400).json({ ok: false, message: '담당자명과 이메일은 필수입니다.' });
+		}
+		if (!application) {
+			return res.status(400).json({ ok: false, message: '적용 장비/용도는 필수입니다.' });
 		}
 		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
 			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
