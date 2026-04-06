@@ -1184,6 +1184,130 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 });
 
 // ══════════════════════════════════════════
+// 대량 SKU 업로드 발주 — 장바구니에서 호출
+// POST /shop/cart/bulk  body: { skuList: "SKU001,10\nSKU002,5" }
+// ══════════════════════════════════════════
+router.post('/cart/bulk', async (req, res) => {
+	try {
+		const rawList = String(req.body.skuList || '').trim();
+		if (!rawList) {
+			return res.status(400).json({ ok: false, message: 'SKU 목록을 입력해주세요.' });
+		}
+
+		const lines = rawList.split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, 100);
+		const results = [];
+
+		for (const line of lines) {
+			// 구분자: 쉼표, 탭, 공백 1~n개
+			const parts = line.split(/[,\t]+|\s{2,}/);
+			const code = String(parts[0] || '').trim();
+			const quantity = Math.max(1, Math.min(999, parseInt(parts[1]) || 1));
+
+			if (!code) continue;
+
+			const [[product]] = await db.execute(
+				`SELECT id, name, price, stock_quantity
+				 FROM products WHERE code = ? AND visibility_status != 'HIDDEN' LIMIT 1`,
+				[code],
+			);
+
+			if (!product) {
+				results.push({ code, quantity, status: 'not_found', message: '상품을 찾을 수 없습니다.' });
+				continue;
+			}
+
+			// 장바구니에 추가
+			if (req.session?.user) {
+				const cartId = await ensureUserCartId(req.session.user.id);
+				const [[existing]] = await db.execute(
+					'SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id = ?',
+					[cartId, product.id],
+				);
+				if (existing) {
+					await db.execute(
+						'UPDATE cart_items SET quantity = LEAST(quantity + ?, 999) WHERE id = ?',
+						[quantity, existing.id],
+					);
+				} else {
+					await db.execute(
+						'INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?, ?, ?)',
+						[cartId, product.id, quantity],
+					);
+				}
+			} else {
+				const guestCart = getGuestCart(req);
+				const prev = Number(guestCart.items[product.id] || 0);
+				guestCart.items[product.id] = Math.min(999, prev + quantity);
+				req.session.cart = guestCart;
+			}
+
+			results.push({ code, name: product.name, quantity, price: product.price, status: 'added' });
+		}
+
+		const addedCount = results.filter(r => r.status === 'added').length;
+		return res.json({ ok: true, results, addedCount, message: `${addedCount}개 상품이 장바구니에 담겼습니다.` });
+	} catch (err) {
+		console.error('[cart/bulk]', err);
+		return res.status(500).json({ ok: false, message: '대량 담기 처리 중 오류가 발생했습니다.' });
+	}
+});
+
+// ══════════════════════════════════════════
+// 샘플 요청·평가 플로우 — 상품상세에서 호출
+// POST /shop/inquiries/sample
+// ══════════════════════════════════════════
+router.post('/inquiries/sample', async (req, res) => {
+	try {
+		const productId    = Number(req.body.productId    || 0) || null;
+		const quantity     = Math.max(1, Math.min(10, Number(req.body.quantity || 1)));
+		const application  = String(req.body.application  || '').trim().slice(0, 200);
+		const testCondition= String(req.body.testCondition|| '').trim().slice(0, 200);
+		const contactName  = String(req.body.contactName  || '').trim().slice(0, 100);
+		const contactEmail = String(req.body.contactEmail || '').trim().slice(0, 150);
+		const companyName  = String(req.body.companyName  || '').trim().slice(0, 100);
+
+		if (!contactName || !contactEmail) {
+			return res.status(400).json({ ok: false, message: '담당자명과 이메일은 필수입니다.' });
+		}
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
+		}
+
+		let productName = '';
+		if (productId) {
+			const [[p]] = await db.execute('SELECT name, code FROM products WHERE id = ? LIMIT 1', [productId]);
+			productName = p ? `${p.name}${p.code ? ` (${p.code})` : ''}` : '';
+		}
+
+		const title = `[샘플요청] ${productName || '상품'} × ${quantity}개`;
+		const content = [
+			`회사명: ${companyName || '(미입력)'}`,
+			`담당자: ${contactName}`,
+			`이메일: ${contactEmail}`,
+			`샘플 수량: ${quantity}개`,
+			`적용 장비/용도: ${application || '(미입력)'}`,
+			`시험 조건: ${testCondition || '(미입력)'}`,
+			productId ? `\n[상품ID: ${productId}]` : '',
+		].join('\n');
+
+		const userId     = req.session?.user?.id || null;
+		const guestName  = userId ? null : contactName;
+		const guestEmail = userId ? null : contactEmail;
+
+		await db.execute(
+			`INSERT INTO inquiries (user_id, guest_name, guest_email, title, content, status, created_at)
+			 VALUES (?, ?, ?, ?, ?, 'NEW', NOW())`,
+			[userId, guestName, guestEmail, title, content],
+		);
+
+		return res.json({ ok: true, message: '샘플 요청이 접수되었습니다. 2~3 영업일 내 배송 안내 드립니다.' });
+	} catch (err) {
+		console.error('[sample]', err);
+		return res.status(500).json({ ok: false, message: '샘플 요청 처리 중 오류가 발생했습니다.' });
+	}
+});
+
+// ══════════════════════════════════════════
 // RFQ (견적 요청 빌더) — 상품상세·장바구니에서 호출
 // ══════════════════════════════════════════
 router.post('/inquiries/rfq', async (req, res) => {

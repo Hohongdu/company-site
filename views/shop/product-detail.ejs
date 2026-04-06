@@ -55,9 +55,32 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
     <% } %>
   </div>
 
-  <!-- 가격 -->
-  <div class="app-detail-price">
-    <%= Number(product.price || 0).toLocaleString() %><span>원</span>
+  <!-- 가격 + 납기 뱃지 -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+    <div class="app-detail-price" style="margin-bottom:0;">
+      <%= Number(product.price || 0).toLocaleString() %><span>원</span>
+    </div>
+    <%# 납기 예측 뱃지 — stock_quantity 기반 %>
+    <% if (product.stock_quantity > 0) { %>
+      <span style="
+        background:#dcfce7;color:#15803d;
+        font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:20px;
+        letter-spacing:.02em;
+      " data-i18n-auto>⚡ 즉시출고</span>
+    <% } else if (product.stock_quantity === 0) { %>
+      <span style="
+        background:#fff7ed;color:#c2410c;
+        font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:20px;
+      " data-i18n-auto>🏭 제작 2주</span>
+    <% } else { %>
+      <span style="
+        background:#f1f5f9;color:#64748b;
+        font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:20px;
+      " data-i18n-auto>📞 납기 협의</span>
+    <% } %>
   </div>
 
   <!-- 규격/스펙 -->
@@ -84,6 +107,53 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
       <%= product.description %>
     </div>
   <% } %>
+
+  <!-- ── 기술자료실 (Technical Data Room) ── -->
+  <div style="margin-top:20px;">
+    <div style="
+      display:flex;align-items:center;
+      justify-content:space-between;margin-bottom:12px;
+    ">
+      <span style="font-size:13px;font-weight:700;color:var(--c-text);" data-i18n-auto>📄 기술문서</span>
+      <% if (!user) { %>
+        <a href="/auth/login" style="font-size:11px;color:var(--c-accent);" data-i18n-auto>로그인 후 다운로드</a>
+      <% } %>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <%
+        const docTypes = [
+          { icon:'📑', label:'데이터시트 (PDF)', size:'1.2 MB', ext:'PDF', locked: !user },
+          { icon:'📐', label:'도면 (CAD/DXF)',   size:'842 KB', ext:'DXF', locked: !user },
+          { icon:'🏅', label:'ISO 9001 인증서',  size:'380 KB', ext:'PDF', locked: false },
+        ];
+      %>
+      <% docTypes.forEach(function(doc) { %>
+        <div style="
+          display:flex;align-items:center;gap:10px;
+          padding:10px 12px;border-radius:var(--r-lg);
+          border:1px solid var(--c-border);
+          background:var(--c-bg);
+        ">
+          <span style="font-size:18px;flex-shrink:0;"><%= doc.icon %></span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:var(--c-text);" data-i18n-auto><%= doc.label %></div>
+            <div style="font-size:11px;color:var(--c-muted);"><%= doc.size %></div>
+          </div>
+          <% if (doc.locked) { %>
+            <a href="/auth/login" style="
+              font-size:11px;padding:4px 10px;border-radius:6px;
+              background:#f1f5f9;color:#64748b;text-decoration:none;
+            " data-i18n-auto>🔒 로그인</a>
+          <% } else { %>
+            <span style="
+              font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;
+              background:#dbeafe;color:#1d4ed8;letter-spacing:.04em;
+            "><%= doc.ext %></span>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </div>
 
   <!-- 찜하기 (로그인 유저만) -->
   <% if (user) { %>
@@ -308,12 +378,21 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
         담기
       </button>
 
+      <!-- 샘플 요청 -->
+      <button class="app-btn app-btn--outline"
+              type="button"
+              data-sheet-open="sampleSheet"
+              data-sheet-overlay="rfqSheetOverlay"
+              style="flex:1;min-width:0;font-size:12px;">
+        🧪 샘플
+      </button>
+
       <!-- 견적 요청 버튼 (RFQ Drawer 열기) -->
       <button class="app-btn app-btn--primary"
               type="button"
               data-sheet-open="rfqSheet"
               data-sheet-overlay="rfqSheetOverlay"
-              style="flex:1.6;min-width:0;">
+              style="flex:1.4;min-width:0;">
         📋 견적 요청
       </button>
 
@@ -321,6 +400,140 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
   </form>
 </div><!-- /detailBottomCta -->
 
+
+<!-- ══════════════════════════════════════════
+   샘플 요청·평가 플로우 드로어
+══════════════════════════════════════════ -->
+<div class="app-sheet" id="sampleSheet" role="dialog" aria-modal="true" aria-label="샘플 요청">
+  <div class="app-sheet__handle" aria-hidden="true"></div>
+  <div class="app-sheet__head">
+    <h2 class="app-sheet__title" data-i18n-auto>🧪 샘플 요청</h2>
+    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <div class="app-sheet__body" style="overflow-y:auto;">
+    <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#1e40af;">
+      <strong>📦 샘플 정책</strong><br>
+      최대 5개까지 평가용 샘플을 신청할 수 있습니다. 2~3 영업일 내 배송됩니다.
+    </div>
+
+    <form id="sampleForm">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+
+      <div class="app-field" style="margin-bottom:14px;">
+        <label class="app-field__label" for="sampleQty" data-i18n-auto>샘플 수량 (최대 5개)</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="app-qty">
+            <button class="app-qty__btn" type="button" data-qty-dec="sampleQty">−</button>
+            <input class="app-qty__input" id="sampleQty" name="quantity" type="number" min="1" max="5" value="1">
+            <button class="app-qty__btn" type="button" data-qty-inc="sampleQty">+</button>
+          </div>
+          <span style="font-size:12px;color:var(--c-muted);">개</span>
+        </div>
+      </div>
+
+      <div class="app-field" style="margin-bottom:14px;">
+        <label class="app-field__label" for="sampleApp" data-i18n-auto>적용 장비 / 용도 <span style="color:var(--c-accent);">*</span></label>
+        <input class="app-field__input" id="sampleApp" name="application" type="text"
+               placeholder="예: 고온 소결로 내부 라이너 교체" maxlength="200" required>
+      </div>
+
+      <div class="app-field" style="margin-bottom:14px;">
+        <label class="app-field__label" for="sampleCond" data-i18n-auto>시험 조건 (선택)</label>
+        <input class="app-field__input" id="sampleCond" name="testCondition" type="text"
+               placeholder="예: 1400℃, H2 분위기, 반복 열충격" maxlength="200">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div class="app-field">
+          <label class="app-field__label" for="sampleName" data-i18n-auto>담당자 <span style="color:var(--c-accent);">*</span></label>
+          <input class="app-field__input" id="sampleName" name="contactName" type="text"
+                 placeholder="홍길동" required value="<%= user?.name || '' %>">
+        </div>
+        <div class="app-field">
+          <label class="app-field__label" for="sampleEmail" data-i18n-auto>이메일 <span style="color:var(--c-accent);">*</span></label>
+          <input class="app-field__input" id="sampleEmail" name="contactEmail" type="email"
+                 placeholder="contact@company.com" required value="<%= user?.email || '' %>">
+        </div>
+      </div>
+
+      <div class="app-field" style="margin-bottom:20px;">
+        <label class="app-field__label" for="sampleCompany" data-i18n-auto>회사명</label>
+        <input class="app-field__input" id="sampleCompany" name="companyName" type="text"
+               placeholder="(주)에너메이드" value="<%= user?.company || '' %>">
+      </div>
+
+      <div id="sampleAlert" style="display:none;margin-bottom:12px;"></div>
+    </form>
+  </div>
+
+  <div class="app-sheet__footer">
+    <button class="app-btn app-btn--outline" style="flex:1;" type="button" data-sheet-close data-i18n-auto>취소</button>
+    <button class="app-btn app-btn--primary" style="flex:2;" type="button" id="sampleSubmitBtn" data-i18n-auto>샘플 신청</button>
+  </div>
+</div><!-- /sampleSheet -->
+
+<script>
+(function () {
+  'use strict';
+  var form      = document.getElementById('sampleForm');
+  var submitBtn = document.getElementById('sampleSubmitBtn');
+  var alertEl   = document.getElementById('sampleAlert');
+  var csrf      = '<%= csrfToken %>';
+
+  function showAlert(msg, type) {
+    alertEl.style.display = 'block';
+    alertEl.className = 'app-alert app-alert--' + (type || 'info');
+    alertEl.textContent = msg;
+  }
+
+  submitBtn.addEventListener('click', function () {
+    alertEl.style.display = 'none';
+    var name  = form.querySelector('[name="contactName"]').value.trim();
+    var email = form.querySelector('[name="contactEmail"]').value.trim();
+    var app   = form.querySelector('[name="application"]').value.trim();
+    if (!name || !email || !app) {
+      showAlert('담당자명, 이메일, 적용 용도는 필수입니다.', 'warn');
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = '처리 중…';
+
+    var data = {};
+    Array.from(new FormData(form).entries()).forEach(function(e){ data[e[0]] = e[1]; });
+
+    fetch('/shop/inquiries/sample', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+      body: JSON.stringify(data),
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res) {
+        if (res.ok) {
+          showAlert('✅ ' + res.message, 'success');
+          submitBtn.textContent = '신청 완료';
+          setTimeout(function() {
+            window.AppSheet && window.AppSheet.close('sampleSheet', 'rfqSheetOverlay');
+            alertEl.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.textContent = '샘플 신청';
+          }, 3000);
+        } else {
+          showAlert('⚠️ ' + (res.message || '오류'), 'warn');
+          submitBtn.disabled = false;
+          submitBtn.textContent = '샘플 신청';
+        }
+      })
+      .catch(function() {
+        showAlert('⚠️ 네트워크 오류', 'warn');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '샘플 신청';
+      });
+  });
+})();
+</script>
 
 <!-- ══════════════════════════════════════════
    RFQ 견적 요청 드로어 (슬라이드 업 패널)
