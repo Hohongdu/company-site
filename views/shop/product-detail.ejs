@@ -35,11 +35,11 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 
   <!-- 카테고리 배지 -->
   <% if (product.category_name) { %>
-    <span class="app-detail-badge"><%= product.category_name %></span>
+    <span class="app-detail-badge" data-i18n-auto><%= product.category_name %></span>
   <% } %>
 
   <!-- 상품명 -->
-  <h1 class="app-detail-name"><%= product.name %></h1>
+  <h1 class="app-detail-name" data-i18n-auto><%= product.name %></h1>
 
   <!-- 평점 -->
   <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
@@ -65,14 +65,14 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
     <div class="app-spec-box">
       <% if (product.code) { %>
         <div style="margin-bottom:10px;">
-          <div class="app-spec-box__label">제품코드</div>
+          <div class="app-spec-box__label" data-i18n-auto>제품코드</div>
           <div class="app-spec-box__value"><%= product.code %></div>
         </div>
       <% } %>
       <% if (product.spec) { %>
         <div>
-          <div class="app-spec-box__label">규격/스펙</div>
-          <div class="app-spec-box__value"><%= product.spec %></div>
+          <div class="app-spec-box__label" data-i18n-auto>규격/스펙</div>
+          <div class="app-spec-box__value" data-i18n-auto><%= product.spec %></div>
         </div>
       <% } %>
     </div>
@@ -88,6 +88,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
   <!-- 찜하기 (로그인 유저만) -->
   <% if (user) { %>
     <form action="/shop/wishlist/toggle" method="post" style="margin-top:20px;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <input type="hidden" name="productId" value="<%= product.id %>">
       <button class="app-btn <%= wished ? 'app-btn--primary' : 'app-btn--outline' %>"
               type="submit"
@@ -126,6 +127,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
   <% if (user) { %>
     <form class="app-review-write" method="post"
           action="/shop/products/<%= product.id %>/reviews">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <select class="app-field__input" name="rating" required
                 style="flex:0 0 90px;">
@@ -218,13 +220,64 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 
 
 <!-- ══════════════════════════════════════════
+   장바구니 담기 확인 모달
+══════════════════════════════════════════ -->
+<div id="cartAddedOverlay" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.48);z-index:2000;
+  align-items:center;justify-content:center;
+  padding:20px;
+" role="dialog" aria-modal="true" aria-labelledby="cartAddedTitle">
+  <div style="
+    background:var(--c-bg);border-radius:var(--r-xl);
+    padding:28px 24px;max-width:340px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+    text-align:center;
+  ">
+    <!-- 체크 아이콘 -->
+    <div style="
+      width:52px;height:52px;border-radius:50%;
+      background:rgba(22,163,74,.12);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;
+    ">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M20 6L9 17l-5-5" stroke="#16a34a" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h3 id="cartAddedTitle" style="
+      font-size:16px;font-weight:700;
+      color:var(--c-text);margin:0 0 6px;
+    ">장바구니에 담겼습니다</h3>
+    <p style="
+      font-size:13px;color:var(--c-muted);margin:0 0 20px;
+    " id="cartAddedDesc">이어서 쇼핑하시겠습니까?</p>
+    <div style="display:flex;gap:10px;">
+      <button id="cartModalNo" style="
+        flex:1;padding:11px 0;border-radius:var(--r-lg);
+        border:1.5px solid var(--c-border);background:var(--c-bg);
+        color:var(--c-text);font-size:14px;font-weight:600;cursor:pointer;
+      ">아니오 (장바구니)</button>
+      <button id="cartModalYes" style="
+        flex:1;padding:11px 0;border-radius:var(--r-lg);
+        border:none;background:var(--c-accent);
+        color:#fff;font-size:14px;font-weight:600;cursor:pointer;
+      ">예 (계속 쇼핑)</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
    Sticky 하단 구매 CTA
-   form POST → /shop/cart/add (기존 동작)
+   form submit → fetch → 모달 표시 (기존 redirect 대신)
    수량 조절은 shop-bottom.ejs의 공통 핸들러(data-qty-inc/dec) 사용
 ══════════════════════════════════════════ -->
 <div class="app-bottom-cta" id="detailBottomCta">
   <form action="/shop/cart/add" method="post" id="detailCartForm"
         style="width:100%;">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <input type="hidden" name="productId" value="<%= product.id %>">
 
     <div class="app-bottom-cta__inner">
@@ -241,6 +294,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 
       <!-- 장바구니 담기 버튼 -->
       <button class="app-btn app-btn--outline" type="submit"
+              id="detailAddBtn"
               form="detailCartForm"
               style="flex:1;min-width:0;"
               aria-label="장바구니 담기">
@@ -254,15 +308,312 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
         담기
       </button>
 
-      <!-- 바로 구매(문의) 버튼 -->
-      <a class="app-btn app-btn--primary"
-         href="/shop/inquiries"
-         style="flex:1.6;min-width:0;">
-        문의/구매
-      </a>
+      <!-- 견적 요청 버튼 (RFQ Drawer 열기) -->
+      <button class="app-btn app-btn--primary"
+              type="button"
+              data-sheet-open="rfqSheet"
+              data-sheet-overlay="rfqSheetOverlay"
+              style="flex:1.6;min-width:0;">
+        📋 견적 요청
+      </button>
 
     </div>
   </form>
 </div><!-- /detailBottomCta -->
+
+
+<!-- ══════════════════════════════════════════
+   RFQ 견적 요청 드로어 (슬라이드 업 패널)
+══════════════════════════════════════════ -->
+<div class="app-sheet-overlay" id="rfqSheetOverlay" aria-hidden="true"></div>
+
+<div class="app-sheet" id="rfqSheet" role="dialog" aria-modal="true" aria-label="견적 요청">
+  <div class="app-sheet__handle" aria-hidden="true"></div>
+
+  <div class="app-sheet__head">
+    <h2 class="app-sheet__title" data-i18n-auto>📋 견적 요청</h2>
+    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="app-sheet__body" style="overflow-y:auto;">
+    <!-- 상품 정보 요약 -->
+    <div style="
+      background:var(--c-bg-2,#f8f8f8);border-radius:var(--r-lg);
+      padding:12px 14px;margin-bottom:20px;
+      display:flex;align-items:center;gap:12px;
+    ">
+      <% if (product.image) { %>
+        <img src="<%= product.image %>" alt=""
+             style="width:44px;height:44px;object-fit:cover;border-radius:var(--r-md);flex-shrink:0;">
+      <% } %>
+      <div style="min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--c-text);
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+             data-i18n-auto><%= product.name %></div>
+        <% if (product.code) { %>
+          <div style="font-size:11px;color:var(--c-muted);">CODE: <%= product.code %></div>
+        <% } %>
+      </div>
+    </div>
+
+    <form id="rfqForm">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+
+      <!-- 수량 -->
+      <div class="app-field" style="margin-bottom:14px;">
+        <label class="app-field__label" for="rfqQty" data-i18n-auto>수량</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="app-qty">
+            <button class="app-qty__btn" type="button"
+                    data-qty-dec="rfqQty" aria-label="수량 감소">−</button>
+            <input class="app-qty__input" id="rfqQty" name="quantity"
+                   type="number" min="1" value="1">
+            <button class="app-qty__btn" type="button"
+                    data-qty-inc="rfqQty" aria-label="수량 증가">+</button>
+          </div>
+          <span style="font-size:12px;color:var(--c-muted);" data-i18n-auto>개</span>
+        </div>
+      </div>
+
+      <!-- 2열: 목표 단가 / 희망 납기 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div class="app-field">
+          <label class="app-field__label" for="rfqPrice" data-i18n-auto>목표 단가 (선택)</label>
+          <input class="app-field__input" id="rfqPrice" name="targetPrice"
+                 type="text" placeholder="예: 5,000원/개" maxlength="100">
+        </div>
+        <div class="app-field">
+          <label class="app-field__label" for="rfqDelivery" data-i18n-auto>희망 납기 (선택)</label>
+          <input class="app-field__input" id="rfqDelivery" name="deliveryDate"
+                 type="date" min="<%= new Date().toISOString().slice(0,10) %>">
+        </div>
+      </div>
+
+      <!-- 회사명 -->
+      <div class="app-field" style="margin-bottom:14px;">
+        <label class="app-field__label" for="rfqCompany" data-i18n-auto>회사명 (선택)</label>
+        <input class="app-field__input" id="rfqCompany" name="companyName"
+               type="text" placeholder="(주)에너메이드" maxlength="100"
+               value="<%= user?.company || '' %>">
+      </div>
+
+      <!-- 2열: 담당자 / 이메일 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div class="app-field">
+          <label class="app-field__label" for="rfqName" data-i18n-auto>담당자 <span style="color:var(--c-accent);">*</span></label>
+          <input class="app-field__input" id="rfqName" name="contactName"
+                 type="text" placeholder="홍길동" maxlength="100" required
+                 value="<%= user?.name || '' %>">
+        </div>
+        <div class="app-field">
+          <label class="app-field__label" for="rfqEmail" data-i18n-auto>이메일 <span style="color:var(--c-accent);">*</span></label>
+          <input class="app-field__input" id="rfqEmail" name="contactEmail"
+                 type="email" placeholder="contact@company.com" maxlength="150" required
+                 value="<%= user?.email || '' %>">
+        </div>
+      </div>
+
+      <!-- 요청사항 -->
+      <div class="app-field" style="margin-bottom:20px;">
+        <label class="app-field__label" for="rfqMessage" data-i18n-auto>요청사항 (선택)</label>
+        <textarea class="app-field__input" id="rfqMessage" name="message"
+                  rows="3" maxlength="1000"
+                  placeholder="특수 규격, 재질, 수량 할인 조건 등 자유롭게 입력해주세요."></textarea>
+      </div>
+
+      <!-- 알림 메시지 영역 -->
+      <div id="rfqAlert" style="display:none;margin-bottom:12px;"></div>
+    </form>
+  </div>
+
+  <div class="app-sheet__footer">
+    <button class="app-btn app-btn--outline" style="flex:1;"
+            type="button" data-sheet-close data-i18n-auto>취소</button>
+    <button class="app-btn app-btn--primary" style="flex:2;"
+            type="button" id="rfqSubmitBtn" data-i18n-auto>견적 요청 전송</button>
+  </div>
+</div><!-- /rfqSheet -->
+
+<script>
+(function () {
+  'use strict';
+
+  var form      = document.getElementById('rfqForm');
+  var submitBtn = document.getElementById('rfqSubmitBtn');
+  var alertEl   = document.getElementById('rfqAlert');
+  var csrfToken = '<%= csrfToken %>';
+
+  function showAlert(msg, type) {
+    alertEl.style.display = 'block';
+    alertEl.className = 'app-alert app-alert--' + (type || 'info');
+    alertEl.textContent = msg;
+  }
+
+  function hideAlert() {
+    alertEl.style.display = 'none';
+  }
+
+  submitBtn.addEventListener('click', function () {
+    hideAlert();
+
+    /* 필수 입력 검증 */
+    var name  = form.querySelector('[name="contactName"]').value.trim();
+    var email = form.querySelector('[name="contactEmail"]').value.trim();
+    if (!name || !email) {
+      showAlert('담당자명과 이메일은 필수입니다.', 'warn');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '전송 중…';
+
+    var data = {};
+    Array.from(new FormData(form).entries()).forEach(function (e) {
+      data[e[0]] = e[1];
+    });
+
+    fetch('/shop/inquiries/rfq', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-csrf-token': csrfToken,
+      },
+      body: JSON.stringify(data),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.ok) {
+          showAlert('✅ ' + res.message, 'success');
+          submitBtn.textContent = '전송 완료';
+          /* 3초 후 드로어 닫기 */
+          setTimeout(function () {
+            window.AppSheet && window.AppSheet.close('rfqSheet', 'rfqSheetOverlay');
+            hideAlert();
+            submitBtn.disabled = false;
+            submitBtn.textContent = '견적 요청 전송';
+          }, 3000);
+        } else {
+          showAlert('⚠️ ' + (res.message || '오류가 발생했습니다.'), 'warn');
+          submitBtn.disabled = false;
+          submitBtn.textContent = '견적 요청 전송';
+        }
+      })
+      .catch(function () {
+        showAlert('⚠️ 네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'warn');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '견적 요청 전송';
+      });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  var form    = document.getElementById('detailCartForm');
+  var overlay = document.getElementById('cartAddedOverlay');
+  var btnNo   = document.getElementById('cartModalNo');
+  var btnYes  = document.getElementById('cartModalYes');
+  var addBtn  = document.getElementById('detailAddBtn');
+
+  if (!form || !overlay) return;
+
+  /* 모달 열기/닫기 */
+  function openModal(cartCount) {
+    var desc = document.getElementById('cartAddedDesc');
+    if (desc && cartCount > 0) {
+      desc.textContent = '장바구니에 ' + cartCount + '개 담겨있습니다. 이어서 쇼핑하시겠습니까?';
+    }
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    btnYes && btnYes.focus();
+  }
+
+  function closeModal() {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  /* "예" → 현재 페이지 유지 (모달만 닫기) */
+  btnYes && btnYes.addEventListener('click', closeModal);
+
+  /* "아니오" → 장바구니로 이동 */
+  btnNo && btnNo.addEventListener('click', function () {
+    closeModal();
+    window.location.href = '/shop/cart';
+  });
+
+  /* 오버레이 외부 클릭 시 닫기 */
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeModal();
+  });
+
+  /* Escape 키 닫기 */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.style.display === 'flex') closeModal();
+  });
+
+  /* 장바구니 헤더 배지 갱신 */
+  function updateCartBadge(count) {
+    var badges = document.querySelectorAll('.shop-cart-badge, .app-tab-badge');
+    badges.forEach(function (b) {
+      if (count > 0) { b.textContent = count; b.style.display = ''; }
+      else { b.style.display = 'none'; }
+    });
+    var headerBtn = document.querySelector('.app-header__btn[href="/shop/cart"]');
+    if (headerBtn) {
+      var existing = headerBtn.querySelector('.shop-cart-badge');
+      if (count > 0 && !existing) {
+        var span = document.createElement('span');
+        span.className = 'app-header-badge shop-cart-badge';
+        span.textContent = count;
+        headerBtn.appendChild(span);
+      }
+    }
+  }
+
+  /* 폼 submit 인터셉트 */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    if (addBtn) { addBtn.disabled = true; }
+
+    var body = new URLSearchParams();
+    body.append('_csrf',     form.querySelector('[name="_csrf"]').value);
+    body.append('productId', form.querySelector('[name="productId"]').value);
+    body.append('quantity',  document.getElementById('detailQty').value || '1');
+
+    fetch('/shop/cart/add', {
+      method:  'POST',
+      headers: {
+        'Content-Type':     'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: body.toString()
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          updateCartBadge(data.cartCount || 0);
+          openModal(data.cartCount || 0);
+        } else {
+          alert(data.message || '장바구니 담기에 실패했습니다.');
+        }
+      })
+      .catch(function () {
+        alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+      })
+      .finally(function () {
+        if (addBtn) { addBtn.disabled = false; }
+      });
+  });
+})();
+</script>
 
 <%- include('../layouts/shop-bottom') %>
