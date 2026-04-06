@@ -1,5 +1,5 @@
 /**
- * demo-preview.js — 8-Feature standalone 데모 서버 (DB 없음)
+ * demo-preview.js — 7-Feature standalone 데모 서버 (DB 없음)
  * Feature 1: 글로벌 수출 모드 (언어 스위처 + Papago 번역)
  * Feature 2: 무검색어 회수 엔진 (No-Hit Recovery)
  * Feature 3: 견적 요청 빌더 (RFQ Builder)
@@ -7,7 +7,6 @@
  * Feature 5: 기술자료실 (Technical Data Room)
  * Feature 6: 대량 SKU 업로드 (Bulk SKU Order)
  * Feature 7: 샘플 요청 드로어 (Sample Request Drawer)
- * Feature 8: 계약가·프로모션 센터 (Contract Pricing Center)
  */
 const http = require('http');
 const path = require('path');
@@ -100,7 +99,6 @@ ${getCss()}
   <a href="#feature5">📄 F5 기술자료</a>
   <a href="#feature6">📦 F6 SKU대량</a>
   <a href="#feature7">🧪 F7 샘플</a>
-  <a href="#feature8">🏷️ F8 계약가</a>
   <span style="margin-left:auto;color:#64748b;font-size:11px;">Test Drive Preview</span>
 </div>
 
@@ -400,7 +398,7 @@ LNR-HT200	3</textarea>
 <!-- ═══════════════════════════════════════════
   FEATURE 7: 샘플 요청 드로어 (Sample Request Drawer)
 ═══════════════════════════════════════════ -->
-<div id="feature7" class="app-section--pad" style="padding-top:8px;">
+<div id="feature7" class="app-section--pad" style="padding-top:8px;padding-bottom:120px;">
   <div class="feature-section">
     <h3>🧪 Feature 7 — 샘플 요청 드로어 <span class="demo-badge">NEW</span></h3>
     <p class="feature-desc">
@@ -436,85 +434,6 @@ LNR-HT200	3</textarea>
     </div>
   </div>
 </div><!-- /feature7 -->
-
-<!-- ═══════════════════════════════════════════
-  FEATURE 8: 계약가·프로모션 센터 (Contract Pricing)
-═══════════════════════════════════════════ -->
-<div id="feature8" class="app-section--pad" style="padding-top:8px;padding-bottom:120px;">
-  <div class="feature-section">
-    <h3>🏷️ Feature 8 — 계약가·프로모션 센터 <span class="demo-badge">PREVIEW</span></h3>
-    <p class="feature-desc">
-      관리자가 쿠폰 발급 → 고객이 마이페이지에서 적용 → 상품 가격에 할인 뱃지 표시.<br>
-      기존 <code>user_coupons</code> 테이블 활용 — schema 변경 없음
-    </p>
-
-    <!-- 상품 카드에 할인 뱃지 -->
-    <p style="font-size:11px;font-weight:600;color:var(--c-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;">
-      상품 리스트 — 계약가 뱃지 표시
-    </p>
-    <div class="app-product-grid" style="margin-bottom:16px;">
-      ${[
-        { name:'알루미나 절연체 A40', spec:'Φ40mm × H80mm', price:12000, contract:9600, pct:20 },
-        { name:'지르코니아 노즐 Z12', spec:'ID 12mm', price:28500, contract:null, pct:0 },
-      ].map(p => `
-      <div class="app-product-card">
-        <div class="app-product-card__thumb">
-          <div class="app-product-card__placeholder">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
-            </svg>
-          </div>
-        </div>
-        <div class="app-product-card__body">
-          <div class="app-product-card__name"><span>${p.name}</span></div>
-          <div class="app-product-card__spec">${p.spec}</div>
-          <div class="app-product-card__price" style="display:flex;flex-direction:column;gap:2px;">
-            ${p.contract ? `
-              <span style="font-size:10px;color:var(--c-muted);text-decoration:line-through;">${p.price.toLocaleString()}원</span>
-              <span style="color:#dc2626;font-weight:700;">${p.contract.toLocaleString()}<small>원</small>
-                <span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px;">-${p.pct}%</span>
-              </span>
-            ` : `${p.price.toLocaleString()}<span>원</span>`}
-          </div>
-        </div>
-      </div>
-      `).join('')}
-    </div>
-
-    <!-- 마이페이지 쿠폰 센터 -->
-    <p style="font-size:11px;font-weight:600;color:var(--c-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;">
-      마이페이지 — 내 쿠폰 센터
-    </p>
-    <div style="border:1px solid var(--c-border,#e5e7eb);border-radius:10px;overflow:hidden;">
-      <div style="background:#1e293b;padding:12px 16px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:18px;">🏷️</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#f8fafc;">내 계약가 쿠폰</div>
-          <div style="font-size:11px;color:#94a3b8;">2개 보유 중</div>
-        </div>
-      </div>
-      ${[
-        { code:'VIP-2024-KIM', desc:'VIP 고객 연간 계약 할인', pct:20, expires:'2024-12-31' },
-        { code:'BULK-Q2-050', desc:'50개 이상 구매 할인', pct:10, expires:'2024-09-30' },
-      ].map(c => `
-      <div style="padding:14px 16px;border-bottom:1px solid var(--c-border,#e5e7eb);display:flex;align-items:center;gap:12px;">
-        <div style="width:44px;height:44px;border-radius:8px;background:#fef2f2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <span style="font-size:18px;font-weight:800;color:#dc2626;">-${c.pct}%</span>
-        </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;color:var(--c-text);">${c.desc}</div>
-          <div style="font-size:11px;color:var(--c-muted);">코드: <code>${c.code}</code> · 만료: ${c.expires}</div>
-        </div>
-        <button class="app-btn app-btn--primary app-btn--sm" onclick="alert('쿠폰 적용됨! (Demo)')">적용</button>
-      </div>
-      `).join('')}
-    </div>
-
-    <p style="font-size:11px;color:var(--c-muted);margin-top:12px;padding:8px 12px;background:#f8fafc;border-radius:6px;">
-      💡 <code>user_coupons</code> 테이블 이미 존재 — 관리자 발급 UI + 장바구니 적용 로직 추가 필요
-    </p>
-  </div>
-</div><!-- /feature8 -->
 
 </div><!-- /app-main -->
 
@@ -895,7 +814,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[DEMO] Preview server running at http://127.0.0.1:${PORT}`);
-  console.log('[DEMO] 8-Feature Preview:');
+  console.log('[DEMO] 7-Feature Preview (F1-F7):');
   console.log('  #feature1 - 글로벌 수출 모드 (🌐 언어 스위처)');
   console.log('  #feature2 - 무검색어 회수 엔진 (인기 검색어 제안)');
   console.log('  #feature3 - 견적 요청 빌더 (📋 RFQ 드로어)');
@@ -903,5 +822,4 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log('  #feature5 - 기술자료실 (로그인 게이트 문서 카드)');
   console.log('  #feature6 - 대량 SKU 업로드 (Bulk 장바구니)');
   console.log('  #feature7 - 샘플 요청 드로어 (🧪 신청 플로우)');
-  console.log('  #feature8 - 계약가·프로모션 센터 (쿠폰 할인 배지)');
 });

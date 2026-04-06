@@ -12,6 +12,22 @@
   </div>
 <% } %>
 
+<!-- ── 대량 주문 진입 버튼 ── -->
+<div class="app-section--pad" style="padding-bottom:0;padding-top:16px;">
+  <button class="app-btn app-btn--outline" style="width:100%;gap:8px;justify-content:flex-start;"
+          data-sheet-open="bulkOrderSheet" data-sheet-overlay="appSheetOverlay"
+          type="button">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"
+            stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="currentColor" stroke-width="1.8"/>
+      <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" stroke-width="1.8"/>
+    </svg>
+    <span data-i18n-auto>📦 대량 주문 (제품코드·수량 일괄 입력)</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--c-muted);">B2B</span>
+  </button>
+</div>
+
 <!-- ── 빈 장바구니 ── -->
 <% if (!items || items.length === 0) { %>
   <div class="app-section--pad" style="padding-top:48px;">
@@ -249,6 +265,110 @@
     ['summaryTotal','summaryFinal','ctaTotal'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.textContent = (id === 'ctaTotal') ? fmt : fmt + '원';
+    });
+  }
+})();
+</script>
+
+<!-- ══════════════════════════════════════════
+   대량 주문 드로어 (Bulk SKU Order Sheet)
+══════════════════════════════════════════ -->
+<div class="app-sheet" id="bulkOrderSheet" role="dialog" aria-modal="true" aria-label="대량 주문">
+  <div class="app-sheet__handle" aria-hidden="true"></div>
+  <div class="app-sheet__head">
+    <h2 class="app-sheet__title" data-i18n-auto>📦 대량 주문</h2>
+    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="app-sheet__body" style="overflow-y:auto;">
+    <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#1e40af;line-height:1.6;">
+      <strong>💡 사용법</strong><br>
+      제품코드와 수량을 한 줄에 하나씩 입력하세요.<br>
+      구분자: 콤마(,) · 탭 · 2칸 이상 공백 모두 인식<br>
+      <code style="font-size:11px;">INS-A40-001, 10</code><br>
+      <code style="font-size:11px;">NOZ-Z12-003  5</code>
+    </div>
+
+    <div class="app-field" style="margin-bottom:16px;">
+      <label class="app-field__label" for="bulkSkuInput" data-i18n-auto>제품코드·수량 입력 (최대 100줄)</label>
+      <textarea class="app-field__input" id="bulkSkuInput"
+                rows="8" style="font-family:monospace;font-size:13px;resize:vertical;"
+                placeholder="INS-A40-001, 10&#10;NOZ-Z12-003  5&#10;LNR-HT200	3"></textarea>
+    </div>
+
+    <div id="bulkSheetResult" style="display:none;margin-bottom:16px;"></div>
+  </div>
+
+  <div class="app-sheet__footer">
+    <button class="app-btn app-btn--outline" style="flex:1;" type="button"
+            data-sheet-close data-i18n-auto>취소</button>
+    <button class="app-btn app-btn--primary" style="flex:2;" type="button"
+            id="bulkSubmitBtn" data-i18n-auto>장바구니에 추가</button>
+  </div>
+</div><!-- /bulkOrderSheet -->
+
+<script>
+(function () {
+  'use strict';
+  var submitBtn = document.getElementById('bulkSubmitBtn');
+  var resultEl  = document.getElementById('bulkSheetResult');
+  var csrf      = '<%= csrfToken %>';
+
+  function showResult(html, type) {
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<div class="app-alert app-alert--' + (type||'info') + '">' + html + '</div>';
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function () {
+      var raw = (document.getElementById('bulkSkuInput').value || '').trim();
+      if (!raw) {
+        showResult('제품코드와 수량을 입력해주세요.', 'warn');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '처리 중…';
+      resultEl.style.display = 'none';
+
+      fetch('/shop/cart/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify({ skuList: raw }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res.ok) {
+            showResult(
+              '✅ <strong>' + (res.addedCount || 0) + '개 SKU</strong>가 추가되었습니다. — ' + res.message,
+              'success'
+            );
+            submitBtn.textContent = '추가 완료';
+            /* 장바구니 카운트 뱃지 갱신 */
+            if (typeof window.__updateCartCount === 'function') window.__updateCartCount();
+            setTimeout(function () {
+              window.AppSheet && window.AppSheet.close('bulkOrderSheet', 'appSheetOverlay');
+              resultEl.style.display = 'none';
+              submitBtn.disabled = false;
+              submitBtn.textContent = '장바구니에 추가';
+              /* 페이지 새로고침으로 카트 목록 반영 */
+              location.reload();
+            }, 2000);
+          } else {
+            showResult('⚠️ ' + (res.message || '처리 중 오류가 발생했습니다.'), 'warn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '장바구니에 추가';
+          }
+        })
+        .catch(function () {
+          showResult('⚠️ 네트워크 오류. 다시 시도해주세요.', 'warn');
+          submitBtn.disabled = false;
+          submitBtn.textContent = '장바구니에 추가';
+        });
     });
   }
 })();
