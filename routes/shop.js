@@ -1198,8 +1198,8 @@ router.post('/cart/bulk', async (req, res) => {
 		const results = [];
 
 		for (const line of lines) {
-			// 구분자: 쉼표, 탭, 공백 1~n개
-			const parts = line.split(/[,\t]+|\s{2,}/);
+			// 구분자: 쉼표, 탭, 공백 1칸 이상 모두 인식
+			const parts = line.split(/[,\t\s]+/);
 			const code = String(parts[0] || '').trim();
 			const quantity = Math.max(1, Math.min(999, parseInt(parts[1]) || 1));
 
