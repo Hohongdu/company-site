@@ -8,6 +8,7 @@ const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('
 const kakaoPayService = require('../services/kakaopay.service');
 const { requireLogin } = require('../middleware/auth');
 const searchLogService = require('../services/search-log.service');
+const notificationService = require('../services/notification.service');
 
 const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
@@ -1297,11 +1298,23 @@ router.post('/inquiries/sample', async (req, res) => {
 		const guestName  = userId ? null : contactName;
 		const guestEmail = userId ? null : contactEmail;
 
-		await db.execute(
+		const [insertResult] = await db.execute(
 			`INSERT INTO inquiries (user_id, guest_name, guest_email, title, content, status, created_at)
 			 VALUES (?, ?, ?, ?, ?, 'NEW', NOW())`,
 			[userId, guestName, guestEmail, title, content],
 		);
+
+		// 관리자 알림 — fire-and-forget (실패해도 응답에 영향 없음)
+		notificationService.sendSampleRequestToAdmin({
+			contactName,
+			contactEmail,
+			companyName,
+			productName,
+			quantity,
+			application,
+			testCondition,
+			id: insertResult.insertId,
+		}).catch((e) => console.error('[sample notify]', e));
 
 		return res.json({ ok: true, message: '샘플 요청이 접수되었습니다. 2~3 영업일 내 배송 안내 드립니다.' });
 	} catch (err) {
@@ -1360,11 +1373,24 @@ router.post('/inquiries/rfq', async (req, res) => {
 		const guestName = userId ? null : contactName;
 		const guestEmail= userId ? null : contactEmail;
 
-		await db.execute(
+		const [rfqInsert] = await db.execute(
 			`INSERT INTO inquiries (user_id, guest_name, guest_email, title, content, status, created_at)
 			 VALUES (?, ?, ?, ?, ?, 'NEW', NOW())`,
 			[userId, guestName, guestEmail, title, content],
 		);
+
+		// 관리자 알림 — fire-and-forget (실패해도 응답에 영향 없음)
+		notificationService.sendRfqToAdmin({
+			contactName,
+			contactEmail,
+			companyName,
+			productName,
+			quantity,
+			targetPrice,
+			deliveryDate,
+			message,
+			id: rfqInsert.insertId,
+		}).catch((e) => console.error('[rfq notify]', e));
 
 		return res.json({ ok: true, message: '견적 요청이 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.' });
 	} catch (err) {
