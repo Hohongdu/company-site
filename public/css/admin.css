@@ -96,7 +96,8 @@ body.admin-wrap {
 .admin-shell {
 	display: flex;
 	gap: 20px;
-	padding: 20px;
+	/* 좌우 패딩 제거: container-fluid px-4 가 이미 16px씩 처리함 → 중복 72px 낭비 제거 */
+	padding: 20px 0;
 	align-items: flex-start;
 	min-height: 100vh;
 }
@@ -188,7 +189,12 @@ body.admin-wrap {
 /* ============================================================
    MAIN CONTENT
    ============================================================ */
-.admin-main { flex: 1; min-width: 0; }
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    /* 콘텐츠 영역에서 가로 스크롤 방지 — 테이블은 내부 table-wrap overflow-x:auto 로 처리 */
+    overflow-x: hidden;
+}
 
 .admin-main > .card,
 .admin-main > .admin-card,
@@ -572,8 +578,9 @@ body.admin-wrap {
 }
 .admin-product-table {
 	table-layout: fixed;
-	min-width: 980px;
-	font-size: 14px;
+	/* 칼럼 합계 ~895px에 맞춤 — 1280px 스크린 기준 가로 스크롤 없이 표시 */
+	min-width: 860px;
+	font-size: 13px;
 }
 .admin-product-table th,
 .admin-product-table td { vertical-align: middle; }
@@ -1044,12 +1051,13 @@ body.admin-wrap {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 16px;
-    border-radius: var(--radius);
-    font-size: 13px;
+    /* btn-sm 기준으로 높이 맞춤 — 패딩/폰트 축소로 행 높이 최소화 */
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 11.5px;
     font-weight: 700;
     white-space: nowrap;
-    width: 92px;          /* 재고 있음 / 재고 부족 / 품절 모두 동일 width */
+    width: 76px;          /* 재고있음/재고부족/품절 모두 동일 width, 컬럼 레이아웃 고정 */
     line-height: 1;
     box-sizing: border-box;
 }
@@ -1057,9 +1065,9 @@ body.admin-wrap {
 .adm-stock-badge--out { background: #dc2626; color: #fff; }
 .adm-stock-badge--low { background: #d97706; color: #fff; }
 
-/* 상품 테이블 전용 버튼 — 크기 통일 (수정 / 삭제 / 샵에서 보기 / 저장 / 변경) */
+/* 상품 테이블 전용 버튼 — btn-sm과 함께 사용, min-width 제거로 컬럼 폭 절약 */
 .adm-tbl-btn {
-    min-width: 90px;
+    /* min-width 제거: 버튼 텍스트 길이(수정/삭제/저장/변경)에 맞게 자연 폭 사용 */
     text-align: center;
     font-weight: 600;
     white-space: nowrap;
@@ -1068,7 +1076,7 @@ body.admin-wrap {
 /* 상품 테이블 셀렉트 — 글자 길이에 맞게 자동 너비 */
 .adm-tbl-select {
     width: auto !important;   /* Bootstrap form-select의 width:100% 오버라이드 */
-    min-width: 90px;
+    min-width: 68px;          /* "판매중" 텍스트가 잘리지 않는 최소값 */
     flex-shrink: 0;
 }
 

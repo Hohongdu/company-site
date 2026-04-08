@@ -97,18 +97,23 @@
                     <table class="table table-hover align-middle mb-0 admin-table admin-product-table">
                         <thead>
                             <tr class="text-muted small">
-                                <th style="width:44px;">
+                                <!--
+                                  table-layout:fixed 에서는 min-width 무시 → width 사용
+                                  합계: 34+44+82+155+76+80+145+118+118 = 852px
+                                  가용폭(1248뷰포트 기준): ~886px → 34px 여유 ✓
+                                -->
+                                <th style="width:34px;">
                                     <input class="form-check-input" type="checkbox" id="checkAll">
                                 </th>
-                                    <th style="min-width:80px;">ID</th>
-                                    <th style="min-width:140px;">코드</th>
-                                <th style="min-width:220px;">상품명</th>
-                                <th style="min-width:160px;">카테고리</th>
-                                <th style="min-width:120px;" class="text-end">가격</th>
-                                <th style="min-width:190px;">재고</th>
-                                <th style="min-width:190px;">상태</th>
-                                <th style="min-width:250px;">관리</th>
-                                </tr>
+                                <th style="width:44px;">ID</th>
+                                <th style="width:82px;">코드</th>
+                                <th style="width:155px;">상품명</th>
+                                <th style="width:76px;">카테고리</th>
+                                <th style="width:80px;" class="text-end">가격</th>
+                                <th style="width:145px;">재고</th>
+                                <th style="width:118px;">상태</th>
+                                <th style="width:118px;">관리</th>
+                            </tr>
                             </thead>
                             <tbody>
                                 <% if (list.length===0) { %>
@@ -127,58 +132,67 @@
                                                     <%= p.id %>
                                                 </td>
                                                 <td class="text-muted admin-cell-code" data-label="코드">
-                                                    <span class="text-truncate d-inline-block" style="max-width: 130px; vertical-align: bottom;"><%= p.code || '-' %></span>
+                                                    <!-- max-width = 칼럼 min-width - 셀 패딩 -->
+                                                    <span class="text-truncate d-inline-block" style="max-width: 70px; vertical-align: bottom;"><%= p.code || '-' %></span>
                                                 </td>
                                                 <td class="fw-semibold admin-cell-name" data-label="상품명">
-                                                    <span class="text-truncate d-inline-block" style="max-width: 240px; vertical-align: bottom;"><%= p.name %></span>
+                                                    <span class="text-truncate d-inline-block" style="max-width: 148px; vertical-align: bottom;"><%= p.name %></span>
                                                 </td>
                                                 <td class="text-muted admin-cell-category" data-label="카테고리">
-                                                    <span class="text-truncate d-inline-block" style="max-width: 120px; vertical-align: bottom;"><%= p.category_name || '-' %></span>
+                                                    <span class="text-truncate d-inline-block" style="max-width: 64px; vertical-align: bottom;"><%= p.category_name || '-' %></span>
                                                 </td>
                                                 <td class="text-end admin-cell-price" data-label="가격">
                                                     <%= Number(p.price || 0).toLocaleString() %>원
                                                 </td>
                                                 <td data-label="재고">
                                                     <% const stockQty = Number(p.stock_quantity || 0); %>
-                                                    <% if (stockQty <= 0) { %>
-                                                        <span class="adm-stock-badge adm-stock-badge--out">품절</span>
-                                                    <% } else if (stockQty <= lowStockThreshold) { %>
-                                                        <span class="adm-stock-badge adm-stock-badge--low">재고 부족</span>
-                                                    <% } else { %>
-                                                        <span class="adm-stock-badge adm-stock-badge--in">재고 있음</span>
-                                                    <% } %>
-                                                    <div class="d-flex gap-2 align-items-center mt-1 flex-wrap">
-                                                        <input class="form-control js-stock-input" type="number" min="0"
-                                                            value="<%= stockQty %>" data-id="<%= p.id %>" style="width:110px;">
-                                                        <button class="btn btn-outline-secondary js-stock-save adm-tbl-btn"
-                                                            type="button" data-id="<%= p.id %>">저장</button>
+                                                    <div class="d-flex flex-column gap-1 align-items-start">
+                                                        <!-- 재고 상태 뱃지 (고정폭 76px — 모든 상태값 동일 너비) -->
+                                                        <% if (stockQty <= 0) { %>
+                                                            <span class="adm-stock-badge adm-stock-badge--out">품절</span>
+                                                        <% } else if (stockQty <= lowStockThreshold) { %>
+                                                            <span class="adm-stock-badge adm-stock-badge--low">재고 부족</span>
+                                                        <% } else { %>
+                                                            <span class="adm-stock-badge adm-stock-badge--in">재고 있음</span>
+                                                        <% } %>
+                                                        <!-- 재고 수량 입력 + 저장 (btn-sm으로 행 높이 최소화) -->
+                                                        <div class="d-flex gap-1 align-items-center">
+                                                            <input class="form-control form-control-sm js-stock-input" type="number" min="0"
+                                                                value="<%= stockQty %>" data-id="<%= p.id %>" style="width:60px;">
+                                                            <button class="btn btn-sm btn-outline-secondary js-stock-save adm-tbl-btn"
+                                                                type="button" data-id="<%= p.id %>">저장</button>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td class="admin-cell-status" data-label="상태">
-                                                    <div class="d-flex gap-2 align-items-center flex-wrap">
-                                                        <select class="form-select adm-tbl-select js-visibility-select"
+                                                    <!-- 판매상태 셀렉트 + 변경 버튼 — 한 줄 인라인, btn-sm -->
+                                                    <div class="d-flex gap-1 align-items-center">
+                                                        <select class="form-select form-select-sm adm-tbl-select js-visibility-select"
                                                             data-id="<%= p.id %>">
                                                             <option value="ACTIVE" <%= p.visibility_status !== 'HIDDEN' ? 'selected' : '' %>>판매중</option>
                                                             <option value="HIDDEN" <%= p.visibility_status === 'HIDDEN' ? 'selected' : '' %>>숨김</option>
                                                         </select>
-                                                        <button class="btn btn-outline-secondary js-visibility-save adm-tbl-btn"
+                                                        <button class="btn btn-sm btn-outline-secondary js-visibility-save adm-tbl-btn"
                                                             type="button" data-id="<%= p.id %>">변경</button>
                                                     </div>
                                                 </td>
                                                 <td data-label="관리">
-                                                    <div class="d-flex gap-2 flex-wrap">
-                                                        <a class="btn btn-outline-primary adm-tbl-btn"
-                                                            href="/admin/products/<%= p.id %>/edit">수정</a>
-
-                                                        <!-- ✅ 삭제 폼 (중첩 아님) + CSRF 포함 -->
-                                                        <form action="/admin/products/<%= p.id %>/delete" method="post"
-                                                            onsubmit="return confirm('삭제할까요?');">
-                                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                            <button class="btn btn-outline-danger adm-tbl-btn"
-                                                                type="submit">삭제</button>
-                                                        </form>
-
-                                                        <a class="btn btn-outline-secondary adm-tbl-btn"
+                                                    <!-- 관리 버튼: 주요액션(수정/삭제) 1열 + 보조액션(샵에서보기) 2열 -->
+                                                    <div class="d-flex flex-column gap-1">
+                                                        <!-- 주요 액션: 수정(오렌지) + 삭제(빨강) 한 줄 -->
+                                                        <div class="d-flex gap-1">
+                                                            <a class="btn btn-sm btn-outline-primary adm-tbl-btn flex-fill text-center"
+                                                                href="/admin/products/<%= p.id %>/edit">수정</a>
+                                                            <!-- 삭제 폼: CSRF 포함, 중첩 금지 -->
+                                                            <form action="/admin/products/<%= p.id %>/delete" method="post"
+                                                                onsubmit="return confirm('삭제할까요?');" class="flex-fill">
+                                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                                <button class="btn btn-sm btn-outline-danger adm-tbl-btn w-100"
+                                                                    type="submit">삭제</button>
+                                                            </form>
+                                                        </div>
+                                                        <!-- 보조 액션: 샵에서 보기 — 전체 폭 사용 -->
+                                                        <a class="btn btn-sm btn-outline-secondary adm-tbl-btn text-center w-100"
                                                             href="/shop/products/<%= p.id %>" target="_blank">샵에서 보기</a>
                                                     </div>
                                                 </td>

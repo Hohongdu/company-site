@@ -339,21 +339,43 @@
         .then(function (r) { return r.json(); })
         .then(function (res) {
           if (res.ok) {
-            showResult(
-              '✅ <strong>' + (res.addedCount || 0) + '개 SKU</strong>가 추가되었습니다. — ' + res.message,
-              'success'
-            );
-            submitBtn.textContent = '추가 완료';
-            /* 장바구니 카운트 뱃지 갱신 */
-            if (typeof window.__updateCartCount === 'function') window.__updateCartCount();
-            setTimeout(function () {
-              window.AppSheet && window.AppSheet.close('bulkOrderSheet', 'appSheetOverlay');
-              resultEl.style.display = 'none';
+            var notFound = (res.results || []).filter(function (r) { return r.status === 'not_found'; });
+            var addedCnt = res.addedCount || 0;
+
+            /* ── 결과 HTML 조립 ── */
+            var html = '';
+            if (addedCnt > 0) {
+              html += '✅ <strong>' + addedCnt + '개 상품</strong>이 장바구니에 담겼습니다.';
+            }
+            if (notFound.length > 0) {
+              html += '<div style="margin-top:8px;padding:8px 10px;' +
+                'background:#fff7ed;border-radius:6px;border:1px solid #fed7aa;">' +
+                '<div style="font-size:12px;font-weight:600;color:#c2410c;margin-bottom:4px;">' +
+                '⚠️ 찾을 수 없는 코드 (' + notFound.length + '개) — 제품코드를 확인해주세요:</div>' +
+                '<div style="font-size:12px;font-family:monospace;color:#92400e;line-height:1.8;">';
+              notFound.forEach(function (r) { html += r.code + '<br>'; });
+              html += '</div></div>';
+            }
+
+            showResult(html, addedCnt > 0 ? 'success' : 'warn');
+            submitBtn.textContent = addedCnt > 0 ? ('추가 완료 (' + addedCnt + ')') : '장바구니에 추가';
+
+            if (addedCnt > 0) {
+              /* 장바구니 카운트 뱃지 갱신 */
+              if (typeof window.__updateCartCount === 'function') window.__updateCartCount();
+              /* not_found가 있으면 3.5초, 없으면 2초 후 닫기 */
+              var delay = notFound.length > 0 ? 3500 : 2000;
+              setTimeout(function () {
+                window.AppSheet && window.AppSheet.close('bulkOrderSheet', 'appSheetOverlay');
+                resultEl.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '장바구니에 추가';
+                location.reload();
+              }, delay);
+            } else {
+              /* 전체 실패 — 자동 닫힘 없이 사용자가 코드 수정하도록 유지 */
               submitBtn.disabled = false;
-              submitBtn.textContent = '장바구니에 추가';
-              /* 페이지 새로고침으로 카트 목록 반영 */
-              location.reload();
-            }, 2000);
+            }
           } else {
             showResult('⚠️ ' + (res.message || '처리 중 오류가 발생했습니다.'), 'warn');
             submitBtn.disabled = false;
