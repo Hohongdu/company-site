@@ -5,6 +5,9 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
 const { sendTemporaryPasswordEmail } = require('../services/notification.service');
+const { sendMail: sendSmtpMail } = require('../services/smtp-email.service');
+
+const { isValidEmail } = require('../lib/validators');
 
 const router = express.Router();
 
@@ -172,16 +175,29 @@ router.post('/register', registerLimiter, async (req, res) => {
 
 		if (!name || name.trim().length < 2 || name.trim().length > 50)
 			return renderErr('이름은 2자 이상 50자 이하로 입력해주세요.');
-		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+		if (!email || !isValidEmail(email))
 			return renderErr('올바른 이메일 주소를 입력해주세요.');
 		if (!password || password.length < 8 || password.length > 72)
 			return renderErr('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
+		if (!/[a-zA-Z]/.test(password))
+			return renderErr('비밀번호에 영문자를 포함해야 합니다.');
+		if (!/[0-9]/.test(password))
+			return renderErr('비밀번호에 숫자를 포함해야 합니다.');
+		if (!/[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]/.test(password))
+			return renderErr('비밀번호에 특수문자를 포함해야 합니다.');
 		if (password !== passwordConfirm) return renderErr('비밀번호가 일치하지 않습니다.');
 
 		const hashedPw = await bcrypt.hash(password, 10);
 
 		// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
 		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
+
+		// 환영 이메일 발송 (비차단 — 이메일 실패가 회원가입을 막지 않음)
+		sendSmtpMail({
+			to: email,
+			subject: `[ENERMADE] 회원가입을 환영합니다, ${name}님`,
+			html: `<h2>안녕하세요, ${name}님!</h2><p>ENERMADE에 가입해 주셔서 감사합니다.</p><p>문의사항은 <a href="${process.env.BASE_URL || 'https://enermade.com'}/contact">고객 지원</a>을 이용해 주세요.</p>`,
+		}).catch(err => console.error('[register] welcome email failed:', err));
 
 		return res.redirect('/auth/login');
 	} catch (err) {

@@ -1321,51 +1321,13 @@ html, body { overflow-x: hidden; max-width: 100%; }
 ══════════════════════════════════════ */
 
 /* Filter chips & sidebar card */
-[data-theme="dark"] .chip { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .sidebar-card { background: var(--c-bg-2) !important; }
 
 /* Product grid */
-[data-theme="dark"] .product-card { background: var(--c-bg-2) !important; }
 
 /* Cart */
-[data-theme="dark"] .cart-remove-btn:hover { background: rgba(220,38,38,.15) !important; }
-[data-theme="dark"] .cart-summary { background: var(--c-bg-2) !important; }
 
 /* Order / inquiry pages */
-[data-theme="dark"] .order-status-badge.pending   { background: rgba(217,119,6,.15) !important; }
-[data-theme="dark"] .order-status-badge.paid      { background: rgba(22,163,74,.15) !important; }
-[data-theme="dark"] .order-status-badge.cancelled { background: rgba(220,38,38,.15) !important; }
-[data-theme="dark"] .payment-result__card { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .payment-result__icon.success { background: rgba(22,163,74,.15) !important; }
-[data-theme="dark"] .payment-result__icon.fail    { background: rgba(220,38,38,.15) !important; }
-[data-theme="dark"] .inquiry-card { background: var(--c-bg-2) !important; }
 
 /* Old shop account sidebar */
-[data-theme="dark"] .shop-account-sidebar { background: var(--c-bg-2) !important; }
 
 /* acct-* block — My Page */
-[data-theme="dark"] .acct-sidebar { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .acct-nav-link:hover  { background: var(--c-bg-3) !important; }
-[data-theme="dark"] .acct-nav-link.is-active { background: var(--c-accent-lt) !important; }
-[data-theme="dark"] .acct-card { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .acct-card--danger { background: rgba(220,38,38,.1) !important; }
-[data-theme="dark"] .acct-card__title { color: var(--c-text) !important; }
-[data-theme="dark"] .acct-addr-item { background: var(--c-bg-3) !important; }
-[data-theme="dark"] .acct-addr-label { color: var(--c-text-2) !important; }
-[data-theme="dark"] .acct-status-badge--pending { background: rgba(217,119,6,.15) !important; }
-[data-theme="dark"] .acct-status-badge--done    { background: rgba(22,163,74,.15) !important; }
-[data-theme="dark"] .acct-status-badge--default { background: var(--c-bg-3) !important; }
-[data-theme="dark"] .acct-inquiry-item { border-color: var(--c-border) !important; }
-[data-theme="dark"] .acct-inquiry-header { background: var(--c-bg-3) !important; border-bottom-color: var(--c-border) !important; }
-[data-theme="dark"] .acct-inquiry-answer { background: rgba(22,163,74,.08) !important; border-top-color: rgba(22,163,74,.2) !important; }
-[data-theme="dark"] .acct-inquiry-title { color: var(--c-text) !important; }
-[data-theme="dark"] .acct-inquiry-text { color: var(--c-text-2) !important; }
-[data-theme="dark"] .acct-inquiry-text--answer { color: #86efac !important; }
-[data-theme="dark"] .acct-inquiry-date { color: var(--c-muted) !important; }
-[data-theme="dark"] .acct-inquiry-label { color: var(--c-muted) !important; }
-[data-theme="dark"] .acct-card .table thead th { background: var(--c-bg-3) !important; }
-[data-theme="dark"] .acct-nav-group-label { color: var(--c-muted) !important; }
-[data-theme="dark"] .acct-accordion-trigger { background: var(--c-bg-3) !important; color: var(--c-text) !important; }
-[data-theme="dark"] .acct-accordion-trigger:hover { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .acct-accordion-chevron { color: var(--c-text-2) !important; }
-[data-theme="dark"] .acct-card .table tbody tr:hover { background: rgba(255,255,255,.04) !important; }

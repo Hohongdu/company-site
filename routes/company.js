@@ -4,6 +4,14 @@ const { requireLogin } = require('../middleware/auth');
 
 const router = express.Router();
 
+function renderRouteError(req, res, statusCode, message, backHref = '/') {
+	return res.status(statusCode).render('error', {
+		statusCode,
+		message,
+		backHref,
+	});
+}
+
 async function ensureNoticesTable() {
 	await db.execute(
 		`CREATE TABLE IF NOT EXISTS notices (
@@ -25,6 +33,11 @@ async function ensureNoticeCategoryColumn() {
 	}
 }
 
+router.initializeSchema = async function initializeSchema() {
+	await ensureNoticesTable();
+	await ensureNoticeCategoryColumn();
+};
+
 router.get('/', (req, res) => res.render('company/index'));
 router.get('/about', (req, res) => res.render('company/about'));
 router.get('/history', (req, res) => res.render('company/history'));
@@ -44,8 +57,6 @@ router.get('/notices', async (req, res) => {
 		const typeParam = String(req.query.type || 'all');
 		const allowedTypes = new Set(['all', 'general', 'product']);
 		const type = allowedTypes.has(typeParam) ? typeParam : 'all';
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
 		const [notices] = await db.execute(
 			`SELECT id, title, category, created_at, views
        FROM notices
@@ -58,7 +69,7 @@ router.get('/notices', async (req, res) => {
 		return res.render('company/notices', { notices, query: q, type });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('공지 목록 로딩 오류');
+		return renderRouteError(req, res, 500, '공지 목록 로딩 오류');
 	}
 });
 
@@ -67,8 +78,6 @@ router.get('/notices/:id', async (req, res) => {
 		const noticeId = Number(req.params.id);
 		if (!noticeId) return res.status(404).render('404', { message: '공지 없음' });
 
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
 		await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
 		const [[notice]] = await db.execute(
 			`SELECT id, title, content, category, created_at, views
@@ -82,9 +91,12 @@ router.get('/notices/:id', async (req, res) => {
 		return res.render('company/notice-detail', { notice });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('공지 상세 로딩 오류');
+		return renderRouteError(req, res, 500, '공지 상세 로딩 오류');
 	}
 });
+
+router.get('/biz', (req, res) => res.render('company/business-areas'));
+router.get('/rnd', (req, res) => res.render('company/research-dev'));
 
 router.get('/account', requireLogin, (req, res) =>
 	res.render('company/account', { user: req.session.user }),

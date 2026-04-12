@@ -304,9 +304,8 @@ const chartPayload = {
 
 <script>
 (function () {
-    // [H-1] JSON.stringify XSS 방지: <\/script> 삽입 공격 차단
-    // JSON.stringify는 <, >, &, / 를 이스케이프하지 않음
-    // Unicode escape(\u003c 등)는 JSON 파싱에 영향 없이 script 컨텍스트 탈출을 막음
+    // [H-1] XSS 방지: script 컨텍스트 탈출 공격 차단 (Unicode escape 적용)
+    // JSON.stringify는 <, >, &, / 를 이스케이프하지 않으므로 replace()로 직접 처리
     const data = <%- JSON.stringify(chartPayload)
         .replace(/</g, '\\u003c')
         .replace(/>/g, '\\u003e')

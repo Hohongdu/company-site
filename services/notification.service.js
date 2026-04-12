@@ -51,8 +51,14 @@ function wrapHtml(title, bodyHtml) {
 exports.sendInquiryReplyEmail = async (payload) => {
 	const { to, name, inquiryTitle, replyContent } = payload;
 
-	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!to) {
+		console.warn(`[notification] ${new Date().toISOString()} sendInquiryReplyEmail SKIPPED: 수신 이메일 없음`);
+		return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
+	}
+	if (!isConfigured()) {
+		console.warn(`[notification] ${new Date().toISOString()} sendInquiryReplyEmail DISABLED: 이메일 드라이버 미설정`);
+		return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	}
 
 	const greeting = name ? `${escapeHtml(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -74,8 +80,14 @@ exports.sendInquiryReplyEmail = async (payload) => {
 exports.sendTemporaryPasswordEmail = async (payload) => {
 	const { to, name, tempPassword } = payload;
 
-	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!to) {
+		console.warn(`[notification] ${new Date().toISOString()} sendTemporaryPasswordEmail SKIPPED: 수신 이메일 없음`);
+		return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
+	}
+	if (!isConfigured()) {
+		console.warn(`[notification] ${new Date().toISOString()} sendTemporaryPasswordEmail DISABLED: 이메일 드라이버 미설정`);
+		return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	}
 
 	const greeting = name ? `${escapeHtml(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(

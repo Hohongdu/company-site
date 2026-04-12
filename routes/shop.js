@@ -10,6 +10,8 @@ const kakaoPayService = require('../services/kakaopay.service');
 const { requireLogin } = require('../middleware/auth');
 const searchLogService = require('../services/search-log.service');
 
+const { isValidEmail } = require('../lib/validators');
+
 const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
@@ -54,8 +56,9 @@ const shopInquiryLimiter = rateLimit({
 	},
 });
 
-const renderShopError = (res, message, status = 500, backHref = '/shop/account/orders') =>
-	res.status(status).render('shop/error', {
+const renderShopError = (req, res, message, status = 500, backHref = req.get('referer') || '/shop') =>
+	res.status(status).render('error', {
+		statusCode: status,
 		message,
 		backHref,
 	});
@@ -159,6 +162,16 @@ async function ensureCouponTable() {
 	);
 }
 
+router.initializeSchema = async function initializeSchema() {
+	await ensureProductVisibilityColumn();
+	await ensureReviewTable();
+	await ensureWishlistTable();
+	await ensureNotificationSettingsTable();
+	await ensureAddressTable();
+	await ensurePaymentMethodTable();
+	await ensureCouponTable();
+};
+
 function generateOrderNumber() {
 	// [H-3] Math.random() → crypto.randomBytes(): 예측 불가능한 CSPRNG 사용
 	// Math.random은 시드 예측 가능 → 공격자가 주문번호 열거 공격 가능
@@ -180,6 +193,7 @@ async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
 	const connection = await db.getConnection();
 	try {
 		await connection.beginTransaction();
+		await connection.execute('SET SESSION innodb_lock_wait_timeout = 5');
 
 		// [C-3] 재고 검증 + FOR UPDATE 락: 트랜잭션 내에서 최신 가격/재고 확인
 		// SELECT ... FOR UPDATE로 동시 주문 경쟁 시 첫 번째 트랜잭션이 완료될 때까지 다른 트랜잭션 대기
@@ -262,7 +276,11 @@ async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
 
 		return { orderId, orderNumber, items: verifiedItems, totalAmount: verifiedTotal };
 	} catch (err) {
-		try { await connection.rollback(); } catch (rbErr) { console.error('[createOrderFromCart] rollback 실패:', rbErr); }
+		if (err?.code === 'ER_LOCK_WAIT_TIMEOUT') {
+			try { await connection.rollback(); } catch (rbErr) { console.error('[createOrderFromCart] rollback failed:', rbErr); }
+			return { error: '다른 주문이 처리 중입니다. 잠시 후 다시 시도해주세요.', status: 409 };
+		}
+		try { await connection.rollback(); } catch (rbErr) { console.error('[createOrderFromCart] rollback failed:', rbErr); }
 		throw err;
 	} finally {
 		connection.release();
@@ -298,22 +316,6 @@ async function fetchOrderDetailByNumber(orderNumber) {
 // 각 라우트 핸들러 내부에서 매 요청마다 호출하면
 // ALTER TABLE이 반복 실행되어 성능 저하 발생
 // =============================================
-(async () => {
-	try {
-		await ensureProductVisibilityColumn();
-		await ensureReviewTable();
-		await ensureWishlistTable();
-		await ensureNotificationSettingsTable();
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureOrderStatusEnum();
-		await ensureCouponTable();
-		console.log('[shop] 스키마 초기화 완료');
-	} catch (err) {
-		console.error('[shop] 스키마 초기화 실패:', err);
-	}
-})();
-
 router.get('/', async (req, res) => {
 	try {
 		const [categories] = await db.execute('SELECT * FROM categories ORDER BY name ASC');
@@ -392,7 +394,7 @@ router.get('/products', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 목록 오류');
+		return renderShopError(req, res, '상품 목록 오류', 500);
 	}
 });
 
@@ -460,7 +462,7 @@ router.get('/products/:id', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 상세 오류');
+		return renderShopError(req, res, '상품 상세 오류', 500);
 	}
 });
 
@@ -483,7 +485,7 @@ router.post('/products/:id/reviews', requireLogin, async (req, res) => {
 		return res.redirect(`/shop/products/${productId}#reviews`);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('리뷰 등록 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '리뷰 등록 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -504,7 +506,7 @@ router.get('/wishlist', requireLogin, async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('위시리스트 로딩 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '위시리스트 로딩 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -533,7 +535,7 @@ router.post('/wishlist/toggle', requireLogin, async (req, res) => {
 		return res.redirect(`/shop/products/${productId}`);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('위시리스트 처리 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '위시리스트 처리 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -553,7 +555,7 @@ router.get('/cart', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('장바구니 오류');
+		return renderShopError(req, res, '장바구니 오류', 500);
 	}
 });
 
@@ -567,7 +569,7 @@ router.post('/cart/add', async (req, res) => {
 
 		if (!productId) {
 			if (isAjax) return res.status(400).json({ ok: false, message: '상품 정보가 올바르지 않습니다.' });
-			return res.status(400).send('상품 정보가 올바르지 않습니다.');
+			return renderShopError(req, res, '상품 정보가 올바르지 않습니다.', 400);
 		}
 
 		let cartCount = 0;
@@ -596,7 +598,7 @@ router.post('/cart/add', async (req, res) => {
 		console.error(err);
 		const isAjax = req.xhr || (req.headers.accept || '').includes('application/json');
 		if (isAjax) return res.status(500).json({ ok: false, message: '장바구니 담기 오류' });
-		res.status(500).send('장바구니 담기 오류');
+		return renderShopError(req, res, '장바구니 담기 오류', 500);
 	}
 });
 
@@ -624,7 +626,7 @@ router.post('/cart/update', async (req, res) => {
 		return res.redirect('/shop/cart');
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('장바구니 수정 오류');
+		return renderShopError(req, res, '장바구니 수정 오류', 500);
 	}
 });
 
@@ -649,7 +651,7 @@ router.post('/cart/remove', async (req, res) => {
 		return res.redirect('/shop/cart');
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('장바구니 삭제 오류');
+		return renderShopError(req, res, '장바구니 삭제 오류', 500);
 	}
 });
 
@@ -665,14 +667,14 @@ router.post('/cart/clear', async (req, res) => {
 		return res.redirect('/shop/cart');
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('장바구니 비우기 오류');
+		return renderShopError(req, res, '장바구니 비우기 오류', 500);
 	}
 });
 
 router.post('/checkout/kakao', kakaoCheckoutLimiter, async (req, res) => {
 	try {
 		if (!kakaoPayService.isConfigured()) {
-			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAO_ADMIN_KEY와 KAKAO_CID를 확인해주세요.');
+			return renderShopError(req, res, '카카오페이 설정이 필요합니다. 환경변수 KAKAO_ADMIN_KEY와 KAKAO_CID를 확인해주세요.', 500);
 		}
 
 		const isGuest = !req.session.user;
@@ -708,6 +710,9 @@ router.post('/checkout/kakao', kakaoCheckoutLimiter, async (req, res) => {
 		}
 
 		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone });
+		if (orderResult.status === 409) {
+			return renderShopError(req, res, orderResult.error, 409, '/shop/cart');
+		}
 		if (orderResult.error) {
 			req.session.cartError = orderResult.error;
 			return res.redirect('/shop/cart');
@@ -750,7 +755,7 @@ router.post('/checkout/kakao', kakaoCheckoutLimiter, async (req, res) => {
 		return res.redirect(readyResult.next_redirect_pc_url);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('카카오페이 결제 준비 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '카카오페이 결제 준비 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -760,7 +765,7 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 		const sessionPayment = req.session.kakaoPay;
 
 		if (!pgToken || !sessionPayment) {
-			return res.status(400).send('결제 승인 정보가 없습니다.');
+			return renderShopError(req, res, '결제 승인 정보가 없습니다.', 400);
 		}
 
 		// [HIGH-4] 멱등성 가드: 이미 PAID/FAILED 상태인 주문의 중복 승인 방지
@@ -828,6 +833,139 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 		return res.status(500).render('shop/payment-fail', {
 			message: '카카오페이 결제 승인 중 오류가 발생했습니다.',
 		});
+	}
+});
+
+// ══════════════════════════════════════════
+// 계좌 입금 결제
+// ══════════════════════════════════════════
+router.post('/checkout/bank', async (req, res) => {
+	try {
+		const isGuest = !req.session.user;
+		const guestName = isGuest ? String(req.body.guestName || '').trim() : null;
+		const guestEmail = isGuest ? String(req.body.guestEmail || '').trim() : null;
+		const guestPhone = isGuest ? String(req.body.guestPhone || '').trim() : null;
+
+		if (isGuest && (!guestName || (!guestEmail && !guestPhone))) {
+			req.session.cartError = '비회원 주문은 이름과 이메일 또는 연락처가 필요합니다.';
+			return res.redirect('/shop/cart');
+		}
+
+		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone });
+		if (orderResult.status === 409) {
+			return renderShopError(req, res, orderResult.error, 409, '/shop/cart');
+		}
+		if (orderResult.error) {
+			req.session.cartError = orderResult.error;
+			return res.redirect('/shop/cart');
+		}
+
+		await db.execute(
+			`INSERT INTO order_payments (order_id, provider, status, amount) VALUES (?, 'BANK_TRANSFER', 'PENDING', ?)`,
+			[orderResult.orderId, orderResult.totalAmount],
+		);
+
+		await clearCart(req);
+
+		req.session.bankOrder = {
+			orderId: orderResult.orderId,
+			orderNumber: orderResult.orderNumber,
+			totalAmount: orderResult.totalAmount,
+		};
+
+		return res.redirect(`/shop/checkout/bank/complete?order=${encodeURIComponent(orderResult.orderNumber)}`);
+	} catch (err) {
+		console.error('[checkout/bank]', err);
+		return renderShopError(req, res, '계좌 입금 주문 처리 중 오류가 발생했습니다.', 500);
+	}
+});
+
+router.get('/checkout/bank/complete', async (req, res) => {
+	try {
+		const orderNumber = String(req.query.order || '').trim();
+		if (!orderNumber) {
+			return renderShopError(req, res, '주문 정보가 없습니다.', 400, '/shop/cart');
+		}
+
+		const [[order]] = await db.execute(
+			`SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at,
+			        op.status AS payment_status
+			 FROM orders o
+			 LEFT JOIN order_payments op ON op.order_id = o.id AND op.provider = 'BANK_TRANSFER'
+			 WHERE o.order_number = ?
+			 LIMIT 1`,
+			[orderNumber],
+		);
+
+		if (!order) {
+			return renderShopError(req, res, '주문을 찾을 수 없습니다.', 404, '/shop/cart');
+		}
+
+		const bankName = process.env.BANK_NAME || '국민은행';
+		const bankAccount = process.env.BANK_ACCOUNT || '000-0000-0000';
+		const bankHolder = process.env.BANK_HOLDER || 'ENERMADE';
+
+		req.session.bankOrder = null;
+
+		return res.render('shop/bank-complete', {
+			order,
+			bankName,
+			bankAccount,
+			bankHolder,
+			active: '',
+			title: '계좌 입금 안내',
+		});
+	} catch (err) {
+		console.error('[checkout/bank/complete]', err);
+		return renderShopError(req, res, '주문 완료 페이지 로딩 중 오류가 발생했습니다.', 500);
+	}
+});
+
+// ══════════════════════════════════════════
+// 세금계산서 발행 요청
+// POST /shop/orders/:orderNumber/tax-invoice
+// ══════════════════════════════════════════
+router.post('/orders/:orderNumber/tax-invoice', async (req, res) => {
+	try {
+		const orderNumber = String(req.params.orderNumber || '').trim();
+		const businessName = String(req.body.business_name || '').trim();
+		const businessRegNo = String(req.body.business_reg_no || '').trim().replace(/\D/g, '');
+		const repName = String(req.body.rep_name || '').trim();
+		const contactEmail = String(req.body.contact_email || '').trim();
+
+		if (!businessName) {
+			return res.status(400).json({ ok: false, message: '사업자명을 입력해주세요.' });
+		}
+		if (businessRegNo.length !== 10) {
+			return res.status(400).json({ ok: false, message: '사업자등록번호는 10자리 숫자로 입력해주세요.' });
+		}
+		if (!repName) {
+			return res.status(400).json({ ok: false, message: '대표자명을 입력해주세요.' });
+		}
+		if (!contactEmail || !isValidEmail(contactEmail)) {
+			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
+		}
+
+		const [[order]] = await db.execute(
+			`SELECT id, order_number FROM orders WHERE order_number = ? LIMIT 1`,
+			[orderNumber],
+		);
+
+		if (!order) {
+			return res.status(404).json({ ok: false, message: '주문을 찾을 수 없습니다.' });
+		}
+
+		await db.execute(
+			`INSERT INTO tax_invoice_requests
+			 (order_id, order_number, business_name, business_reg_no, rep_name, contact_email)
+			 VALUES (?, ?, ?, ?, ?, ?)`,
+			[order.id, order.order_number, businessName, businessRegNo, repName, contactEmail],
+		);
+
+		return res.json({ ok: true, message: '세금계산서 발행 요청이 접수되었습니다.' });
+	} catch (err) {
+		console.error('[tax-invoice]', err);
+		return res.status(500).json({ ok: false, message: '세금계산서 요청 처리 중 오류가 발생했습니다.' });
 	}
 });
 
@@ -933,7 +1071,7 @@ router.post('/orders/guest', guestOrderLookupLimiter, async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('주문 조회 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '주문 조회 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -958,18 +1096,14 @@ router.get('/orders/:orderNumber', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('주문 상세 조회 오류');
+		return renderShopError(req, res, '주문 상세 조회 오류', 500);
 	}
 });
 
 router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
-		await ensureNotificationSettingsTable();
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
-		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+		const [[user]] = await db.execute('SELECT id, name, email, is_admin FROM users WHERE id = ? LIMIT 1', [userId]);
 		const [[notificationRow]] = await db.execute(
 			`SELECT email_enabled
        FROM user_notification_settings
@@ -1016,7 +1150,7 @@ router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('내 정보 로딩 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '내 정보 로딩 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1059,7 +1193,7 @@ router.post('/account/profile', requireLogin, accountCsrf, async (req, res) => {
 		return res.redirect('/shop/account?message=내 정보가 업데이트되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('내 정보 수정 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '내 정보 수정 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1068,7 +1202,6 @@ router.post('/account/notifications', requireLogin, accountCsrf, async (req, res
 		const userId = req.session.user.id;
 		const emailEnabled = req.body.emailNotifications === 'on' ? 1 : 0;
 
-		await ensureNotificationSettingsTable();
 		await db.execute(
 			`INSERT INTO user_notification_settings (user_id, email_enabled)
        VALUES (?, ?)
@@ -1079,7 +1212,7 @@ router.post('/account/notifications', requireLogin, accountCsrf, async (req, res
 		return res.redirect('/shop/account?message=알림 설정이 저장되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('알림 설정 저장 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '알림 설정 저장 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1097,7 +1230,6 @@ router.post('/account/addresses', requireLogin, accountCsrf, async (req, res) =>
 			return res.redirect('/shop/account?error=배송지 정보를 입력해주세요.');
 		}
 
-		await ensureAddressTable();
 		await db.execute(
 			`INSERT INTO user_addresses
        (user_id, label, recipient_name, phone, address_line1, address_line2, postal_code)
@@ -1108,7 +1240,7 @@ router.post('/account/addresses', requireLogin, accountCsrf, async (req, res) =>
 		return res.redirect('/shop/account?message=배송지가 추가되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('배송지 저장 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '배송지 저장 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1122,7 +1254,7 @@ router.post('/account/addresses/:id/delete', requireLogin, accountCsrf, async (r
 		return res.redirect('/shop/account?message=배송지가 삭제되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('배송지 삭제 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '배송지 삭제 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1137,7 +1269,6 @@ router.post('/account/payments', requireLogin, accountCsrf, async (req, res) => 
 			return res.redirect('/shop/account?error=결제수단 정보를 입력해주세요.');
 		}
 
-		await ensurePaymentMethodTable();
 		await db.execute(
 			`INSERT INTO user_payment_methods (user_id, label, provider, last4)
        VALUES (?, ?, ?, ?)`,
@@ -1147,7 +1278,7 @@ router.post('/account/payments', requireLogin, accountCsrf, async (req, res) => 
 		return res.redirect('/shop/account?message=결제수단이 저장되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('결제수단 저장 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '결제수단 저장 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1161,7 +1292,7 @@ router.post('/account/payments/:id/delete', requireLogin, accountCsrf, async (re
 		return res.redirect('/shop/account?message=결제수단이 삭제되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('결제수단 삭제 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '결제수단 삭제 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1177,7 +1308,6 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 			return res.redirect('/shop/account?error=쿠폰 코드를 입력해주세요.');
 		}
 
-		await ensureCouponTable();
 		await db.execute(
 			`INSERT INTO user_coupons (user_id, code, description, discount_pct, expires_at)
        VALUES (?, ?, ?, ?, ?)`,
@@ -1187,7 +1317,7 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 		return res.redirect('/shop/account?message=쿠폰이 등록되었습니다.');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('쿠폰 등록 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '쿠폰 등록 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1209,7 +1339,7 @@ router.get('/account/inquiries', requireLogin, accountCsrf, async (req, res) => 
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('문의 내역 로딩 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '문의 내역 로딩 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1231,7 +1361,7 @@ router.get('/account/orders', requireLogin, accountCsrf, async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('주문 내역 로딩 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '주문 내역 로딩 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1241,7 +1371,7 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 		const userId = req.session.user.id;
 
 		if (!orderId) {
-			return renderShopError(res, '주문 정보가 올바르지 않습니다.', 400);
+			return renderShopError(req, res, '주문 정보가 올바르지 않습니다.', 400);
 		}
 
 		const [[order]] = await db.execute(
@@ -1253,19 +1383,18 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 		);
 
 		if (!order) {
-			return renderShopError(res, '주문 정보를 찾을 수 없습니다.', 404);
+			return renderShopError(req, res, '주문 정보를 찾을 수 없습니다.', 404);
 		}
 
-	if (order.status !== 'PENDING') {
-		return res.redirect('/shop/account/orders');
-	}
+		if (order.status !== 'PENDING') {
+			return res.redirect('/shop/account/orders');
+		}
 
-	await ensureOrderStatusEnum();
-	await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
+		await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
 		return res.redirect('/shop/account/orders');
 	} catch (err) {
 		console.error(err);
-		return renderShopError(res, '주문 취소 요청 중 오류가 발생했습니다.', 500);
+		return renderShopError(req, res, '주문 취소 요청 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1276,21 +1405,15 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 	let user;
 	try {
 		// [E-1] 사용자 존재 확인을 getConnection() 전에 실행: 불필요한 connection 점유 방지
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
-		await ensureWishlistTable();
-		await ensureReviewTable();
-		await ensureNotificationSettingsTable();
 		const [[foundUser]] = await db.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
 		user = foundUser;
 	} catch (err) {
 		console.error('[account/delete] 사전 조회 실패:', err);
-		return res.status(500).send('회원 탈퇴 처리 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '회원 탈퇴 처리 중 오류가 발생했습니다.', 500);
 	}
 
 	if (!user) {
-		return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
+		return renderShopError(req, res, '사용자 정보를 찾을 수 없습니다.', 404);
 	}
 
 	const connection = await db.getConnection();
@@ -1335,7 +1458,7 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 			console.error('[account/delete] rollback 실패:', rbErr);
 		}
 		console.error('[account/delete]', err);
-		return res.status(500).send('회원 탈퇴 처리 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '회원 탈퇴 처리 중 오류가 발생했습니다.', 500);
 	} finally {
 		connection.release();
 	}
@@ -1430,7 +1553,7 @@ router.post('/inquiries/sample', async (req, res) => {
 		if (!application) {
 			return res.status(400).json({ ok: false, message: '적용 장비/용도는 필수입니다.' });
 		}
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+		if (!isValidEmail(contactEmail)) {
 			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
 		}
 
@@ -1486,7 +1609,7 @@ router.post('/inquiries/rfq', async (req, res) => {
 			return res.status(400).json({ ok: false, message: '담당자명과 이메일은 필수입니다.' });
 		}
 		// 간단한 이메일 형식 검증
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+		if (!isValidEmail(contactEmail)) {
 			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
 		}
 
@@ -1601,7 +1724,7 @@ router.post('/inquiries/guest', inquiryLookupCsrf, async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('문의 조회 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '문의 조회 중 오류가 발생했습니다.', 500);
 	}
 });
 
@@ -1647,7 +1770,7 @@ router.post('/inquiries', shopInquiryLimiter, async (req, res) => {
 		return res.redirect('/shop/inquiries?ok=1');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('문의 등록 중 오류가 발생했습니다.');
+		return renderShopError(req, res, '문의 등록 중 오류가 발생했습니다.', 500);
 	}
 });
 

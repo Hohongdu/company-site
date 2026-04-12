@@ -206,11 +206,11 @@
 
   <!-- ── Sticky 결제 CTA ── -->
   <div class="app-cart-cta">
-    <div class="app-cart-cta__inner">
+    <div class="app-cart-cta__inner" style="flex-direction:column;gap:8px;">
       <% if (paymentEnabled) { %>
         <%# 비회원 필드는 위 guest-form의 input들이 form="checkoutForm"으로 연결됨 %>
         <form action="/shop/checkout/kakao" method="post"
-              id="checkoutForm" style="flex:1;display:flex;">
+              id="checkoutForm" style="display:flex;">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button class="app-btn app-btn--primary" type="submit"
                   style="flex:1;font-size:16px;font-weight:700;">
@@ -218,6 +218,19 @@
             <span style="font-size:14px;font-weight:400;opacity:.85;margin-left:6px;">
               (<span id="ctaTotal"><%= Number(totalAmount || 0).toLocaleString() %></span>원)
             </span>
+          </button>
+        </form>
+        <form action="/shop/checkout/bank" method="post"
+              id="bankCheckoutForm" style="display:flex;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (isGuest) { %>
+            <input type="hidden" id="bankGuestName" name="guestName" value="<%= guestInfo?.guestName || '' %>">
+            <input type="hidden" id="bankGuestEmail" name="guestEmail" value="<%= guestInfo?.guestEmail || '' %>">
+            <input type="hidden" id="bankGuestPhone" name="guestPhone" value="<%= guestInfo?.guestPhone || '' %>">
+          <% } %>
+          <button class="app-btn app-btn--outline" type="submit"
+                  style="flex:1;font-size:15px;font-weight:600;">
+            계좌 입금
           </button>
         </form>
       <% } else { %>
@@ -267,6 +280,30 @@
       if (el) el.textContent = (id === 'ctaTotal') ? fmt : fmt + '원';
     });
   }
+})();
+
+/* 비회원 계좌입금 폼 — 게스트 입력 필드 값을 hidden 필드로 동기화 */
+(function () {
+  var bankForm = document.getElementById('bankCheckoutForm');
+  if (!bankForm) return;
+
+  function syncGuestFields() {
+    ['guestName', 'guestEmail', 'guestPhone'].forEach(function (field) {
+      var src = document.getElementById(field);
+      var dst = document.getElementById('bank' + field.charAt(0).toUpperCase() + field.slice(1));
+      if (src && dst) dst.value = src.value;
+    });
+  }
+
+  bankForm.addEventListener('submit', function (e) {
+    syncGuestFields();
+  });
+
+  /* 입력할 때마다 실시간 동기화 */
+  ['guestName', 'guestEmail', 'guestPhone'].forEach(function (field) {
+    var el = document.getElementById(field);
+    if (el) el.addEventListener('input', syncGuestFields);
+  });
 })();
 </script>
 

@@ -1466,17 +1466,16 @@
 
   /* 탭바(64px) 여백 불필요 → 기본 하단 여백으로 초기화 */
   .app-main { padding-bottom: 24px; }
-  /* 하단 CTA가 있는 페이지: CTA 높이(~76px)만 확보 */
-  .app-main.has-bottom-cta,
-  .app-main.has-cart-cta { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  /* 하단 CTA가 있는 페이지: 장바구니 CTA는 2버튼 세로 배열(~108px) */
+  .app-main.has-bottom-cta { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  .app-main.has-cart-cta   { padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)); }
 
   /* CTA 위치: 탭바가 없으므로 화면 맨 아래로 내림 */
   .app-bottom-cta,
   .app-cart-cta { bottom: env(safe-area-inset-bottom, 0px); }
 
   /* 다크모드 위젯: 탭바 위로 올릴 필요 없음 → 기본 위치로 복원 */
-  .app-wrap .dark-widget { bottom: 20px; }
-}
+  .app-wrap}
 
 @media (min-width: 1024px) {
   /* 상품 그리드 4열 */
@@ -1552,49 +1551,7 @@
 
 /* ── 다크모드 버튼: shop 탭바(64px) 위로 올리기 ── */
 /* .app-wrap = shop-top.ejs의 body 클래스 */
-.app-wrap .dark-widget {
-  bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
-}
-
+.app-wrap
 /* ── 다크모드: shop 앱 UI 요소 ── */
-[data-theme="dark"] .app-header {
-  background: #18181b !important;
-  border-bottom-color: #3f3f46 !important;
-}
-[data-theme="dark"] .app-header__brand-name,
-[data-theme="dark"] .app-header__title { color: #fafafa !important; }
-[data-theme="dark"] .app-header__btn { color: rgba(255,255,255,.7) !important; }
-[data-theme="dark"] .app-bottom-nav { background: #18181b !important; border-top-color: #3f3f46 !important; }
-[data-theme="dark"] .app-tab { color: var(--c-muted) !important; }
-[data-theme="dark"] .app-tab.is-active { color: var(--c-accent) !important; }
-[data-theme="dark"] .app-card { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; }
-[data-theme="dark"] .app-section { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-field__input { background: var(--c-bg-3) !important; border-color: var(--c-border) !important; color: var(--c-text) !important; }
-[data-theme="dark"] .app-field__label { color: var(--c-muted) !important; }
-[data-theme="dark"] .app-bottom-cta,
-[data-theme="dark"] .app-cart-cta { background: var(--c-bg-2) !important; border-top-color: #3f3f46 !important; }
-[data-theme="dark"] .app-sheet { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-sheet__head { border-bottom-color: #3f3f46 !important; }
-[data-theme="dark"] .app-wrap { background: var(--c-bg) !important; }
 
 /* Missing overrides — extended dark mode coverage */
-[data-theme="dark"] .app-searchbar { background: var(--c-bg-3) !important; border-color: var(--c-border) !important; }
-[data-theme="dark"] .app-chip { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; }
-[data-theme="dark"] .app-filter-btn { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; color: var(--c-text-2) !important; }
-[data-theme="dark"] .app-empty { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-sheet__head { background: var(--c-bg-2) !important; border-bottom-color: var(--c-border) !important; }
-[data-theme="dark"] .app-sheet__footer { background: var(--c-bg-2) !important; border-top-color: var(--c-border) !important; }
-[data-theme="dark"] .app-product-card { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-related-card { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-cart-item { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-order-summary { background: var(--c-bg-2) !important; border-color: var(--c-border) !important; }
-[data-theme="dark"] .app-guest-form { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-review-write { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-menu-list { background: var(--c-bg-2) !important; }
-[data-theme="dark"] .app-menu-item--danger .app-menu-item__icon { background: rgba(220,38,38,.15) !important; }
-[data-theme="dark"] .app-menu-item__admin .app-menu-item__icon { background: rgba(234,88,12,.15) !important; }
-[data-theme="dark"] .app-alert--info    { background: rgba(8,145,178,.15) !important; }
-[data-theme="dark"] .app-alert--warning { background: rgba(217,119,6,.15) !important; }
-[data-theme="dark"] .app-alert--success { background: rgba(22,163,74,.15) !important; }
-[data-theme="dark"] .app-alert--danger  { background: rgba(220,38,38,.15) !important; }
-[data-theme="dark"] .app-tab-badge { border-color: var(--c-bg-2) !important; }

@@ -1,0 +1,8 @@
+-- order_payments 테이블: 계좌 입금 결제 지원 확장
+-- provider ENUM에 BANK_TRANSFER 추가
+ALTER TABLE order_payments
+  MODIFY COLUMN provider ENUM('KAKAO', 'BANK_TRANSFER') NOT NULL;
+
+-- status ENUM에 PENDING, CONFIRMED, COMPLETED 추가
+ALTER TABLE order_payments
+  MODIFY COLUMN status ENUM('READY', 'APPROVED', 'CANCELED', 'FAILED', 'PENDING', 'CONFIRMED', 'COMPLETED', 'AMOUNT_MISMATCH') NOT NULL DEFAULT 'READY';

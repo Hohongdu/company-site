@@ -1,7 +1,6 @@
 const inquiryService = require('../services/inquiry.service');
 const { sendNewInquiryToAdmin } = require('../services/notification.service');
-
-const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+const { isValidEmail } = require('../lib/validators');
 
 exports.create = async (req, res) => {
 	try {
@@ -12,7 +11,7 @@ exports.create = async (req, res) => {
 		if (!name || !email || !message) {
 			return res.status(400).json({ ok: false, message: '필수값 누락' });
 		}
-		if (!isEmail(email)) {
+		if (!isValidEmail(email)) {
 			return res.status(400).json({ ok: false, message: '이메일 형식 오류' });
 		}
 		if (name.length > 50) {
@@ -29,7 +28,7 @@ exports.create = async (req, res) => {
 		return res.json({ ok: true, id: saved.id });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ ok: false });
+		return res.status(500).json({ ok: false, message: '문의 등록 중 오류가 발생했습니다.', code: 'INQUIRY_CREATE_ERROR' });
 	}
 };
 
@@ -42,6 +41,6 @@ exports.list = async (req, res) => {
 		return res.json({ ok: true, data: rows });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ ok: false });
+		return res.status(500).json({ ok: false, message: '문의 목록 조회 중 오류가 발생했습니다.', code: 'INQUIRY_LIST_ERROR' });
 	}
 };

@@ -30,16 +30,23 @@
         <div>
           <label class="form-label" for="reg-pw">비밀번호</label>
           <input type="password" id="reg-pw" name="password" class="form-control"
-            placeholder="비밀번호를 입력하세요" required>
+            placeholder="비밀번호를 입력하세요" required autocomplete="new-password">
+          <div id="pw-rules" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:8px;font-size:12px;">
+            <span id="rule-len"  class="pw-rule pw-rule--idle">✕ 8자 이상</span>
+            <span id="rule-eng"  class="pw-rule pw-rule--idle">✕ 영문 포함</span>
+            <span id="rule-num"  class="pw-rule pw-rule--idle">✕ 숫자 포함</span>
+            <span id="rule-spec" class="pw-rule pw-rule--idle">✕ 특수문자 포함</span>
+          </div>
         </div>
 
         <div>
           <label class="form-label" for="reg-pw2">비밀번호 확인</label>
           <input type="password" id="reg-pw2" name="passwordConfirm" class="form-control"
-            placeholder="비밀번호를 다시 입력하세요" required>
+            placeholder="비밀번호를 다시 입력하세요" required autocomplete="new-password">
+          <div id="pw-match-msg" style="font-size:12px;margin-top:4px;display:none;"></div>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="padding:12px;">회원가입 완료</button>
+        <button type="submit" id="reg-submit" class="btn btn-primary" style="padding:12px;">회원가입 완료</button>
       </form>
 
       <hr class="my-4">
@@ -51,4 +58,50 @@
   </div>
 </div>
 
+<style>
+.pw-rule { color: var(--c-muted, #888); transition: color .15s; }
+.pw-rule--ok   { color: #16a34a; }
+.pw-rule--fail { color: #dc2626; }
+.pw-rule--idle { color: #888; }
+</style>
+<script>
+(function () {
+  var pw   = document.getElementById('reg-pw');
+  var pw2  = document.getElementById('reg-pw2');
+  var rLen  = document.getElementById('rule-len');
+  var rEng  = document.getElementById('rule-eng');
+  var rNum  = document.getElementById('rule-num');
+  var rSpec = document.getElementById('rule-spec');
+  var matchMsg = document.getElementById('pw-match-msg');
+
+  function setRule(el, ok, label) {
+    el.textContent = (ok ? '✓ ' : '✕ ') + label;
+    el.className = 'pw-rule pw-rule--' + (pw.value.length === 0 ? 'idle' : (ok ? 'ok' : 'fail'));
+  }
+
+  function checkPw() {
+    var v = pw.value;
+    setRule(rLen,  v.length >= 8,                             '8자 이상');
+    setRule(rEng,  /[a-zA-Z]/.test(v),                        '영문 포함');
+    setRule(rNum,  /[0-9]/.test(v),                            '숫자 포함');
+    setRule(rSpec, /[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]/.test(v), '특수문자 포함');
+    checkMatch();
+  }
+
+  function checkMatch() {
+    if (!pw2.value) { matchMsg.style.display = 'none'; return; }
+    matchMsg.style.display = 'block';
+    if (pw.value === pw2.value) {
+      matchMsg.textContent = '✓ 비밀번호가 일치합니다.';
+      matchMsg.style.color = '#16a34a';
+    } else {
+      matchMsg.textContent = '✕ 비밀번호가 일치하지 않습니다.';
+      matchMsg.style.color = '#dc2626';
+    }
+  }
+
+  pw.addEventListener('input', checkPw);
+  pw2.addEventListener('input', checkMatch);
+})();
+</script>
 <%- include('../layouts/company-bottom') %>
