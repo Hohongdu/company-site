@@ -114,15 +114,6 @@
   overlay.addEventListener('click', function (e) { if (e.target === overlay) closeLogin(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLogin(); });
 
-  /* Dark mode toggle */
-  const dmBtn = document.getElementById('darkModeToggle');
-  if (dmBtn) {
-    dmBtn.addEventListener('click', function () {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      localStorage.setItem('site_theme', isDark ? 'light' : 'dark');
-    });
-  }
 })();
 </script>
 </body>
