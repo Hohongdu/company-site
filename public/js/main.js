@@ -418,52 +418,8 @@
 		root._updateLabel = updateLabel;
 	}
 
-	const ICON_MOON = `<svg class="dark-toggle__svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-	const ICON_SUN  = `<svg class="dark-toggle__svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
-
-	function createDarkModeToggle() {
-		const storageKey = 'site_theme';
-		const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
-
-		function applyTheme(dark) {
-			if (dark) {
-				document.documentElement.setAttribute('data-theme', 'dark');
-			} else {
-				document.documentElement.removeAttribute('data-theme');
-			}
-			localStorage.setItem(storageKey, dark ? 'dark' : 'light');
-			const iconEl = root.querySelector('.dark-toggle__icon');
-			if (iconEl) iconEl.innerHTML = dark ? ICON_SUN : ICON_MOON;
-		}
-
-		const root = document.createElement('div');
-		root.className = 'dark-widget';
-		root.id = 'darkWidget';
-		root.innerHTML = `
-			<button class="dark-toggle" type="button" aria-label="다크 모드 토글">
-				<span class="dark-toggle__icon">${ICON_MOON}</span>
-			</button>
-		`;
-		document.body.appendChild(root);
-
-		root.querySelector('.dark-toggle').addEventListener('click', () => {
-			applyTheme(!isDark());
-		});
-
-		// Init from stored preference, fallback to system preference
-		const stored = localStorage.getItem(storageKey);
-		if (stored === 'dark') {
-			applyTheme(true);
-		} else if (stored === 'light') {
-			applyTheme(false);
-		} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-			applyTheme(true);
-		}
-	}
-
 	if (document.body) {
 		createLanguageWidget();
-		createDarkModeToggle();
 		const defaultLang = localStorage.getItem(storageLangKey) || 'ko';
 		const widget = document.getElementById('langWidget');
 		if (widget && widget._updateLabel) widget._updateLabel(defaultLang);

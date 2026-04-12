@@ -192,9 +192,8 @@
     const totals = raw.map(r => Number(r.total || 0));
     const noHits = raw.map(r => Number(r.no_hit || 0));
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
-    const labelColor = isDark ? '#a1a1aa' : '#6b7280';
+    const gridColor = 'rgba(0,0,0,.06)';
+    const labelColor = '#6b7280';
 
     const ctx = document.getElementById('searchVolumeChart').getContext('2d');
     new Chart(ctx, {
