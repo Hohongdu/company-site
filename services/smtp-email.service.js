@@ -72,20 +72,40 @@ async function sendMail({ to, subject, html, text }) {
 }
 
 /**
+ * HTML 특수문자 이스케이프 (이메일 본문 인젝션 방지)
+ * @param {string} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+	return String(str)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#x27;');
+}
+
+/**
  * 관리자에게 서버 오류 알림 이메일 발송
  * @param {{ error: string, url: string, method: string, userId?: number|null, stack?: string }} opts
  */
 async function sendAdminErrorAlert({ error, url, method, userId, stack }) {
 	const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_FROM;
 	if (!adminEmail) return;
-	const subject = `[ENERMADE] 서버 오류 발생 — ${method} ${url}`;
+	// [M-7] 이메일 HTML 인젝션 방지: user-controlled 값 이스케이프 처리
+	const safeMethod = escapeHtml(method || '');
+	const safeUrl = escapeHtml(url || '');
+	const safeUserId = escapeHtml(userId || '비회원');
+	const safeError = escapeHtml(String(error));
+	const safeStack = escapeHtml((stack || '').slice(0, 2000));
+	const subject = `[ENERMADE] 서버 오류 발생 — ${safeMethod} ${safeUrl}`;
 	const html = `<h3>서버 오류 알림</h3>
     <table>
       <tr><th>시간</th><td>${new Date().toISOString()}</td></tr>
-      <tr><th>URL</th><td>${method} ${url}</td></tr>
-      <tr><th>사용자</th><td>${userId || '비회원'}</td></tr>
-      <tr><th>오류</th><td>${String(error)}</td></tr>
-      <tr><th>스택</th><td><pre>${(stack || '').slice(0, 2000)}</pre></td></tr>
+      <tr><th>URL</th><td>${safeMethod} ${safeUrl}</td></tr>
+      <tr><th>사용자</th><td>${safeUserId}</td></tr>
+      <tr><th>오류</th><td>${safeError}</td></tr>
+      <tr><th>스택</th><td><pre>${safeStack}</pre></td></tr>
     </table>`;
 	return sendMail({ to: adminEmail, subject, html }).catch(() => {});
 }

@@ -880,21 +880,23 @@ router.post('/checkout/bank', async (req, res) => {
 	}
 });
 
-router.get('/checkout/bank/complete', async (req, res) => {
+router.get('/checkout/bank/complete', requireLogin, async (req, res) => {
 	try {
+		const userId = req.session.user.id;
 		const orderNumber = String(req.query.order || '').trim();
 		if (!orderNumber) {
 			return renderShopError(req, res, '주문 정보가 없습니다.', 400, '/shop/cart');
 		}
 
+		// [C-6] 주문 소유권 확인: user_id 조건으로 타인 주문 열람(IDOR) 차단
 		const [[order]] = await db.execute(
 			`SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at,
 			        op.status AS payment_status
 			 FROM orders o
 			 LEFT JOIN order_payments op ON op.order_id = o.id AND op.provider = 'BANK_TRANSFER'
-			 WHERE o.order_number = ?
+			 WHERE o.order_number = ? AND o.user_id = ?
 			 LIMIT 1`,
-			[orderNumber],
+			[orderNumber, userId],
 		);
 
 		if (!order) {
@@ -925,8 +927,9 @@ router.get('/checkout/bank/complete', async (req, res) => {
 // 세금계산서 발행 요청
 // POST /shop/orders/:orderNumber/tax-invoice
 // ══════════════════════════════════════════
-router.post('/orders/:orderNumber/tax-invoice', async (req, res) => {
+router.post('/orders/:orderNumber/tax-invoice', requireLogin, async (req, res) => {
 	try {
+		const userId = req.session.user.id;
 		const orderNumber = String(req.params.orderNumber || '').trim();
 		const businessName = String(req.body.business_name || '').trim();
 		const businessRegNo = String(req.body.business_reg_no || '').trim().replace(/\D/g, '');
@@ -946,9 +949,10 @@ router.post('/orders/:orderNumber/tax-invoice', async (req, res) => {
 			return res.status(400).json({ ok: false, message: '올바른 이메일 주소를 입력해주세요.' });
 		}
 
+		// [C-6] 주문 소유권 확인: user_id 조건 추가로 타인 주문에 대한 세금계산서 요청 차단
 		const [[order]] = await db.execute(
-			`SELECT id, order_number FROM orders WHERE order_number = ? LIMIT 1`,
-			[orderNumber],
+			`SELECT id, order_number FROM orders WHERE order_number = ? AND user_id = ? LIMIT 1`,
+			[orderNumber, userId],
 		);
 
 		if (!order) {
