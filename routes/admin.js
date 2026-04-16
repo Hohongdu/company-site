@@ -1233,6 +1233,8 @@ router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();
+		// 체크박스 미선택 시 req.body에 키 자체가 없으므로 === 'on' 으로 판별
+		const wantEmail = req.body.sendEmail === 'on';
 
 		if (!inquiryId || !answerContent) {
 			return renderRouteError(req, res, 400, '답변 내용이 필요합니다.');
@@ -1254,12 +1256,20 @@ router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 		const recipientEmail = inquiry.user_email || inquiry.guest_email || null;
 		const recipientName = inquiry.user_name || inquiry.guest_name || null;
 
-		// 이메일 발송 시도
-		let notificationChannel = recipientEmail ? 'EMAIL' : 'NONE';
+		// 이메일 발송 여부 결정: 이메일 주소가 있고 관리자가 발송을 선택한 경우에만 발송
+		let notificationChannel = 'NONE';
 		let notificationStatus = 'SKIPPED';
-		let notificationError = recipientEmail ? null : '이메일 정보가 없습니다.';
+		let notificationError = null;
 
-		if (recipientEmail) {
+		if (!recipientEmail) {
+			notificationError = '이메일 정보가 없습니다.';
+		} else if (!wantEmail) {
+			// 관리자가 이메일 발송 체크박스를 해제한 경우
+			notificationChannel = 'NONE';
+			notificationStatus = 'SKIPPED';
+			notificationError = '관리자가 이메일 발송을 건너뜀';
+		} else {
+			notificationChannel = 'EMAIL';
 			const emailResult = await sendInquiryReplyEmail({
 				to: recipientEmail,
 				name: recipientName,
@@ -1290,6 +1300,7 @@ router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 		await logAdminAction(req, 'inquiry_reply', 'inquiry', inquiryId, true, {
 			notificationChannel,
 			notificationStatus,
+			emailRequested: wantEmail,
 		});
 
 		return res.redirect('/admin/inquiries');

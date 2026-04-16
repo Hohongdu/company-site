@@ -96,6 +96,23 @@
                                                 <textarea class="form-control" name="answerContent" rows="4" required
                                                     placeholder="답변 내용을 입력해주세요..."><%= inquiry.answer_content || '' %></textarea>
                                             </div>
+                                            <!-- 이메일 발송 여부 선택 -->
+                                            <% const replyEmail = inquiry.user_email || inquiry.guest_email || null; %>
+                                            <div class="admin-reply-email-row mb-3">
+                                                <% if (replyEmail) { %>
+                                                    <label class="admin-reply-email-label">
+                                                        <input type="checkbox" name="sendEmail" value="on" checked
+                                                               class="form-check-input me-2" id="sendEmail-<%= inquiry.id %>">
+                                                        <span>답변 내용을 이메일로 발송</span>
+                                                        <span class="admin-reply-email-addr"><%= replyEmail %></span>
+                                                    </label>
+                                                <% } else { %>
+                                                    <span class="admin-reply-no-email">
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                                        이메일 주소가 없어 발송 불가
+                                                    </span>
+                                                <% } %>
+                                            </div>
                                             <div class="d-flex align-items-center justify-content-end gap-2">
                                                 <button type="submit" class="btn btn-admin btn-sm">답변 저장</button>
                                             </div>
@@ -141,6 +158,48 @@
 .admin-inquiry-content-box--answered { border-left: 3px solid var(--accent); }
 .admin-inquiry-content-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
 .admin-inquiry-content-text { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+
+/* 이메일 발송 체크박스 행 */
+.admin-reply-email-row {
+    background: #f0f7ff;
+    border: 1px solid #c8e0ff;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+}
+.admin-reply-email-label {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: #1e40af;
+    user-select: none;
+}
+.admin-reply-email-label .form-check-input {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: #2563eb;
+}
+.admin-reply-email-addr {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563eb;
+    background: #dbeafe;
+    border-radius: 4px;
+    padding: 1px 7px;
+}
+.admin-reply-no-email {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #6b7280;
+    font-size: 12px;
+}
 </style>
 
 <%- include('partials/admin-footer') %>
