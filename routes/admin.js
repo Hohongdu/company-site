@@ -1266,7 +1266,12 @@ router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 				inquiryTitle: inquiry.title,
 				replyContent: answerContent,
 			});
-			notificationStatus = emailResult.status || (emailResult.ok ? 'SENT' : 'FAILED');
+			// [M-8] notification_status ENUM 범위 보호: 이메일 서비스가 'DISABLED' 등 유효하지 않은
+			// 상태를 반환할 경우 MySQL strict mode에서 ENUM 위반으로 500 오류 발생.
+			// ENUM('PENDING','SENT','FAILED','SKIPPED') 밖의 값은 모두 'SKIPPED'로 정규화.
+			const VALID_NOTIF_STATUSES = new Set(['PENDING', 'SENT', 'FAILED', 'SKIPPED']);
+			const rawStatus = emailResult.status || (emailResult.ok ? 'SENT' : 'FAILED');
+			notificationStatus = VALID_NOTIF_STATUSES.has(rawStatus) ? rawStatus : 'SKIPPED';
 			notificationError = emailResult.error || null;
 		}
 
