@@ -100,6 +100,52 @@ html, body {
   background: var(--c-bg-2);
   color: var(--c-navy);
 }
+/* 쇼핑몰 버튼 — 액센트 강조 */
+.site-nav__actions .nav-shop-btn {
+  position: relative;
+  color: var(--c-accent);
+}
+.site-nav__actions .nav-shop-btn:hover {
+  background: rgba(234,88,12,.1);
+  color: var(--c-accent);
+}
+/* 장바구니 수량 뱃지 (데스크탑) */
+.nav-cart-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+/* 쇼핑몰 링크 (모바일 드로어) */
+.mob-drawer__link--shop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--c-accent) !important;
+}
+.mob-drawer__cart-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
 
 /* Mobile hamburger */
 .site-nav__hamburger {

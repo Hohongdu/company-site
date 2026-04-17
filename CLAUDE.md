@@ -84,3 +84,20 @@ Optional: `PAPAGO_CLIENT_ID`, `PAPAGO_CLIENT_SECRET`
 ### Views
 
 EJS templates in `/views/`. Layouts and partials are in `/views/layouts/` and `/views/partials/`. The view engine root is set to `/views`.
+
+---
+
+## 작업 규칙 (Claude 준수 사항)
+
+### 기능 보존 원칙
+**구현된 기능은 명시적 요청 없이 삭제하지 않는다.**
+
+- 버그 수정·리팩터링 중에도 기존에 동작하던 기능(라우트, UI 요소, API, 서비스)을 제거하려면 반드시 사용자에게 먼저 확인해야 한다.
+- 커밋 메시지에 기능 제거가 포함될 경우 사전에 명시하고 승인을 받는다.
+- UI 개편 시 네비게이션 링크·버튼·메뉴 항목을 '정리'하는 행위도 동일하게 금지한다.
+- 위반 사례: `b5c885b` 커밋에서 쇼핑몰 아이콘/링크가 명시적 요청 없이 제거됨 → `company-top.ejs` 복원 필요.
+
+### 배포 스크립트 관리
+`deploy_lederberg.py`는 Pi(192.168.1.250)로 파일을 SFTP 업로드하는 배포 도구다.
+- 백엔드 파일(routes, services, controllers, lib)과 프론트엔드 파일(CSS, JS, EJS)은 반드시 **세트로** 배포 목록에 포함해야 한다.
+- 새 파일을 추가하거나 기존 파일을 수정한 경우 배포 목록을 업데이트한다.
