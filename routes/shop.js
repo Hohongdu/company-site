@@ -170,6 +170,8 @@ router.initializeSchema = async function initializeSchema() {
 	await ensureAddressTable();
 	await ensurePaymentMethodTable();
 	await ensureCouponTable();
+	// [P1] CANCEL_REQUESTED 값이 없는 구형 DB에서 주문취소 요청 시 SQL 오류 방지
+	await ensureOrderStatusEnum();
 };
 
 function generateOrderNumber() {

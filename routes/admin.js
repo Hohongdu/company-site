@@ -873,13 +873,14 @@ router.post('/products/import', upload.single('file'), async (req, res) => {
 					continue;
 				}
 
-				await db.execute(
+				const [insertResult] = await db.execute(
 					`INSERT INTO products (code, name, description, price, spec, image, category_id)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					[code, name, description, price, spec, image || null, categoryId],
 				);
-				// 새로 삽입된 code도 Map에 추가 (동일 파일 내 중복 code 처리)
-				if (code) existingProductMap.set(code, null);
+				// [P2] 삽입된 실제 ID를 Map에 저장: null 저장 시 동일 파일 내 같은 code가
+				// 다시 나타날 때 UPDATE WHERE id=NULL → 0 rows affected 되는 silent fail 방지
+				if (code) existingProductMap.set(code, insertResult.insertId);
 				successCount++;
 			} catch (e) {
 				failCount++;
