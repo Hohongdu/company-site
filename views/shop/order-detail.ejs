@@ -1,77 +1,115 @@
-<%- include('../layouts/shop-top', { title: '주문 상세' , active: '' }) %>
+<%- include('../layouts/shop-top', { title: '주문 상세', active: '' }) %>
 
-    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-            <h3 class="fw-bold mb-1">주문 상세</h3>
-            <div class="text-muted small">주문번호: <strong><%= order.order_number %></strong></div>
-            <div class="text-muted small">상태: <strong><%= order.status %></strong></div>
+<div class="shop-page">
+  <div class="container" style="max-width:900px;">
+
+    <!-- 헤더 -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div>
+        <a href="/shop/lookup" class="btn btn-sm btn-outline-secondary mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:-2px;margin-right:4px;">
+            <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          조회 목록
+        </a>
+        <h3 style="font-size:20px;font-weight:700;color:var(--c-text,#0f172a);margin:0;">주문 상세</h3>
+        <div style="font-size:13px;color:var(--c-muted,#64748b);margin-top:4px;">
+          주문번호: <strong style="color:var(--c-text)"><%= order.order_number %></strong>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a class="btn btn-sm btn-outline-secondary" href="/shop/products">상품 더 보기</a>
-            <a class="btn btn-sm btn-outline-dark" href="/shop/cart">장바구니</a>
-        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="/shop/products">상품 더 보기</a>
+        <a class="btn btn-sm btn-outline-dark" href="/shop/cart">장바구니</a>
+      </div>
     </div>
 
-    <% if (!items || items.length===0) { %>
-        <div class="alert alert-light border">주문 상품이 없습니다.</div>
-        <% } else { %>
-            <div class="row g-3">
-                <div class="col-12 col-lg-8">
-                    <div class="shop-card p-3">
-                        <h5 class="fw-bold mb-3">주문 상품</h5>
-                        <% items.forEach(it=> { %>
-                            <div class="d-flex gap-3 flex-wrap py-3 border-top">
-                                <div class="bg-light rounded-3" style="width:120px; height:90px; overflow:hidden;">
-                                    <img src="<%= it.product_image || 'https://via.placeholder.com/600x400?text=No+Image' %>"
-                                        alt="<%= it.product_name %>" style="width:100%; height:100%; object-fit:cover;">
-                                </div>
+    <!-- MED-B 수정: 주문 상태 뱃지 — PAID/CANCELED/FAILED/PAYING 포함한 전체 상태 한국어 매핑 -->
+    <%
+    // 주문 상태 → 한국어 레이블 + 색상 매핑
+    const statusMap = {
+      'PENDING':          { label: '결제 대기',   bg: '#fef9c3', color: '#a16207' },
+      'PAYING':           { label: '결제 중',     bg: '#e0f2fe', color: '#0369a1' },
+      'PAID':             { label: '결제 완료',   bg: '#dcfce7', color: '#15803d' },
+      'CANCEL_REQUESTED': { label: '취소 요청',   bg: '#fff7ed', color: '#c2410c' },
+      'CANCELED':         { label: '취소 완료',   bg: '#f1f5f9', color: '#475569' },
+      'FAILED':           { label: '결제 실패',   bg: '#fef2f2', color: '#b91c1c' },
+      'COMPLETED':        { label: '완료',         bg: '#dcfce7', color: '#15803d' },
+    };
+    const statusInfo = statusMap[order.status] || { label: order.status, bg: '#f1f5f9', color: '#475569' };
+    %>
+    <div style="background:#fff;border:1px solid var(--c-border,#e2e8f0);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;">
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--c-muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;">주문 상태</div>
+        <span style="display:inline-block;padding:4px 14px;border-radius:999px;font-size:13px;font-weight:700;
+          background:<%= statusInfo.bg %>; color:<%= statusInfo.color %>;">
+          <%= statusInfo.label %>
+        </span>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:var(--c-muted);margin-bottom:2px;">주문일</div>
+        <div style="font-size:14px;font-weight:600;color:var(--c-text)"><%= new Date(order.created_at).toLocaleDateString('ko-KR') %></div>
+      </div>
+    </div>
 
-                                <div class="flex-grow-1" style="min-width:220px;">
-                                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                                        <div>
-                                            <div class="fw-semibold">
-                                                <%= it.product_name %>
-                                            </div>
-                                            <div class="text-muted small">단가: <%= Number(it.unit_price || 0).toLocaleString()
-                                                    %>원 · 수량: <%= it.quantity %>
-                                            </div>
-                                            <% if (it.product_spec) { %>
-                                                <div class="text-muted small">규격: <%= it.product_spec %>
-                                                </div>
-                                                <% } %>
-                                        </div>
-                                        <div class="fw-bold">
-                                            <%= Number(it.total_price || 0).toLocaleString() %>원
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-2">
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                            href="/shop/products/<%= it.product_id %>">상품 상세</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <% }) %>
+    <% if (!items || items.length === 0) { %>
+      <div class="alert alert-light border" style="border-radius:12px;">주문 상품이 없습니다.</div>
+    <% } else { %>
+      <div class="row g-3">
+        <!-- 주문 상품 -->
+        <div class="col-12 col-lg-8">
+          <div style="background:#fff;border:1px solid var(--c-border,#e2e8f0);border-radius:12px;padding:24px;">
+            <h5 style="font-size:15px;font-weight:700;color:var(--c-text);margin-bottom:16px;">주문 상품</h5>
+            <% items.forEach((it, idx) => { %>
+              <div style="display:flex;gap:16px;padding:<%= idx > 0 ? '16px 0 0' : '0' %;border-top:<%= idx > 0 ? '1px solid var(--c-border,#e2e8f0)' : 'none' %>;">
+                <div style="width:80px;height:64px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--c-bg-2,#f8fafc);">
+                  <% if (it.product_image) { %>
+                    <img src="<%= it.product_image %>" alt="<%= it.product_name %>" style="width:100%;height:100%;object-fit:cover;">
+                  <% } else { %>
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#cbd5e1" stroke-width="1.5"/></svg>
                     </div>
+                  <% } %>
                 </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:14px;color:var(--c-text);margin-bottom:4px;"><%= it.product_name %></div>
+                  <div style="font-size:12px;color:var(--c-muted);">단가: <%= Number(it.unit_price || 0).toLocaleString() %>원 · 수량: <%= it.quantity %>개</div>
+                  <% if (it.product_spec) { %>
+                    <div style="font-size:12px;color:var(--c-muted);">규격: <%= it.product_spec %></div>
+                  <% } %>
+                  <div style="margin-top:8px;">
+                    <a class="btn btn-sm btn-outline-secondary" href="/shop/products/<%= it.product_id %>" style="font-size:12px;padding:3px 10px;">상품 상세</a>
+                  </div>
+                </div>
+                <div style="font-weight:700;font-size:15px;color:var(--c-accent,#ea580c);white-space:nowrap;"><%= Number(it.total_price || 0).toLocaleString() %>원</div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
 
-                <div class="col-12 col-lg-4">
-                    <div class="shop-card p-3">
-                        <h5 class="fw-bold mb-3">주문 요약</h5>
-                        <div class="d-flex justify-content-between text-muted">
-                            <span>총 금액</span><span>
-                                <%= Number(order.total_amount || 0).toLocaleString() %>원
-                            </span>
-                        </div>
-                        <div class="d-flex justify-content-between text-muted mt-1">
-                            <span>결제 상태</span><span>
-                                <%= payment?.status || '미결제' %>
-                            </span>
-                        </div>
-                        <button class="btn btn-primary w-100 mt-3" disabled>결제 완료</button>
-                    </div>
-                </div>
+        <!-- 주문 요약 -->
+        <div class="col-12 col-lg-4">
+          <div style="background:#fff;border:1px solid var(--c-border,#e2e8f0);border-radius:12px;padding:24px;position:sticky;top:80px;">
+            <h5 style="font-size:15px;font-weight:700;color:var(--c-text);margin-bottom:16px;">주문 요약</h5>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--c-muted);padding:8px 0;border-bottom:1px solid var(--c-border,#e2e8f0);">
+              <span>상품 합계</span>
+              <span><%= Number(order.total_amount || 0).toLocaleString() %>원</span>
             </div>
-            <% } %>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--c-muted);padding:8px 0;border-bottom:1px solid var(--c-border,#e2e8f0);">
+              <span>결제 상태</span>
+              <span style="color:<%= payment?.status === 'SUCCESS' ? '#15803d' : '#64748b' %>;font-weight:600;">
+                <%= payment?.status === 'SUCCESS' ? '결제 완료' : (payment?.status || '미결제') %>
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--c-text);padding:12px 0 0;">
+              <span>최종 결제금액</span>
+              <span style="color:var(--c-accent,#ea580c);"><%= Number(order.total_amount || 0).toLocaleString() %>원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
 
-                <%- include('../layouts/shop-bottom') %>
+  </div>
+</div>
+
+<%- include('../layouts/shop-bottom') %>

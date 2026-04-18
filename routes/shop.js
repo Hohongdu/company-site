@@ -9,6 +9,7 @@ const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('
 const kakaoPayService = require('../services/kakaopay.service');
 const { requireLogin } = require('../middleware/auth');
 const searchLogService = require('../services/search-log.service');
+const notificationService = require('../services/notification.service');
 
 const { isValidEmail } = require('../lib/validators');
 

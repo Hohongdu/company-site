@@ -78,11 +78,12 @@
 
 		const data = await response.json().catch(() => null);
 		if (!response.ok || !data?.ok) {
-			if (response.status >= 500 || response.status === 403 || response.status === 502) {
+			// 인증 실패(401/403)만 전체 번역 차단 — 502/5xx는 개별 텍스트 문제일 수 있으므로 계속 진행
+			if (response.status === 401 || response.status === 403) {
 				translationTemporarilyBlocked = true;
 				lastBlockingError = {
 					status: response.status,
-					message: data?.message || 'response not ok',
+					message: data?.message || 'auth error',
 				};
 			}
 			appendLog('translate failed', {
@@ -106,14 +107,78 @@
 		return fallback;
 	}
 
+	// h1 > em, h2 > br 같이 인라인 전용 자식만 있는 경우 통 번역 허용
+	const INLINE_TAGS = new Set(['EM','STRONG','SPAN','B','I','BR','A','MARK','SMALL','SUP','SUB','ABBR','CITE','WBR','S','U']);
+	function hasOnlyInlineChildren(el) {
+		return Array.from(el.children).every(ch => INLINE_TAGS.has(ch.tagName));
+	}
+
 	function autoTextCandidates() {
-		return Array.from(document.querySelectorAll('[data-i18n-auto]')).map((el) => {
+		// 1) 명시적으로 data-i18n-auto 태그된 요소
+		const tagged = Array.from(document.querySelectorAll('[data-i18n-auto]')).map((el) => {
 			const src = el.getAttribute('data-i18n-auto-ko') || el.textContent.trim();
 			if (src && !el.getAttribute('data-i18n-auto-ko')) {
 				el.setAttribute('data-i18n-auto-ko', src);
 			}
 			return { el, src };
 		});
+
+		// 2) <main> 내 정적 텍스트 요소 자동 감지 — 개별 뷰 파일 수정 없이 전 페이지 적용
+		const mainEl = document.querySelector('main');
+		if (!mainEl) return tagged;
+
+		const taggedSet = new Set(tagged.map((t) => t.el));
+		const autoScanned = [];
+
+		// 안전하게 번역 가능한 정적 요소 선택자 (동적 데이터 제외)
+		const STATIC_SELECTORS = [
+			// 헤딩 (인라인 자식 포함 허용)
+			'h1','h2','h3','h4','h5','h6',
+			// 공통 레이아웃
+			'.sec-label','.page-banner h1','.page-banner p',
+			'label','legend','th',
+			// 홈 hero 섹션
+			'.hero__eyebrow','.hero__sub','.hero__stat-label','.hero__badge-label',
+			// 홈 feature cards
+			'.feat-card__title','.feat-card__desc',
+			// 홈 partners / stats / why / faq
+			'.partners-label','.stat-label',
+			'.why-item__title','.why-item__desc',
+			'.accordion-button','.accordion-body',
+			// 홈 CTA / 공통 설명 텍스트
+			'.cta-label','.txt-muted',
+			// shop / account
+			'.card-title','.acct-card__title',
+			'.cart-summary-title','.sidebar-label',
+			// CTA 버튼 (a.btn, button.btn) — <main> 내 정적 텍스트 버튼 번역
+			'a.btn','button.btn',
+			// 연혁 타임라인
+			'.timeline-title','.timeline-desc',
+			// 공지사항 필터 버튼
+			'.notice-filter-btn',
+			// 문의 연락처 정보
+			'.contact-info-item__label','.contact-notice li',
+			// 브레드크럼
+			'.breadcrumb-item a','.breadcrumb-item.active',
+		].join(',');
+
+		mainEl.querySelectorAll(STATIC_SELECTORS).forEach((el) => {
+			// 이미 처리됐거나 data-i18n-auto 부모 아래에 있으면 스킵
+			if (taggedSet.has(el) || el.closest('[data-i18n-auto]')) return;
+			// 블록 자식이 있으면 동적 컨텐츠로 간주해 스킵 (인라인 전용은 허용)
+			if (el.children.length > 0 && !hasOnlyInlineChildren(el)) return;
+			// 인라인 자식이 있는 경우 innerHTML 원본 저장 (한국어 복원 시 <em>, <br> 등 유지)
+			if (el.children.length > 0 && !el.getAttribute('data-i18n-auto-html-ko')) {
+				el.setAttribute('data-i18n-auto-html-ko', el.innerHTML);
+			}
+			const src = el.getAttribute('data-i18n-auto-ko') || el.textContent.trim();
+			if (!src || src.length < 1) return;
+			if (!el.getAttribute('data-i18n-auto-ko')) el.setAttribute('data-i18n-auto-ko', src);
+			autoScanned.push({ el, src });
+		});
+
+		appendLog('autoScan', { tagged: tagged.length, scanned: autoScanned.length });
+		return [...tagged, ...autoScanned];
 	}
 
 	async function applyLanguage(lang) {
@@ -142,7 +207,10 @@
 				if (src) el.setAttribute('placeholder', src);
 			});
 			autoEls.forEach(({ el, src }) => {
-				if (src) el.textContent = src;
+				// 인라인 자식 있던 요소는 innerHTML 원본으로 복원 (em, br 등 스타일 유지)
+				const htmlKo = el.getAttribute('data-i18n-auto-html-ko');
+				if (htmlKo) el.innerHTML = htmlKo;
+				else if (src) el.textContent = src;
 			});
 			appendLog('apply done', { lang, count: textEls.length + htmlEls.length + placeholderEls.length + autoEls.length });
 			return;

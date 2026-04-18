@@ -411,4 +411,130 @@
 })();
 </script>
 
+<!-- ══════════════════════════════════════════
+   대량 주문 드로어 (Bulk SKU Order Sheet)
+══════════════════════════════════════════ -->
+<div class="app-sheet" id="bulkOrderSheet" role="dialog" aria-modal="true" aria-label="대량 주문">
+  <div class="app-sheet__handle" aria-hidden="true"></div>
+  <div class="app-sheet__head">
+    <h2 class="app-sheet__title" data-i18n-auto>📦 대량 주문</h2>
+    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="app-sheet__body" style="overflow-y:auto;">
+    <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#1e40af;line-height:1.6;">
+      <strong>💡 사용법</strong><br>
+      제품코드와 수량을 한 줄에 하나씩 입력하세요.<br>
+      구분자: 콤마(,) · 탭 · 2칸 이상 공백 모두 인식<br>
+      <code style="font-size:11px;">INS-A40-001, 10</code><br>
+      <code style="font-size:11px;">NOZ-Z12-003  5</code>
+    </div>
+
+    <div class="app-field" style="margin-bottom:16px;">
+      <label class="app-field__label" for="bulkSkuInput" data-i18n-auto>제품코드·수량 입력 (최대 100줄)</label>
+      <textarea class="app-field__input" id="bulkSkuInput"
+                rows="8" style="font-family:monospace;font-size:13px;resize:vertical;"
+                placeholder="INS-A40-001, 10&#10;NOZ-Z12-003  5&#10;LNR-HT200	3"></textarea>
+    </div>
+
+    <div id="bulkSheetResult" style="display:none;margin-bottom:16px;"></div>
+  </div>
+
+  <div class="app-sheet__footer">
+    <button class="app-btn app-btn--outline" style="flex:1;" type="button"
+            data-sheet-close data-i18n-auto>취소</button>
+    <button class="app-btn app-btn--primary" style="flex:2;" type="button"
+            id="bulkSubmitBtn" data-i18n-auto>장바구니에 추가</button>
+  </div>
+</div><!-- /bulkOrderSheet -->
+
+<script>
+(function () {
+  'use strict';
+  var submitBtn = document.getElementById('bulkSubmitBtn');
+  var resultEl  = document.getElementById('bulkSheetResult');
+  var csrf      = '<%= csrfToken %>';
+
+  function showResult(html, type) {
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<div class="app-alert app-alert--' + (type||'info') + '">' + html + '</div>';
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function () {
+      var raw = (document.getElementById('bulkSkuInput').value || '').trim();
+      if (!raw) {
+        showResult('제품코드와 수량을 입력해주세요.', 'warn');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '처리 중…';
+      resultEl.style.display = 'none';
+
+      fetch('/shop/cart/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify({ skuList: raw }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res.ok) {
+            var notFound = (res.results || []).filter(function (r) { return r.status === 'not_found'; });
+            var addedCnt = res.addedCount || 0;
+
+            /* ── 결과 HTML 조립 ── */
+            var html = '';
+            if (addedCnt > 0) {
+              html += '✅ <strong>' + addedCnt + '개 상품</strong>이 장바구니에 담겼습니다.';
+            }
+            if (notFound.length > 0) {
+              html += '<div style="margin-top:8px;padding:8px 10px;' +
+                'background:#fff7ed;border-radius:6px;border:1px solid #fed7aa;">' +
+                '<div style="font-size:12px;font-weight:600;color:#c2410c;margin-bottom:4px;">' +
+                '⚠️ 찾을 수 없는 코드 (' + notFound.length + '개) — 제품코드를 확인해주세요:</div>' +
+                '<div style="font-size:12px;font-family:monospace;color:#92400e;line-height:1.8;">';
+              notFound.forEach(function (r) { html += r.code + '<br>'; });
+              html += '</div></div>';
+            }
+
+            showResult(html, addedCnt > 0 ? 'success' : 'warn');
+            submitBtn.textContent = addedCnt > 0 ? ('추가 완료 (' + addedCnt + ')') : '장바구니에 추가';
+
+            if (addedCnt > 0) {
+              /* 장바구니 카운트 뱃지 갱신 */
+              if (typeof window.__updateCartCount === 'function') window.__updateCartCount();
+              /* not_found가 있으면 3.5초, 없으면 2초 후 닫기 */
+              var delay = notFound.length > 0 ? 3500 : 2000;
+              setTimeout(function () {
+                window.AppSheet && window.AppSheet.close('bulkOrderSheet', 'appSheetOverlay');
+                resultEl.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '장바구니에 추가';
+                location.reload();
+              }, delay);
+            } else {
+              /* 전체 실패 — 자동 닫힘 없이 사용자가 코드 수정하도록 유지 */
+              submitBtn.disabled = false;
+            }
+          } else {
+            showResult('⚠️ ' + (res.message || '처리 중 오류가 발생했습니다.'), 'warn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '장바구니에 추가';
+          }
+        })
+        .catch(function () {
+          showResult('⚠️ 네트워크 오류. 다시 시도해주세요.', 'warn');
+          submitBtn.disabled = false;
+          submitBtn.textContent = '장바구니에 추가';
+        });
+    });
+  }
+})();
+</script>
+
 <%- include('../layouts/shop-bottom') %>

@@ -297,8 +297,7 @@
   // 테마 표시
   const themeLabel = document.getElementById('themeLabel');
   if (themeLabel) {
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    themeLabel.textContent = isDark ? '어두운 테마 (시스템)' : '밝은 테마 (시스템)';
+    themeLabel.textContent = '밝은 테마';
   }
 
   // 번역 캐시 초기화

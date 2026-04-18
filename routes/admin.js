@@ -231,6 +231,8 @@ router.get('/dashboard', async (req, res) => {
 		const [[categoryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM categories');
 		const [[orderCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM orders');
 		const [[inquiryCnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM inquiries');
+		const [[pendingInqCnt]] = await db.execute("SELECT COUNT(*) AS cnt FROM inquiries WHERE answer_content IS NULL OR answer_content = ''");
+		const [[thisMonthRev]] = await db.execute("SELECT COALESCE(SUM(total_amount),0) AS revenue FROM orders WHERE DATE_FORMAT(created_at,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')");
 
 		const [recentOrders] = await db.execute(
 			`SELECT o.order_number, o.status, o.total_amount, o.created_at,
@@ -333,6 +335,8 @@ router.get('/dashboard', async (req, res) => {
 				totalCategories: categoryCnt.cnt,
 				totalOrders: orderCnt.cnt,
 				totalInquiries: inquiryCnt.cnt,
+				pendingInquiries: pendingInqCnt.cnt,
+				thisMonthRevenue: thisMonthRev.revenue,
 			},
 			sys: {
 				load1: load[0],
@@ -644,7 +648,8 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, r
 /* =========================
    상품 삭제 (장바구니 정리 포함)
 ========================= */
-router.post('/products/:id/delete', async (req, res) => {
+// CRIT-6: csrfProtection 추가 — CSRF 공격으로 상품 무단 삭제 방지
+router.post('/products/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 
@@ -909,13 +914,19 @@ router.post('/products/import', upload.single('file'), async (req, res) => {
 		await fs.unlink(req.file.path).catch(() => {});
 
 		// 4) upload_histories 업데이트
-		const status = failCount > 0 ? (successCount > 0 ? 'FAILED' : 'FAILED') : 'SUCCESS';
+		// LOW 수정: 삼중 조건 오류 수정 — 부분 성공은 'PARTIAL', 전체 실패는 'FAILED', 전체 성공은 'SUCCESS'
+		const status = failCount === 0 ? 'SUCCESS' : successCount > 0 ? 'PARTIAL' : 'FAILED';
 		await db.execute(`UPDATE upload_histories SET status=?, success_count=?, fail_count=? WHERE id=?`, [status, successCount, failCount, uploadId]);
 
 		// 5) 같은 페이지로 돌아가서 알림 표시
 		return res.redirect(`/admin/products/import?ok=1&uploadId=${uploadId}&success=${successCount}&fail=${failCount}`);
 	} catch (err) {
-		console.error(err);
+		console.error('[상품 임포트]', err);
+
+		// LOW 수정: 에러 시에도 temp 파일 삭제 (파일 누적 방지)
+		if (req.file?.path) {
+			await fs.unlink(req.file.path).catch(() => {});
+		}
 
 		// 실패 시에도 히스토리 업데이트(가능하면)
 		if (uploadId) {
@@ -1312,11 +1323,39 @@ router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 });
 
 
-// =============================================
-// 검색 통계
-// =============================================
+// ─── 방문 로그 ────────────────────────────────────────────
+router.get('/visit-logs', requireAdmin, async (req, res) => {
+	try {
+		const page = Math.max(1, Number(req.query.page) || 1);
+		const limit = 50;
+		const offset = (page - 1) * limit;
 
-// 페이지 뷰
+		const [[{ total }]] = await db.execute('SELECT COUNT(*) AS total FROM visit_logs');
+		const [logs] = await db.execute(
+			'SELECT * FROM visit_logs ORDER BY visited_at DESC LIMIT ? OFFSET ?',
+			[limit, offset],
+		);
+
+		// 첫 진입 페이지 집계
+		const [topPages] = await db.execute(
+			`SELECT first_path, COUNT(*) AS cnt FROM visit_logs
+       GROUP BY first_path ORDER BY cnt DESC LIMIT 10`,
+		);
+
+		res.render('admin/visit-logs', {
+			title: '방문 로그', active: 'visit-logs',
+			logs, topPages, total, page, limit, user: req.session.user,
+		});
+	} catch (err) {
+		console.error('[visit-logs]', err);
+		res.render('admin/visit-logs', {
+			title: '방문 로그', active: 'visit-logs',
+			logs: [], topPages: [], total: 0, page: 1, limit: 50, user: req.session.user,
+		});
+	}
+});
+
+// ─── 검색어 통계 ────────────────────────────────────────────
 router.get('/search-stats', requireAdmin, async (req, res) => {
 	try {
 		const days = Number(req.query.days || 30);
@@ -1451,6 +1490,33 @@ router.post('/tax-invoices/:id/status', requireAdmin, csrfProtection, async (req
 // 이메일 드라이버 테스트
 // =============================================
 
+		const wb = xlsx.utils.book_new();
+
+		const topSheet = xlsx.utils.aoa_to_sheet(
+			[['검색어', '검색 횟수', '평균 결과수']].concat(
+				topKw.map(r => [r.keyword, r.search_count, Math.round(r.avg_results)]),
+			),
+		);
+		xlsx.utils.book_append_sheet(wb, topSheet, '인기검색어');
+
+		const noHitSheet = xlsx.utils.aoa_to_sheet(
+			[['무결과 검색어', '검색 횟수']].concat(
+				noHit.map(r => [r.keyword, r.search_count]),
+			),
+		);
+		xlsx.utils.book_append_sheet(wb, noHitSheet, '무결과키워드');
+
+		const buf = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+		res.setHeader('Content-Disposition', `attachment; filename="search-stats-${Date.now()}.xlsx"`);
+		res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		res.send(buf);
+	} catch (err) {
+		console.error('[search-stats export]', err);
+		res.status(500).send('내보내기 오류가 발생했습니다.');
+	}
+});
+
+// ─── 이메일 드라이버 테스트 ─────────────────────────────────
 router.post('/test-email', requireAdmin, async (req, res) => {
 	const adminEmail =
 		process.env.ADMIN_EMAIL ||

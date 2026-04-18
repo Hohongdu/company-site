@@ -13,6 +13,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/company.css" />
+  <!-- favicon 없음으로 인한 404 콘솔 오류 방지 -->
+  <link rel="icon" href="data:,">
 </head>
 <body>
 
@@ -84,7 +86,7 @@
             </a>
           <% } %>
         <% } else { %>
-          <button class="btn btn-primary btn-sm js-open-login" type="button">로그인</button>
+          <button class="btn btn-primary btn-sm js-open-login" type="button" data-i18n-auto>로그인</button>
         <% } %>
       </div>
 
@@ -120,16 +122,16 @@
         </div>
       </div>
       <div class="mob-drawer__auth-btns">
-        <a class="mob-drawer__btn-outline" href="/account">내 계정</a>
+        <a class="mob-drawer__btn-outline" href="/account" data-i18n-auto>내 계정</a>
         <% if (user && user.is_admin) { %>
-          <a class="mob-drawer__btn-admin" href="/admin/dashboard">관리자</a>
+          <a class="mob-drawer__btn-admin" href="/admin/dashboard" data-i18n-auto>관리자</a>
         <% } %>
-        <a class="mob-drawer__btn-dark" href="/auth/logout">로그아웃</a>
+        <a class="mob-drawer__btn-dark" href="/auth/logout" data-i18n-auto>로그아웃</a>
       </div>
     <% } else { %>
       <div class="mob-drawer__auth-btns">
-        <button class="mob-drawer__btn-primary flex-fill js-open-login" type="button">로그인</button>
-        <a class="mob-drawer__btn-outline flex-fill" href="/auth/register">회원가입</a>
+        <button class="mob-drawer__btn-primary flex-fill js-open-login" type="button" data-i18n-auto>로그인</button>
+        <a class="mob-drawer__btn-outline flex-fill" href="/auth/register" data-i18n-auto>회원가입</a>
       </div>
     <% } %>
   </div>
@@ -179,7 +181,7 @@
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box" role="dialog" aria-modal="true" aria-label="로그인">
     <div class="login-box__head">
-      <h2>로그인</h2>
+      <h2 data-i18n-auto>로그인</h2>
       <button class="login-box__close" id="loginClose" aria-label="닫기" type="button">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -187,27 +189,27 @@
       </button>
     </div>
     <div class="login-box__body">
-      <p class="login-box__sub">계정으로 로그인하여 더 많은 서비스를 이용하세요</p>
+      <p class="login-box__sub" data-i18n-auto>계정으로 로그인하여 더 많은 서비스를 이용하세요</p>
       <form method="post" action="/auth/login">
         <input type="hidden" name="_csrf" value="<%= csrfTokenValue %>">
         <input type="hidden" name="returnTo" value="<%= returnTo %>">
         <div class="mb-3">
-          <label class="form-label" for="modal-email">이메일</label>
+          <label class="form-label" for="modal-email" data-i18n-auto>이메일</label>
           <input class="form-control" type="email" id="modal-email" name="email" placeholder="example@company.com" autocomplete="email" required>
         </div>
         <div class="mb-2">
-          <label class="form-label" for="modal-pw">비밀번호</label>
+          <label class="form-label" for="modal-pw" data-i18n-auto>비밀번호</label>
           <input class="form-control" type="password" id="modal-pw" name="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
         </div>
         <div class="d-flex justify-content-end mb-3">
-          <a href="/auth/forgot" class="txt-accent" style="font-size:13px;font-weight:600;">비밀번호 찾기</a>
+          <a href="/auth/forgot" class="txt-accent" style="font-size:13px;font-weight:600;" data-i18n-auto>비밀번호 찾기</a>
         </div>
-        <button class="btn btn-dark w-100 mb-2" type="submit">로그인</button>
-        <a class="btn btn-outline-secondary w-100 btn-sm" href="/shop/orders/guest">비회원 주문 조회</a>
+        <button class="btn btn-dark w-100 mb-2" type="submit" data-i18n-auto>로그인</button>
+        <a class="btn btn-outline-secondary w-100 btn-sm" href="/shop/orders/guest" data-i18n-auto>비회원 주문 조회</a>
       </form>
       <hr class="my-3">
       <p style="text-align:center;font-size:13px;color:var(--c-muted);margin:0;">
-        아직 회원이 아니신가요? <a href="/auth/register" style="font-weight:700;color:var(--c-accent);">회원가입 →</a>
+        아직 회원이 아니신가요? <a href="/auth/register" style="font-weight:700;color:var(--c-accent);" data-i18n-auto>회원가입</a> →
       </p>
     </div>
   </div>

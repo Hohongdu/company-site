@@ -100,7 +100,9 @@ exports.translate = async (req, res) => {
 				diagnostics: err.diagnostics || null,
 				durationMs: Date.now() - startedAt,
 			});
-			return res.status(err.response.status || 502).json({
+			// err.status는 서비스가 래핑한 502, err.response.status는 원본(404 등)
+			// 클라이언트에게는 서비스 래핑 상태코드(502)를 반환해야 차단 로직이 동작함
+			return res.status(err.status || 502).json({
 				ok: false,
 				requestId,
 				message: err.message || 'Papago API 호출 중 오류가 발생했습니다.',

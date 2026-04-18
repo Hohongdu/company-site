@@ -15,7 +15,7 @@
   position: sticky;
   top: 0;
   z-index: 1040;
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .shop-header__inner {
@@ -393,7 +393,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
    SHOP FOOTER
 ══════════════════════════════════════ */
 .shop-footer {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   border-top: 1px solid rgba(255,255,255,.07);
   padding: 20px 0;
   margin-top: auto;
@@ -421,11 +421,19 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .shop-main { min-height: calc(100vh - 62px - 57px); }
 .shop-page { padding: 32px 0 64px; }
 
+/* Generic shop card — lookup, payment result, inquiry pages */
+.shop-card {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
 /* ══════════════════════════════════════
    SHOP HOMEPAGE HERO
 ══════════════════════════════════════ */
 .shop-hero {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   padding: 72px 0 56px;
   position: relative;
   overflow: hidden;
@@ -487,7 +495,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   padding: 6px 16px;
   border-radius: var(--r-2xl);
   border: 1.5px solid var(--c-border);
-  background: #fff;
+  background: var(--c-bg);
   font-family: var(--font-head);
   font-size: 13px;
   font-weight: 600;
@@ -509,7 +517,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   gap: 20px;
 }
 .product-card {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   overflow: hidden;
@@ -675,7 +683,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   top: 90px;
 }
 .sidebar-card {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   padding: 22px;
@@ -755,7 +763,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 /* Cart summary */
 .cart-summary {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   padding: 28px;
@@ -833,7 +841,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   padding: 48px 16px;
 }
 .payment-result__card {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   padding: 48px 36px;
@@ -855,7 +863,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
    ACCOUNT PAGES
 ══════════════════════════════════════ */
 .shop-account-sidebar {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   overflow: hidden;
@@ -863,7 +871,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
   top: 90px;
 }
 .shop-account-sidebar__head {
-  background: var(--c-navy);
+  background: var(--c-bg-navy);
   padding: 24px;
 }
 .shop-account-sidebar__name {
@@ -902,7 +910,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
    INQUIRY FORM
 ══════════════════════════════════════ */
 .inquiry-card {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r-xl);
   padding: 32px;
@@ -954,7 +962,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 /* Sidebar */
 .acct-sidebar {
-  background: #fff;
+  background: var(--c-bg);
   border: 1px solid var(--c-border, #e4e4e7);
   border-radius: 16px;
   overflow: hidden;
@@ -1006,13 +1014,23 @@ html, body { overflow-x: hidden; max-width: 100%; }
   gap: 2px;
 }
 
+.acct-nav-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  padding: 6px 14px 2px;
+  margin-top: 4px;
+}
+
 .acct-nav-link {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
   border-radius: 10px;
-  color: #3f3f46;
+  color: var(--c-text-2);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -1041,8 +1059,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 
 .acct-card {
-  background: #fff;
-  border: 1px solid #e4e4e7;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
   border-radius: 16px;
   padding: 28px;
 }
@@ -1055,20 +1073,20 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .acct-card__head {
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f2;
+  border-bottom: 1px solid var(--c-border);
 }
 
 .acct-card__title {
   font-family: 'Sora', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--c-text);
   margin: 0 0 4px;
 }
 
 .acct-card__desc {
   font-size: 13px;
-  color: #71717a;
+  color: var(--c-muted);
   margin: 0;
 }
 
@@ -1085,20 +1103,20 @@ html, body { overflow-x: hidden; max-width: 100%; }
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--c-border);
   border-radius: 10px;
-  background: #f8f8f8;
+  background: var(--c-bg-2);
 }
 
 .acct-addr-label {
   font-weight: 700;
   font-size: 14px;
-  color: #0f172a;
+  color: var(--c-text);
 }
 
 .acct-addr-detail {
   font-size: 12px;
-  color: #71717a;
+  color: var(--c-muted);
   margin-top: 2px;
 }
 
@@ -1155,7 +1173,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 
 .acct-inquiry-item {
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--c-border);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -1166,19 +1184,54 @@ html, body { overflow-x: hidden; max-width: 100%; }
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  background: #f8f8f8;
-  border-bottom: 1px solid #e4e4e7;
+  background: var(--c-bg-2);
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* 아코디언 트리거 버튼 */
+.acct-accordion-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  background: var(--c-bg-2);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.acct-accordion-trigger:hover { background: var(--c-bg-3); }
+.acct-accordion-trigger__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.acct-accordion-chevron {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+.acct-accordion-trigger.is-open .acct-accordion-chevron {
+  transform: rotate(180deg);
+}
+.acct-accordion-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-bg);
 }
 
 .acct-inquiry-title {
   font-weight: 700;
   font-size: 14px;
-  color: #0f172a;
+  color: var(--c-text);
 }
 
 .acct-inquiry-date {
   font-size: 12px;
-  color: #71717a;
+  color: var(--c-muted);
   margin-top: 3px;
 }
 
@@ -1203,7 +1256,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 .acct-inquiry-text {
   font-size: 14px;
-  color: #3f3f46;
+  color: var(--c-text-2);
   white-space: pre-wrap;
   line-height: 1.6;
 }
@@ -1277,18 +1330,18 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 /* Table styling in account */
 .acct-card .table thead th {
-  background: #f8f8f8;
+  background: var(--c-bg-2);
   font-size: 12px;
   font-weight: 700;
-  color: #71717a;
+  color: var(--c-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 2px solid #e4e4e7;
+  border-bottom: 2px solid var(--c-border);
   white-space: nowrap;
 }
 
 .acct-card .table tbody tr:hover {
-  background: #fff7ed;
+  background: var(--c-accent-lt);
 }
 
 /* Responsive */

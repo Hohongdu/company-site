@@ -161,6 +161,11 @@
             <div class="app-product-card__price">
               <%= Number(p.price || 0).toLocaleString() %><span>원</span>
             </div>
+            <% if (p.stock_quantity != null && p.stock_quantity > 0) { %>
+              <span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:#d4edda;color:#155724;">⚡ 즉시출고</span>
+            <% } else if (p.stock_quantity === 0) { %>
+              <span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:#fff3cd;color:#856404;">🏭 제작 2주</span>
+            <% } %>
           </div>
 
           <!-- 액션 버튼 -->

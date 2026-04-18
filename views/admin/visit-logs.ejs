@@ -1,0 +1,96 @@
+<%- include('partials/admin-header', { title: '방문 로그', subtitle: '첫 진입 페이지 분석', active: 'visit-logs', user }) %>
+
+<div class="row g-3 mb-4">
+  <!-- 인기 첫 진입 페이지 -->
+  <div class="col-12 col-md-5">
+    <div class="dash-card h-100">
+      <div class="dash-card__head">
+        <h6 class="dash-card__title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" style="display:inline;vertical-align:-2px;margin-right:5px;"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
+          첫 진입 페이지 TOP 10
+        </h6>
+      </div>
+      <% if (!topPages || topPages.length === 0) { %>
+        <div style="padding:24px;text-align:center;color:#94a3b8;font-size:14px;">데이터 없음</div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>페이지</th><th style="text-align:right;width:60px;">방문</th></tr></thead>
+            <tbody>
+              <% topPages.forEach(p => { %>
+                <tr>
+                  <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= p.first_path %>"><%= p.first_path %></td>
+                  <td style="text-align:right;font-weight:700;color:#ea580c;"><%= p.cnt %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- 통계 요약 -->
+  <div class="col-12 col-md-7">
+    <div class="kpi-row mb-3" style="grid-template-columns:repeat(2,1fr);">
+      <div class="kpi-card kpi-card--blue">
+        <div class="kpi-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="kpi-card__body"><div class="kpi-card__value"><%= total.toLocaleString() %></div><div class="kpi-card__label">총 방문 세션</div></div>
+      </div>
+      <div class="kpi-card kpi-card--green">
+        <div class="kpi-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div class="kpi-card__body"><div class="kpi-card__value"><%= logs.filter(l=>l.is_member).length %></div><div class="kpi-card__label">회원 방문 (현 페이지)</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 로그 테이블 -->
+<div class="dash-card">
+  <div class="dash-card__head">
+    <h6 class="dash-card__title">상세 방문 로그</h6>
+    <span style="font-size:12px;color:#94a3b8;">총 <%= total.toLocaleString() %>건</span>
+  </div>
+  <% if (!logs || logs.length === 0) { %>
+    <div style="padding:32px;text-align:center;color:#94a3b8;font-size:14px;">아직 방문 로그가 없습니다.</div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead style="background:var(--admin-bg,#f8fafc);">
+          <tr>
+            <th>첫 진입 페이지</th>
+            <th>유입 경로(Referrer)</th>
+            <th>회원 여부</th>
+            <th>방문 시각</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% logs.forEach(log => { %>
+            <tr>
+              <td style="font-size:12px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= log.first_path %>"><%= log.first_path %></td>
+              <td style="font-size:11px;color:#94a3b8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= log.referrer || '-' %>"><%= log.referrer || '-' %></td>
+              <td>
+                <span style="font-size:11px;padding:2px 8px;border-radius:99px;background:<%= log.is_member ? '#dcfce7' : '#f1f5f9' %>;color:<%= log.is_member ? '#15803d' : '#64748b' %>;">
+                  <%= log.is_member ? '회원' : '비회원' %>
+                </span>
+              </td>
+              <td style="font-size:12px;color:#94a3b8;white-space:nowrap;"><%= new Date(log.visited_at).toLocaleString('ko-KR') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <% if (total > limit) { %>
+      <div style="display:flex;justify-content:center;gap:6px;padding:16px 0 4px;">
+        <% const totalPages = Math.ceil(total / limit); %>
+        <% for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) { %>
+          <a href="?page=<%= p %>" class="btn btn-sm <%= p === page ? 'btn-primary' : 'btn-outline-secondary' %>" style="min-width:36px;"><%= p %></a>
+        <% } %>
+      </div>
+    <% } %>
+  <% } %>
+</div>
+
+<%- include('partials/admin-footer') %>
