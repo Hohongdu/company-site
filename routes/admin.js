@@ -1487,8 +1487,11 @@ router.post('/tax-invoices/:id/status', requireAdmin, csrfProtection, async (req
 	}
 });
 
-// 이메일 드라이버 테스트
-// =============================================
+router.get('/search-stats/export', requireAdmin, async (req, res) => {
+	try {
+		const days = Number(req.query.days || 365);
+		const topKw = await searchLogService.getTopKeywords({ days, limit: 1000 });
+		const noHit = await searchLogService.getNoHitKeywords({ days, limit: 1000 });
 
 		const wb = xlsx.utils.book_new();
 
