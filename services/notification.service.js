@@ -221,20 +221,29 @@ exports.sendRfqToAdmin = async (payload) => {
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
 	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
 
+	// [M-7] 사용자 입력 HTML 이스케이프: 관리자 이메일 내 HTML injection 방지
+	const safeName     = escapeHtml(contactName);
+	const safeEmail    = escapeHtml(contactEmail);
+	const safeCompany  = escapeHtml(companyName  || '(미입력)');
+	const safeProduct  = escapeHtml(productName  || '(미입력)');
+	const safePrice    = escapeHtml(targetPrice  || '협의');
+	const safeDelivery = escapeHtml(deliveryDate || '협의');
+	const safeMessage  = message ? escapeHtml(message).replace(/\n/g, '<br>') : null;
+
 	const html = wrapHtml(
 		'새 견적 요청이 접수되었습니다',
 		`<p>새로운 견적 요청이 웹사이트를 통해 접수되었습니다.</p>
 		<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;">
-			<tr><td style="padding:8px 0;color:#666;width:100px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${contactName}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${contactEmail}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${companyName || '(미입력)'}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${productName || '(미입력)'}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;width:100px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeName}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeEmail}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeCompany}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeProduct}</td></tr>
 			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">수량</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${quantity}개</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">목표 단가</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${targetPrice || '협의'}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">희망 납기</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${deliveryDate || '협의'}</td></tr>
-			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${id}</td></tr>` : ''}
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">목표 단가</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safePrice}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">희망 납기</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeDelivery}</td></tr>
+			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${Number(id)}</td></tr>` : ''}
 		</table>
-		${message ? `<p style="color:#444;font-size:14px;margin-top:8px;font-weight:600;">요청사항:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${message.replace(/\n/g, '<br>')}</div>` : ''}
+		${safeMessage ? `<p style="color:#444;font-size:14px;margin-top:8px;font-weight:600;">요청사항:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${safeMessage}</div>` : ''}
 		<p style="margin-top:20px;">
 			<a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/inquiries"
 			   style="background:#3b5bdb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
@@ -243,7 +252,7 @@ exports.sendRfqToAdmin = async (payload) => {
 		</p>`,
 	);
 
-	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 견적요청: ${contactName}님`, html });
+	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 견적요청: ${safeName}님`, html });
 };
 
 // ── 7. 샘플 요청 → 관리자 알림 ────────────────────────
@@ -260,20 +269,28 @@ exports.sendSampleRequestToAdmin = async (payload) => {
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
 	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
 
+	// [M-7] 사용자 입력 HTML 이스케이프: 관리자 이메일 내 HTML injection 방지
+	const safeName        = escapeHtml(contactName);
+	const safeEmail       = escapeHtml(contactEmail);
+	const safeCompany     = escapeHtml(companyName   || '(미입력)');
+	const safeProduct     = escapeHtml(productName   || '(미입력)');
+	const safeApplication = escapeHtml(application   || '(미입력)');
+	const safeCondition   = testCondition ? escapeHtml(testCondition) : null;
+
 	const html = wrapHtml(
 		'새 샘플 요청이 접수되었습니다',
 		`<p>새로운 샘플 요청이 웹사이트를 통해 접수되었습니다.</p>
 		<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;">
-			<tr><td style="padding:8px 0;color:#666;width:120px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${contactName}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${contactEmail}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${companyName || '(미입력)'}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${productName || '(미입력)'}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;width:120px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeName}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeEmail}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeCompany}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeProduct}</td></tr>
 			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">샘플 수량</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${quantity}개</td></tr>
-			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${id}</td></tr>` : ''}
+			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${Number(id)}</td></tr>` : ''}
 		</table>
 		<p style="color:#444;font-size:14px;margin-top:8px;font-weight:600;">적용 장비/용도:</p>
-		<div style="background:#fff3cd;border-left:4px solid #ffc107;padding:8px 16px;border-radius:4px;margin:8px 0;font-size:14px;line-height:1.7;">${application || '(미입력)'}</div>
-		${testCondition ? `<p style="color:#444;font-size:14px;margin-top:12px;font-weight:600;">시험 조건:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${testCondition}</div>` : ''}
+		<div style="background:#fff3cd;border-left:4px solid #ffc107;padding:8px 16px;border-radius:4px;margin:8px 0;font-size:14px;line-height:1.7;">${safeApplication}</div>
+		${safeCondition ? `<p style="color:#444;font-size:14px;margin-top:12px;font-weight:600;">시험 조건:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${safeCondition}</div>` : ''}
 		<p style="margin-top:20px;">
 			<a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/inquiries"
 			   style="background:#198754;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
@@ -282,5 +299,5 @@ exports.sendSampleRequestToAdmin = async (payload) => {
 		</p>`,
 	);
 
-	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 샘플요청: ${contactName}님`, html });
+	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 샘플요청: ${safeName}님`, html });
 };

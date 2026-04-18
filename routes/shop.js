@@ -883,24 +883,44 @@ router.post('/checkout/bank', async (req, res) => {
 	}
 });
 
-router.get('/checkout/bank/complete', requireLogin, async (req, res) => {
+router.get('/checkout/bank/complete', async (req, res) => {
 	try {
-		const userId = req.session.user.id;
 		const orderNumber = String(req.query.order || '').trim();
 		if (!orderNumber) {
 			return renderShopError(req, res, '주문 정보가 없습니다.', 400, '/shop/cart');
 		}
 
-		// [C-6] 주문 소유권 확인: user_id 조건으로 타인 주문 열람(IDOR) 차단
-		const [[order]] = await db.execute(
-			`SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at,
-			        op.status AS payment_status
-			 FROM orders o
-			 LEFT JOIN order_payments op ON op.order_id = o.id AND op.provider = 'BANK_TRANSFER'
-			 WHERE o.order_number = ? AND o.user_id = ?
-			 LIMIT 1`,
-			[orderNumber, userId],
-		);
+		let order;
+		if (req.session.user) {
+			// [C-6] 로그인 사용자: user_id 소유권 확인
+			const [[row]] = await db.execute(
+				`SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at,
+				        op.status AS payment_status
+				 FROM orders o
+				 LEFT JOIN order_payments op ON op.order_id = o.id AND op.provider = 'BANK_TRANSFER'
+				 WHERE o.order_number = ? AND o.user_id = ?
+				 LIMIT 1`,
+				[orderNumber, req.session.user.id],
+			);
+			order = row;
+		} else {
+			// [C-6] 비회원: 세션 bankOrder로 본인 주문만 열람 허용 (IDOR 방지)
+			// requireLogin을 제거하되 세션 검증으로 소유권을 동등하게 보장
+			const sessionOrder = req.session.bankOrder;
+			if (!sessionOrder || sessionOrder.orderNumber !== orderNumber) {
+				return renderShopError(req, res, '주문을 찾을 수 없습니다.', 404, '/shop/cart');
+			}
+			const [[row]] = await db.execute(
+				`SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at,
+				        op.status AS payment_status
+				 FROM orders o
+				 LEFT JOIN order_payments op ON op.order_id = o.id AND op.provider = 'BANK_TRANSFER'
+				 WHERE o.order_number = ? AND o.user_id IS NULL
+				 LIMIT 1`,
+				[orderNumber],
+			);
+			order = row;
+		}
 
 		if (!order) {
 			return renderShopError(req, res, '주문을 찾을 수 없습니다.', 404, '/shop/cart');
@@ -1525,8 +1545,8 @@ router.post('/cart/bulk', async (req, res) => {
 			} else {
 				const guestCart = getGuestCart(req);
 				const prev = Number(guestCart.items[product.id] || 0);
+				// getGuestCart()가 req.session.guestCart 참조를 반환하므로 직접 변경 반영됨
 				guestCart.items[product.id] = Math.min(999, prev + quantity);
-				req.session.cart = guestCart;
 			}
 
 			results.push({ code, name: product.name, quantity, price: product.price, status: 'added' });
