@@ -26,6 +26,18 @@ const kakaoCheckoutLimiter = rateLimit({
 	message: { ok: false, message: '잠시 후 다시 시도해 주세요.' },
 });
 
+// [HIGH-5] 계좌이체 결제 시작 rate limiter: IP당 1분 5회 — 유령 주문 남발 방지
+const bankCheckoutLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: 5,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		req.session.cartError = '잠시 후 다시 시도해 주세요.';
+		return res.redirect('/shop/cart');
+	},
+});
+
 // [MED-1] 비회원 주문조회 브루트포스 방지: 1시간 내 IP당 10회 초과 시 차단
 // 주문번호 열거 공격으로 고객 PII 노출 방지
 const guestOrderLookupLimiter = rateLimit({
@@ -842,7 +854,7 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 // ══════════════════════════════════════════
 // 계좌 입금 결제
 // ══════════════════════════════════════════
-router.post('/checkout/bank', async (req, res) => {
+router.post('/checkout/bank', bankCheckoutLimiter, async (req, res) => {
 	try {
 		const isGuest = !req.session.user;
 		const guestName = isGuest ? String(req.body.guestName || '').trim() : null;
@@ -1564,7 +1576,7 @@ router.post('/cart/bulk', async (req, res) => {
 // 샘플 요청·평가 플로우 — 상품상세에서 호출
 // POST /shop/inquiries/sample
 // ══════════════════════════════════════════
-router.post('/inquiries/sample', async (req, res) => {
+router.post('/inquiries/sample', shopInquiryLimiter, async (req, res) => {
 	try {
 		const productId    = Number(req.body.productId    || 0) || null;
 		const quantity     = Math.max(1, Math.min(5, Number(req.body.quantity || 1)));
@@ -1621,7 +1633,7 @@ router.post('/inquiries/sample', async (req, res) => {
 // ══════════════════════════════════════════
 // RFQ (견적 요청 빌더) — 상품상세·장바구니에서 호출
 // ══════════════════════════════════════════
-router.post('/inquiries/rfq', async (req, res) => {
+router.post('/inquiries/rfq', shopInquiryLimiter, async (req, res) => {
 	try {
 		const productId   = Number(req.body.productId  || 0) || null;
 		const quantity    = Math.max(1, Math.min(9999, Number(req.body.quantity    || 1)));
