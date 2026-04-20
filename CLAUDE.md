@@ -315,9 +315,20 @@ As of the latest update:
 
 ## Required Result Report Format
 
-For each completed task, report in Korean using this structure:
+For each completed task, report in Korean. Start with an intuitive final-result summary before details:
+
+- Put the user-facing outcome first: what is now done, what changed, what remains.
+- Prefer concise tables for comparisons, status, before/after lists, and branch/deployment state.
+- When a visual issue or UI change is involved, attach screenshots/images first when available, then explain.
+- Keep the detailed root-cause and verification notes below the summary.
+
+Use this structure:
 
 ```text
+[최종 결과 요약]
+- 사용자가 바로 이해할 수 있게 완료/미완료/다음 행동을 직관적으로 요약
+- 필요하면 표, 스크린샷, 이미지 링크를 먼저 첨부
+
 [작업 요약]
 - 무엇을 수정했는지 1~3줄 요약
 
