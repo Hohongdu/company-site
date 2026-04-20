@@ -57,7 +57,7 @@ exports.sendInquiryReplyEmail = async (payload) => {
 	}
 	if (!isConfigured()) {
 		console.warn(`[notification] ${new Date().toISOString()} sendInquiryReplyEmail DISABLED: 이메일 드라이버 미설정`);
-		return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+		return { ok: false, status: 'DISABLED', provider: 'NONE', error: '이메일 발송 비활성화: SMTP 미설정' };
 	}
 
 	const greeting = name ? `${escapeHtml(name)}님,` : '안녕하세요,';
@@ -86,7 +86,7 @@ exports.sendTemporaryPasswordEmail = async (payload) => {
 	}
 	if (!isConfigured()) {
 		console.warn(`[notification] ${new Date().toISOString()} sendTemporaryPasswordEmail DISABLED: 이메일 드라이버 미설정`);
-		return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+		return { ok: false, status: 'DISABLED', provider: 'NONE', error: '이메일 발송 비활성화: SMTP 미설정' };
 	}
 
 	const greeting = name ? `${escapeHtml(name)}님,` : '안녕하세요,';
