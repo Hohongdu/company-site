@@ -36,11 +36,9 @@
 
 ### 쇼핑몰 — 라이트 모드 (영어 UI)
 
-<img src="docs/screenshots/05-shop-light-mode.png" alt="Shop Light Mode" width="100%">
 
 ### 쇼핑몰 — 다크 모드
 
-<img src="docs/screenshots/04-shop-light.png" alt="Shop Dark Mode" width="100%">
 
 ---
 
