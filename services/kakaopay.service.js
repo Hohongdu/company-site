@@ -47,14 +47,22 @@ async function ready({ orderId, userId, itemName, quantity, totalAmount, approva
 		fail_url: failUrl,
 	});
 
-	const response = await axios.post(`${KAKAOPAY_HOST}/v1/payment/ready`, payload.toString(), {
-		headers: {
-			'Authorization': `KakaoAK ${adminKey}`,
-			'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-		},
-	});
-
-	return response.data;
+	try {
+		const response = await axios.post(`${KAKAOPAY_HOST}/v1/payment/ready`, payload.toString(), {
+			headers: {
+				'Authorization': `KakaoAK ${adminKey}`,
+				'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+			},
+		});
+		return response.data;
+	} catch (err) {
+		const detail = err.response?.data;
+		const msg = detail?.msg || detail?.message || err.message;
+		console.error('[KakaoPay] ready() 실패:', msg, detail || '');
+		const error = new Error(`카카오페이 결제 준비 실패: ${msg || '알 수 없는 오류'}`);
+		error.kakaoDetail = detail;
+		throw error;
+	}
 }
 
 async function approve({ tid, orderId, userId, pgToken }) {
@@ -68,14 +76,22 @@ async function approve({ tid, orderId, userId, pgToken }) {
 		pg_token: pgToken,
 	});
 
-	const response = await axios.post(`${KAKAOPAY_HOST}/v1/payment/approve`, payload.toString(), {
-		headers: {
-			'Authorization': `KakaoAK ${adminKey}`,
-			'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-		},
-	});
-
-	return response.data;
+	try {
+		const response = await axios.post(`${KAKAOPAY_HOST}/v1/payment/approve`, payload.toString(), {
+			headers: {
+				'Authorization': `KakaoAK ${adminKey}`,
+				'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+			},
+		});
+		return response.data;
+	} catch (err) {
+		const detail = err.response?.data;
+		const msg = detail?.msg || detail?.message || err.message;
+		console.error('[KakaoPay] approve() 실패:', msg, detail || '');
+		const error = new Error(`카카오페이 결제 승인 실패: ${msg || '알 수 없는 오류'}`);
+		error.kakaoDetail = detail;
+		throw error;
+	}
 }
 
 module.exports = {

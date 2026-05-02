@@ -111,6 +111,25 @@
     </div>
 </div>
 
+<% if (totalPages > 1) { %>
+<nav class="mt-3" aria-label="문의 목록 페이지">
+    <ul class="pagination justify-content-center">
+        <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+            <a class="page-link" href="/admin/inquiries?page=<%= page - 1 %>">이전</a>
+        </li>
+        <% for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) { %>
+            <li class="page-item <%= p === page ? 'active' : '' %>">
+                <a class="page-link" href="/admin/inquiries?page=<%= p %>"><%= p %></a>
+            </li>
+        <% } %>
+        <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+            <a class="page-link" href="/admin/inquiries?page=<%= page + 1 %>">다음</a>
+        </li>
+    </ul>
+    <p class="text-center text-muted small mt-1">전체 <%= total %>건 / <%= totalPages %>페이지</p>
+</nav>
+<% } %>
+
 <style>
 .admin-inquiry-expand {
     background: #f8fafc;

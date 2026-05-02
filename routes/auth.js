@@ -1,11 +1,48 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
 const { sendTemporaryPasswordEmail } = require('../services/notification.service');
 
 const router = express.Router();
+
+// 비밀번호 재설정: IP당 15분에 5회
+const forgotLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 5,
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: (req) => req.ip,
+	handler: (req, res) => {
+		res.status(429).render('auth/forgot', {
+			csrfToken: req.session?.csrfToken || '',
+			message: '요청이 너무 많습니다. 15분 후 다시 시도해주세요.',
+			messageType: 'error',
+		});
+	},
+	skip: () => process.env.NODE_ENV === 'test',
+});
+
+// 로그인 실패: IP당 15분에 20회 (성공 시 카운트 제외)
+const loginLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 20,
+	skipSuccessfulRequests: true,
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: (req) => req.ip,
+	handler: (req, res) => {
+		res.status(429).render('auth/login', {
+			returnTo: '',
+			csrfToken: req.session?.csrfToken || '',
+			error: '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.',
+			query: req.query,
+		});
+	},
+	skip: () => process.env.NODE_ENV === 'test',
+});
 
 const sanitizeReturnTo = (value) => {
 	if (typeof value !== 'string') return '';
@@ -32,7 +69,7 @@ router.get('/forgot', (req, res) => {
 });
 
 
-router.post('/forgot', async (req, res) => {
+router.post('/forgot', forgotLimiter, async (req, res) => {
 	const SUCCESS_MSG = '입력하신 이메일 주소로 임시 비밀번호가 전송되었습니다. 이메일을 확인해주세요.';
 
 	try {
@@ -52,7 +89,8 @@ router.post('/forgot', async (req, res) => {
 		);
 
 		if (!user) {
-			// 보안: 계정 존재 여부를 알려주지 않음
+			// 타이밍 공격 방지: 계정 존재 여부와 무관하게 bcrypt 연산을 수행해 응답 시간을 균일화
+			await bcrypt.hash('timing-equalization-dummy', 10);
 			return res.render('auth/forgot', {
 				csrfToken: req.csrfToken(),
 				message: SUCCESS_MSG,
@@ -125,7 +163,7 @@ router.post('/register', async (req, res) => {
 	}
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
 	try {
 		const { email, password } = req.body;
 

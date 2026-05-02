@@ -92,6 +92,11 @@ app.use((req, res, next) => {
 });
 
 app.use('/auth', csrfProtection);
+// multipart/form-data 요청은 express body-parser가 req.body를 채우지 않으므로
+// 전역 CSRF 체크 시점에 req.body._csrf가 비어있다.
+// 대신 각 multipart 라우트 핸들러에서 multer 이후 csrfProtection을 명시적으로 적용한다.
+// (routes/admin.js: router.post('/products/new', uploadImage.single(...), csrfProtection, ...))
+// 새 multipart 라우트 추가 시 반드시 핸들러 인자에 csrfProtection을 포함할 것.
 app.use('/admin', (req, res, next) => {
 	if (req.method === 'GET' || !req.is('multipart/form-data')) {
 		return csrfProtection(req, res, next);
@@ -211,9 +216,19 @@ app.use((err, req, res, next) => {
 // =====================
 // Start
 // =====================
-app.listen(PORT, () => {
-	console.log(`Server running at http://127.0.0.1:${PORT}`);
-});
+(async () => {
+	try {
+		await db.execute('SELECT 1');
+		console.log('[DB] 데이터베이스 연결 확인 완료');
+	} catch (err) {
+		console.error('[FATAL] 데이터베이스 연결 실패 — 서버 시작 중단:', err.message);
+		process.exit(1);
+	}
+
+	app.listen(PORT, () => {
+		console.log(`Server running at http://127.0.0.1:${PORT}`);
+	});
+})();
 // ===============================
 // 카카오페이 결제 (orders 기반)
 // ===============================
