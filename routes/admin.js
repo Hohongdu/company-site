@@ -1084,6 +1084,12 @@ router.get('/api/products/check-code', async (req, res) => {
 ========================= */
 router.get('/orders', async (req, res) => {
 	try {
+		const PAGE_SIZE = 50;
+		const page = Math.max(1, Number(req.query.page) || 1);
+		const offset = (page - 1) * PAGE_SIZE;
+
+		const [[{ total }]] = await db.execute(`SELECT COUNT(*) AS total FROM orders`);
+
 		const [orders] = await db.execute(
 			`SELECT o.*, u.name AS user_name, u.email AS user_email,
         op.provider AS payment_provider, op.status AS payment_status
@@ -1098,10 +1104,17 @@ router.get('/orders', async (req, res) => {
            GROUP BY order_id
          ) latest ON latest.max_id = op1.id
        ) op ON op.order_id = o.id
-       ORDER BY o.created_at DESC`,
+       ORDER BY o.created_at DESC
+       LIMIT ? OFFSET ?`,
+			[PAGE_SIZE, offset],
 		);
 
-		return res.render('admin/orders', { orders });
+		return res.render('admin/orders', {
+			orders,
+			page,
+			totalPages: Math.ceil(total / PAGE_SIZE),
+			total,
+		});
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('주문 목록 로딩 오류');
@@ -1154,15 +1167,24 @@ router.get('/orders/:orderNumber', async (req, res) => {
 ========================= */
 router.get('/inquiries', async (req, res) => {
 	try {
+		const PAGE_SIZE = 50;
+		const page = Math.max(1, Number(req.query.page) || 1);
+		const offset = (page - 1) * PAGE_SIZE;
+
+		const [[{ total }]] = await db.execute(`SELECT COUNT(*) AS total FROM inquiries`);
+		const totalPages = Math.ceil(total / PAGE_SIZE);
+
 		const [inquiries] = await db.execute(
 			`SELECT i.*, o.order_number, u.name AS user_name, u.email AS user_email
        FROM inquiries i
        LEFT JOIN orders o ON o.id = i.order_id
        LEFT JOIN users u ON u.id = i.user_id
-       ORDER BY i.created_at DESC`,
+       ORDER BY i.created_at DESC
+       LIMIT ? OFFSET ?`,
+			[PAGE_SIZE, offset],
 		);
 
-		return res.render('admin/inquiries', { inquiries });
+		return res.render('admin/inquiries', { inquiries, page, totalPages, total });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('문의 목록 로딩 오류');

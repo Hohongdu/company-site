@@ -14,36 +14,6 @@
 
 ---
 
-## 📸 스크린샷
-
-### 홈페이지 — 라이트 모드 / 영어 번역
-
-<img src="docs/screenshots/01-home-hero-light-en.png" alt="Home Hero Light English" width="100%">
-
----
-
-### 홈페이지 — 다크 모드
-
-<img src="docs/screenshots/02-home-hero-dark.png" alt="Home Hero Dark Mode" width="100%">
-
----
-
-### 다크 모드 — 기능 소개 섹션 (영문 번역 동시 적용)
-
-<img src="docs/screenshots/03-home-dark-cards.png" alt="Dark Mode Feature Cards" width="100%">
-
----
-
-### 쇼핑몰 — 라이트 모드 (영어 UI)
-
-<img src="docs/screenshots/05-shop-light-mode.png" alt="Shop Light Mode" width="100%">
-
-### 쇼핑몰 — 다크 모드
-
-<img src="docs/screenshots/04-shop-light.png" alt="Shop Dark Mode" width="100%">
-
----
-
 ## 🛠 기술 스택
 
 | 레이어 | 기술 |
@@ -52,53 +22,54 @@
 | **Web Framework** | Express.js 4 |
 | **Template Engine** | EJS |
 | **Database** | MySQL 8 via `mysql2` Promise Pool |
-| **CSS Framework** | Bootstrap 5 + Custom CSS Variables (다크 모드) |
+| **CSS Framework** | Bootstrap 5 + Custom CSS Variables |
 | **Authentication** | express-session + bcrypt |
 | **Payment** | Kakao Pay REST API |
 | **Translation** | Naver Papago API (KO↔EN/JA/ZH 실시간) |
 | **Email** | Nodemailer (Gmail SMTP) |
 | **Process Manager** | PM2 |
 | **Reverse Proxy** | Nginx |
-| **Server** | Raspberry Pi (ARM64) |
+| **Server** | Raspberry Pi 5 (ARM64, Debian) |
 
 ---
 
 ## ✨ 주요 기능
 
-### 🌙 다크 모드
-- 헤더 토글 버튼으로 즉시 전환
-- `[data-theme="dark"]` + CSS Custom Properties 시스템으로 전체 테마 일관 적용
-- `--c-bg-navy` / `--c-navy` 역할 분리로 hero·footer는 항상 딥 네이비 유지
-- `localStorage`에 설정 저장 → 페이지 이동 후에도 유지
-
 ### 🌐 다국어 실시간 번역 (KO / EN / JA / ZH)
 - 우측 하단 언어 위젯으로 즉시 전환
 - Naver Papago API를 서버 프록시(`/api/translate`)로 호출
 - `data-i18n`, `data-i18n-html`, `data-i18n-placeholder` 명시 태그 지원
-- **자동 스캔 시스템**: `<main>` 내 h1~h6, `.hero__eyebrow`, `.feat-card__title`, `.accordion-button` 등 정적 요소를 뷰 파일 수정 없이 전 페이지 자동 번역
-- `h1 > em`, `h2 > br` 같은 인라인 자식 포함 헤딩 지원 — 번역 후 한국어 복원 시 `innerHTML` 원본 복구로 `<em>` 스타일 유지
+- **자동 스캔 시스템**: `<main>` 내 정적 요소를 뷰 파일 수정 없이 전 페이지 자동 번역
 - `localStorage` 캐시로 동일 텍스트 재번역 방지
-- 인증 실패(401/403)만 전체 차단 — 개별 502는 건너뛰고 나머지 계속 번역
 
 ### 🛒 이커머스 쇼핑몰
-- **카트**: 비로그인(세션) ↔ 로그인(DB) 이중 저장 + 로그인 시 자동 병합
+- **카트**: 비로그인(세션) ↔ 로그인(DB) 이중 저장 + 로그인 시 자동 병합 (트랜잭션 보장)
 - **결제**: Kakao Pay REST API 연동 (준비 → 승인 → 콜백 전 과정)
+- **결제 idempotency**: `SELECT FOR UPDATE` + 상태 사전 체크로 중복 승인 방지
 - **주문 조회**: 비회원도 주문번호 + 이름으로 조회 가능
+- **대량주문**: SKU 코드 일괄 입력 → 장바구니 일괄 추가
 - **상품 관리**: 어드민 대시보드에서 CRUD + Excel 일괄 업로드
 
 ### 🔐 인증 & 보안
-- 세션 기반 인증 (`express-session`, 2시간 TTL, httpOnly)
+- 세션 기반 인증 (`express-session`, 2시간 TTL, httpOnly, sameSite: lax)
 - 비밀번호 bcrypt 해싱 (10 rounds)
-- 커스텀 CSRF 미들웨어 (`/lib/csurf.js`) — `/auth`, `/admin` 라우트 적용
+- 커스텀 CSRF 미들웨어 (`/lib/csurf.js`) — `crypto.timingSafeEqual` 타이밍 공격 방지
+- 로그인/비밀번호 찾기 브루트포스 방지: `express-rate-limit`
+- 결제 요청 rate limiting (1분/10회)
+- 세션 고정 공격 방지: 로그인 시 `session.regenerate()`
+- 이메일 XSS 방지: `esc()` 헬퍼로 모든 사용자 입력 이스케이프
+- `/forgot` 타이밍 공격 방지: 존재하지 않는 이메일 경로에서도 bcrypt 실행
 - Helmet.js 보안 헤더
-- Nginx Reverse Proxy (`trust proxy` 설정)
+- SESSION_SECRET 미설정 시 production 환경 시작 거부
+- DB 시작 검증: `SELECT 1` 후 실패 시 프로세스 종료
 
 ### 👑 관리자 대시보드 (`/admin`)
-- 상품 등록/수정/삭제 + 이미지 업로드
+- 상품 등록/수정/삭제 + 이미지 업로드 (sharp 최적화 옵션)
 - Excel 파일로 상품 일괄 등록
-- 주문 목록 조회 및 상태 관리
-- 문의 답변 (이메일 알림 발송)
+- 주문 목록 조회 (50건/페이지 페이지네이션)
+- 문의 목록 조회 (50건/페이지 페이지네이션) + 이메일 답변
 - 공지사항 관리
+- 방문 로그 / 검색어 통계
 
 ---
 
@@ -115,15 +86,14 @@ company-site/
 │   └── api/                # REST API 엔드포인트
 │       └── translate.js    # Papago 번역 프록시
 ├── services/
-│   ├── papago.service.js   # Naver Papago API 래퍼
-│   ├── kakao-pay.service.js
-│   ├── email.service.js
-│   └── notification.service.js
+│   ├── kakaopay.service.js # Kakao Pay API 래퍼 (try/catch 포함)
+│   ├── email.service.js    # Gmail SMTP 드라이버
+│   └── notification.service.js  # 문의/주문 알림 이메일 (XSS 이스케이프)
 ├── middleware/
 │   └── auth.js             # requireLogin / requireAdmin 가드
 ├── lib/
-│   ├── csurf.js            # 커스텀 CSRF 토큰
-│   └── cart.js             # 세션/DB 이중 카트 로직
+│   ├── csurf.js            # 커스텀 CSRF — timingSafeEqual 적용
+│   └── cart.js             # 세션/DB 이중 카트 로직 (트랜잭션)
 ├── views/
 │   ├── company/            # 기업 사이트 EJS 템플릿
 │   ├── shop/               # 쇼핑몰 EJS 템플릿
@@ -131,11 +101,11 @@ company-site/
 │   └── admin/              # 관리자 대시보드
 ├── public/
 │   ├── css/
-│   │   ├── main.css        # CSS 변수 + 다크 모드 시스템
+│   │   ├── main.css        # CSS 변수 시스템
 │   │   ├── company.css
 │   │   └── shop.css
 │   └── js/
-│       └── main.js         # 다크모드 토글 + 번역 엔진
+│       └── main.js         # 번역 엔진 + UI 스크립트
 ├── db.js                   # mysql2 Promise Pool
 └── migrations/             # DB 스키마 마이그레이션
 ```
@@ -163,7 +133,7 @@ cp .env.example .env
 
 ```env
 # 서버
-SESSION_SECRET=your_secret_here
+SESSION_SECRET=your_secret_here        # 필수 — production에서 미설정 시 시작 거부
 BASE_URL=https://yourdomain.com
 
 # 데이터베이스
@@ -181,7 +151,7 @@ EMAIL_FROM=your@gmail.com
 
 # Kakao Pay
 KAKAO_ADMIN_KEY=your_kakao_admin_key
-KAKAO_CID=TC0ONETIME
+KAKAO_CID=TC0ONETIME                   # 운영 환경에서는 실제 CID로 교체
 
 # Naver Papago 번역 (선택)
 PAPAGO_CLIENT_ID=your_papago_client_id
@@ -206,7 +176,7 @@ Internet → Nginx (80/443) → PM2 [company-site] (127.0.0.1:3000)
                               MySQL (127.0.0.1:3306)
 ```
 
-- **서버**: Raspberry Pi 4 (ARM64, Ubuntu Server)
+- **서버**: Raspberry Pi 5 (ARM64, Debian)
 - **프로세스**: PM2 `fork` 모드, 자동 재시작
 - **HTTPS**: Let's Encrypt (Certbot)
 - **정적 파일**: Express `static` → Nginx 캐싱
@@ -215,37 +185,72 @@ Internet → Nginx (80/443) → PM2 [company-site] (127.0.0.1:3000)
 
 ## 🔑 핵심 구현 포인트
 
-### CSS 변수 이중 역할 분리 (다크 모드)
+### 결제 idempotency (이중 승인 방지)
 
-```css
-:root {
-  --c-bg-navy:  #0f172a;   /* 배경 전용 — 다크모드에서도 리매핑 안 됨 */
-  --c-navy:     #0f172a;   /* 텍스트 전용 — 다크모드에서 #f1f5f9로 리매핑 */
+```javascript
+// SELECT FOR UPDATE로 행 잠금 → 상태 사전 확인 → 동일 트랜잭션 내 처리
+const [[order]] = await connection.execute(
+  'SELECT id, status FROM orders WHERE id = ? FOR UPDATE', [orderId]
+);
+if (order.status === 'PAID') {
+  await connection.commit();
+  return res.redirect('/shop/orders/' + orderNumber);
 }
-[data-theme="dark"] {
-  --c-navy: #f1f5f9;        /* 텍스트 색반전 */
-  /* --c-bg-navy는 리매핑 없음 → hero/footer 항상 딥 네이비 유지 */
+// ... Kakao Pay approve API 호출 ...
+await connection.commit();
+```
+
+### 카트 세션↔DB 이중 저장 (트랜잭션)
+
+```javascript
+// lib/cart.js — 로그인 시 게스트 카트를 DB로 원자적 병합
+// 성공 후에만 세션 초기화 (실패 시 다음 로그인 때 재시도)
+await connection.commit();
+req.session.guestCart = { items: {} };
+```
+
+### 이메일 XSS 방지
+
+```javascript
+// services/notification.service.js
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 ```
 
-### 번역 인라인 자식 보존
+### CSRF 타이밍 공격 방지
 
-```js
-// h1 > em 처럼 인라인 자식이 있어도 번역 허용
-if (el.children.length > 0 && !hasOnlyInlineChildren(el)) return;
-
-// 한국어 복원 시 innerHTML 원본 복구 (em 스타일 유지)
-const htmlKo = el.getAttribute('data-i18n-auto-html-ko');
-if (htmlKo) el.innerHTML = htmlKo;
-else if (src) el.textContent = src;
+```javascript
+// lib/csurf.js — 동일 길이의 문자열 비교
+return crypto.timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
 ```
 
-### 카트 세션↔DB 이중 저장
+### `/forgot` 계정 열거 방지
 
-```js
-// lib/cart.js — 로그인 시 세션 카트를 DB로 병합
-async function mergeCarts(sessionCart, userId) { ... }
+```javascript
+// 존재하지 않는 이메일도 bcrypt 연산 후 동일 응답 시간 보장
+await bcrypt.hash('timing-equalization-dummy', 10);
+return res.render('auth/forgot', { message: SUCCESS_MSG });
 ```
+
+---
+
+## 🛡 보안 적용 목록
+
+| 항목 | 조치 |
+|------|------|
+| XSS (이메일 템플릿) | `esc()` 헬퍼로 모든 사용자 입력 이스케이프 |
+| CSRF | 커스텀 CSRF + `timingSafeEqual` |
+| 세션 고정 | 로그인 시 `session.regenerate()` |
+| 브루트포스 | 로그인/비밀번호찾기/결제 rate limiting |
+| 타이밍 공격 | CSRF 비교 + `/forgot` bcrypt dummy |
+| IDOR | 주문/카트 조회 시 `AND user_id = ?` |
+| 결제 중복 | `FOR UPDATE` + 상태 사전 체크 |
+| Kakao API 장애 | `try/catch` + 구체적 에러 메시지 |
+| DB 시작 검증 | `SELECT 1` 후 실패 시 `process.exit(1)` |
+| SESSION_SECRET | production 미설정 시 시작 거부 |
 
 ---
 
