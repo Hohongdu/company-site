@@ -55,8 +55,8 @@ function wrapHtml(title, bodyHtml) {
 exports.sendInquiryReplyEmail = async (payload) => {
 	const { to, name, inquiryTitle, replyContent } = payload;
 
-	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!to) return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', provider: 'NONE', error: 'SMTP 비활성화 — 이메일 발송이 비활성화 상태입니다' };
 
 	const greeting = name ? `${esc(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -76,16 +76,17 @@ exports.sendInquiryReplyEmail = async (payload) => {
  * @param {{ to: string, name?: string, tempPassword: string }} payload
  */
 exports.sendTemporaryPasswordEmail = async (payload) => {
-	const { to, name, tempPassword } = payload;
+	const { to, name, tempPassword, temporaryPassword } = payload;
+	const password = tempPassword || temporaryPassword;
 
-	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!to) return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
+	if (!isConfigured()) return { ok: false, status: 'DISABLED', provider: 'NONE', error: 'SMTP 비활성화 — 이메일 발송이 비활성화 상태입니다' };
 
 	const greeting = name ? `${esc(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
 		'임시 비밀번호 발급',
 		`<p>${greeting} 요청하신 임시 비밀번호가 발급되었습니다.</p>
-		<div class="highlight">${esc(tempPassword)}</div>
+		<div class="highlight">${esc(password)}</div>
 		<p>로그인 후 <strong>반드시 비밀번호를 변경</strong>해주세요.</p>
 		<p style="color:#e74c3c;font-size:13px;">본인이 요청하지 않은 경우 이 메일을 무시하시고, 계정 보안을 확인해주세요.</p>`,
 	);

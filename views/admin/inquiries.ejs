@@ -92,7 +92,7 @@
                                         <form class="admin-reply-form" action="/admin/inquiries/<%= inquiry.id %>/reply" method="post">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <div class="mb-2">
-                                                <label class="form-label small fw-semibold">답변 작성</label>
+                                                <label class="form-label small fw-semibold">답변 작성 <span class="text-muted fw-normal">(답변 저장만 가능합니다)</span></label>
                                                 <textarea class="form-control" name="answerContent" rows="4" required
                                                     placeholder="답변 내용을 입력해주세요..."><%= inquiry.answer_content || '' %></textarea>
                                             </div>
