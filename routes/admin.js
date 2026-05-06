@@ -282,6 +282,14 @@ router.get('/dashboard', async (req, res) => {
 		const revenueMap = new Map(monthlyOrders.map((row) => [row.ym, Number(row.revenue || 0)]));
 		const inquiryMap = new Map(monthlyInquiries.map((row) => [row.ym, Number(row.cnt || 0)]));
 
+		const [lowStockProducts] = await db.execute(
+			`SELECT id, name, code, stock_quantity
+       FROM products
+       WHERE stock_quantity <= 5
+       ORDER BY stock_quantity ASC
+       LIMIT 20`,
+		).catch(() => [[]]);
+
 		const chartData = {
 			labels: monthLabels.map((ym) => ym.slice(5).replace('-', '/')),
 			orders: monthLabels.map((ym) => orderMap.get(ym) || 0),
@@ -365,6 +373,7 @@ router.get('/dashboard', async (req, res) => {
 			recentOrders,
 			recentInquiries,
 			chartData,
+			lowStockProducts,
 		});
 	} catch (err) {
 		console.error(err);
