@@ -84,3 +84,12 @@ Optional: `PAPAGO_CLIENT_ID`, `PAPAGO_CLIENT_SECRET`
 ### Views
 
 EJS templates in `/views/`. Layouts and partials are in `/views/layouts/` and `/views/partials/`. The view engine root is set to `/views`.
+
+## 개발 규칙 (절대 준수)
+
+### 쿠폰 / 할인 기능 금지
+쿠폰, 할인코드, 프로모션, 포인트, 적립금 등 가격 할인과 관련된 기능은 **어떤 형태로도 추가하지 않는다.**
+- 장바구니, 결제, 주문 플로우에 할인 적용 로직 추가 금지
+- DB 스키마에 `discount_*`, `coupon_*` 컬럼/테이블 추가 금지
+- UI에 쿠폰 선택 / 할인 금액 표시 추가 금지
+- `user_coupons` 테이블은 기존 데이터 보존용으로만 유지하며 결제에 연동하지 않는다
