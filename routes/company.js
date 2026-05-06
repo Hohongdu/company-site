@@ -4,26 +4,27 @@ const { requireLogin } = require('../middleware/auth');
 
 const router = express.Router();
 
-async function ensureNoticesTable() {
-	await db.execute(
-		`CREATE TABLE IF NOT EXISTS notices (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      title VARCHAR(200) NOT NULL,
-      content TEXT NOT NULL,
-      category VARCHAR(30) NOT NULL DEFAULT 'general',
-      views INT NOT NULL DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-	);
-}
-
-async function ensureNoticeCategoryColumn() {
+// 서버 시작 시 1회 실행 — 매 요청마다 ALTER TABLE 반복 방지
+(async () => {
 	try {
-		await db.execute(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`);
+		await db.execute(
+			`CREATE TABLE IF NOT EXISTS notices (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        content TEXT NOT NULL,
+        category VARCHAR(30) NOT NULL DEFAULT 'general',
+        views INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+		);
+		await db.execute(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`).catch((err) => {
+			if (!String(err?.message || '').includes('Duplicate column')) throw err;
+		});
+		console.log('[company] 스키마 초기화 완료');
 	} catch (err) {
-		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+		console.error('[company] 스키마 초기화 실패:', err);
 	}
-}
+})();
 
 router.get('/', (req, res) => res.render('company/index'));
 router.get('/about', (req, res) => res.render('company/about'));
@@ -44,8 +45,6 @@ router.get('/notices', async (req, res) => {
 		const typeParam = String(req.query.type || 'all');
 		const allowedTypes = new Set(['all', 'general', 'product']);
 		const type = allowedTypes.has(typeParam) ? typeParam : 'all';
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
 		const [notices] = await db.execute(
 			`SELECT id, title, category, created_at, views
        FROM notices
@@ -58,7 +57,6 @@ router.get('/notices', async (req, res) => {
 		return res.render('company/notices', { notices, query: q, type });
 	} catch (err) {
 		console.error('[공지 목록]', err);
-		// HIGH-C 수정: plain text 대신 500 뷰 렌더링
 		return res.status(500).render('500', { message: '공지 목록을 불러오는 중 오류가 발생했습니다.' });
 	}
 });
@@ -68,8 +66,6 @@ router.get('/notices/:id', async (req, res) => {
 		const noticeId = Number(req.params.id);
 		if (!noticeId) return res.status(404).render('404', { message: '공지 없음' });
 
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
 		await db.execute('UPDATE notices SET views = views + 1 WHERE id = ?', [noticeId]);
 		const [[notice]] = await db.execute(
 			`SELECT id, title, content, category, created_at, views

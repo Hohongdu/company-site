@@ -92,8 +92,14 @@
             <h5 style="font-size:15px;font-weight:700;color:var(--c-text);margin-bottom:16px;">주문 요약</h5>
             <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--c-muted);padding:8px 0;border-bottom:1px solid var(--c-border,#e2e8f0);">
               <span>상품 합계</span>
-              <span><%= Number(order.total_amount || 0).toLocaleString() %>원</span>
+              <span><%= Number((order.total_amount || 0) + (order.discount_amount || 0)).toLocaleString() %>원</span>
             </div>
+            <% if (order.discount_amount > 0) { %>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:#16a34a;padding:8px 0;border-bottom:1px solid var(--c-border,#e2e8f0);">
+              <span>쿠폰 할인</span>
+              <span>- <%= Number(order.discount_amount).toLocaleString() %>원</span>
+            </div>
+            <% } %>
             <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--c-muted);padding:8px 0;border-bottom:1px solid var(--c-border,#e2e8f0);">
               <span>결제 상태</span>
               <span style="color:<%= payment?.status === 'SUCCESS' ? '#15803d' : '#64748b' %>;font-weight:600;">

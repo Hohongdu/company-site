@@ -172,6 +172,22 @@
       </div>
     </div>
 
+    <!-- 쿠폰 선택 (로그인 유저만) -->
+    <% if (paymentEnabled && !isGuest && availableCoupons && availableCoupons.length > 0) { %>
+      <div class="app-coupon-wrap">
+        <label class="app-field__label" for="couponSelect">쿠폰 적용</label>
+        <select id="couponSelect" name="couponId" form="checkoutForm" class="app-field__input">
+          <option value="">쿠폰 선택 안함</option>
+          <% availableCoupons.forEach(c => { %>
+            <option value="<%= c.id %>" data-pct="<%= c.discount_pct %>">
+              <%= c.description || c.code %> (<%= c.discount_pct %>% 할인<% if (c.expires_at) { %>, ~<%= new Date(c.expires_at).toLocaleDateString('ko-KR') %><% } %>)
+            </option>
+          <% }) %>
+        </select>
+        <div id="couponDiscountInfo" style="font-size:12px;color:var(--c-accent);margin-top:4px;display:none;"></div>
+      </div>
+    <% } %>
+
     <!-- 비회원 주문 정보 폼 -->
     <% if (paymentEnabled && isGuest) { %>
       <div class="app-guest-form">
@@ -261,6 +277,35 @@
     ['summaryTotal','summaryFinal','ctaTotal'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.textContent = (id === 'ctaTotal') ? fmt : fmt + '원';
+    });
+  }
+
+  /* 쿠폰 선택 → 할인 금액 실시간 반영 */
+  var couponSelect = document.getElementById('couponSelect');
+  if (couponSelect) {
+    couponSelect.addEventListener('change', function () {
+      var opt = this.options[this.selectedIndex];
+      var pct = parseInt(opt.getAttribute('data-pct') || '0');
+      var total = 0;
+      document.querySelectorAll('[data-unit-price]').forEach(function (input) {
+        var unit = parseInt(input.getAttribute('data-unit-price')) || 0;
+        var qty  = Math.max(1, parseInt(input.value) || 1);
+        total += unit * qty;
+      });
+      var discount = Math.floor(total * pct / 100);
+      var final = Math.max(0, total - discount);
+      var info = document.getElementById('couponDiscountInfo');
+      var finalEl = document.getElementById('summaryFinal');
+      var ctaEl   = document.getElementById('ctaTotal');
+      if (pct > 0) {
+        if (info) { info.textContent = pct + '% 할인 적용 — ' + discount.toLocaleString() + '원 할인'; info.style.display = 'block'; }
+        if (finalEl) finalEl.textContent = final.toLocaleString() + '원';
+        if (ctaEl)   ctaEl.textContent   = final.toLocaleString();
+      } else {
+        if (info) info.style.display = 'none';
+        if (finalEl) finalEl.textContent = total.toLocaleString() + '원';
+        if (ctaEl)   ctaEl.textContent   = total.toLocaleString();
+      }
     });
   }
 })();

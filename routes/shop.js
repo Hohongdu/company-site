@@ -131,9 +131,21 @@ async function ensureCouponTable() {
       description VARCHAR(255),
       discount_pct INT DEFAULT 0,
       expires_at DATE,
+      used_at TIMESTAMP NULL DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 	);
+	// 기존 테이블에 used_at 컬럼이 없으면 추가
+	await db.execute(`ALTER TABLE user_coupons ADD COLUMN used_at TIMESTAMP NULL DEFAULT NULL`).catch((err) => {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	});
+	// orders 테이블에 쿠폰 관련 컬럼 추가
+	await db.execute(`ALTER TABLE orders ADD COLUMN coupon_id INT NULL`).catch((err) => {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	});
+	await db.execute(`ALTER TABLE orders ADD COLUMN discount_amount INT NOT NULL DEFAULT 0`).catch((err) => {
+		if (!String(err?.message || '').includes('Duplicate column')) throw err;
+	});
 }
 
 function generateOrderNumber() {
@@ -144,7 +156,7 @@ function generateOrderNumber() {
 	return `ORD-${Date.now()}-${rand}`;
 }
 
-async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
+async function createOrderFromCart(req, { guestName, guestEmail, guestPhone, couponId }) {
 	const data = await getCartViewData(req);
 
 	if (!data.items.length || !data.totalAmount) {
@@ -154,15 +166,33 @@ async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
 	const orderNumber = generateOrderNumber();
 	const userId = req.session.user?.id || null;
 
+	// 쿠폰 검증 (로그인 유저만)
+	let coupon = null;
+	let discountAmount = 0;
+	if (couponId && userId) {
+		const [[found]] = await db.execute(
+			`SELECT id, discount_pct FROM user_coupons
+       WHERE id = ? AND user_id = ? AND used_at IS NULL
+         AND (expires_at IS NULL OR expires_at >= CURDATE())
+       LIMIT 1`,
+			[couponId, userId],
+		);
+		if (found) {
+			coupon = found;
+			discountAmount = Math.floor(data.totalAmount * found.discount_pct / 100);
+		}
+	}
+	const finalAmount = Math.max(0, data.totalAmount - discountAmount);
+
 	const connection = await db.getConnection();
 	try {
 		await connection.beginTransaction();
 
 		const [orderResult] = await connection.execute(
 			`INSERT INTO orders
-        (order_number, user_id, guest_name, guest_email, guest_phone, status, total_amount)
-        VALUES (?, ?, ?, ?, ?, 'PENDING', ?)`,
-			[orderNumber, userId, guestName || null, guestEmail || null, guestPhone || null, data.totalAmount],
+        (order_number, user_id, guest_name, guest_email, guest_phone, status, total_amount, coupon_id, discount_amount)
+        VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
+			[orderNumber, userId, guestName || null, guestEmail || null, guestPhone || null, finalAmount, coupon?.id || null, discountAmount],
 		);
 
 		const orderId = orderResult.insertId;
@@ -187,8 +217,16 @@ async function createOrderFromCart(req, { guestName, guestEmail, guestPhone }) {
 			]);
 		}
 
+		// 쿠폰 사용 처리 (트랜잭션 내)
+		if (coupon) {
+			await connection.execute(
+				`UPDATE user_coupons SET used_at = NOW() WHERE id = ? AND used_at IS NULL`,
+				[coupon.id],
+			);
+		}
+
 		await connection.commit();
-		return { orderId, orderNumber, items: data.items, totalAmount: data.totalAmount };
+		return { orderId, orderNumber, items: data.items, totalAmount: finalAmount, discountAmount };
 	} catch (err) {
 		await connection.rollback();
 		throw err;
@@ -473,11 +511,26 @@ router.get('/cart', async (req, res) => {
 		const cartError = req.session.cartError || null;
 		req.session.cartError = null;
 
+		// 로그인 유저의 사용 가능한 쿠폰 목록
+		let availableCoupons = [];
+		if (req.session.user) {
+			const [rows] = await db.execute(
+				`SELECT id, code, description, discount_pct, expires_at
+         FROM user_coupons
+         WHERE user_id = ? AND used_at IS NULL
+           AND (expires_at IS NULL OR expires_at >= CURDATE())
+         ORDER BY discount_pct DESC`,
+				[req.session.user.id],
+			);
+			availableCoupons = rows;
+		}
+
 		res.render('shop/cart', {
 			...data,
 			paymentEnabled,
 			guestInfo: req.session.guestOrderInfo || {},
 			cartError,
+			availableCoupons,
 		});
 	} catch (err) {
 		console.error(err);
@@ -603,6 +656,7 @@ router.post('/checkout/kakao', checkoutLimiter, async (req, res) => {
 		const guestName = isGuest ? String(req.body.guestName || '').trim() : null;
 		const guestEmail = isGuest ? String(req.body.guestEmail || '').trim() : null;
 		const guestPhone = isGuest ? String(req.body.guestPhone || '').trim() : null;
+		const couponId = req.session.user ? (Number(req.body.couponId) || null) : null;
 
 		if (isGuest && (!guestName || (!guestEmail && !guestPhone))) {
 			req.session.cartError = '비회원 주문은 이름과 이메일 또는 연락처가 필요합니다.';
@@ -613,7 +667,7 @@ router.post('/checkout/kakao', checkoutLimiter, async (req, res) => {
 			req.session.guestOrderInfo = { guestName, guestEmail, guestPhone };
 		}
 
-		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone });
+		const orderResult = await createOrderFromCart(req, { guestName, guestEmail, guestPhone, couponId });
 		if (orderResult.error) {
 			req.session.cartError = orderResult.error;
 			return res.redirect('/shop/cart');

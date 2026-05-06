@@ -31,6 +31,20 @@ function pct(part, total) {
 	return Math.round((part / total) * 100);
 }
 
+// 엑셀 수식 주입 방지: =, +, -, @ 로 시작하는 문자열 앞에 탭 prefix
+function sanitizeCell(val) {
+	if (typeof val !== 'string') return val;
+	return /^[=+\-@\t\r]/.test(val) ? `\t${val}` : val;
+}
+
+function sanitizeRows(rows) {
+	return rows.map((row) => {
+		const out = {};
+		for (const [k, v] of Object.entries(row)) out[k] = sanitizeCell(v);
+		return out;
+	});
+}
+
 function healthLabel(level) {
 	if (level === 'good') return { text: '좋음', badge: 'success' };
 	if (level === 'warn') return { text: '주의', badge: 'warning' };
@@ -897,7 +911,7 @@ router.get('/products/export', async (req, res) => {
 		const [rows] = await db.execute(sql, params);
 
 		const worksheet = xlsx.utils.json_to_sheet(
-			rows.map((r) => ({
+			sanitizeRows(rows.map((r) => ({
 				id: r.id,
 				code: r.code,
 				name: r.name,
@@ -907,7 +921,7 @@ router.get('/products/export', async (req, res) => {
 				image: r.image,
 				description: r.description,
 				created_at: r.created_at,
-			})),
+			}))),
 		);
 
 		worksheet['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 24 }, { wch: 16 }, { wch: 10 }, { wch: 24 }, { wch: 28 }, { wch: 40 }, { wch: 20 }];
@@ -982,7 +996,7 @@ router.get('/categories/export', async (req, res) => {
       ORDER BY id DESC
     `);
 
-		const ws = xlsx.utils.json_to_sheet(rows);
+		const ws = xlsx.utils.json_to_sheet(sanitizeRows(rows));
 		const wb = xlsx.utils.book_new();
 		xlsx.utils.book_append_sheet(wb, ws, 'categories');
 
@@ -1006,7 +1020,7 @@ router.get('/uploads/export', async (req, res) => {
       ORDER BY id DESC
     `);
 
-		const ws = xlsx.utils.json_to_sheet(rows);
+		const ws = xlsx.utils.json_to_sheet(sanitizeRows(rows));
 		const wb = xlsx.utils.book_new();
 		xlsx.utils.book_append_sheet(wb, ws, 'upload_histories');
 
@@ -1038,7 +1052,7 @@ router.get('/uploads/:id/fails/export', async (req, res) => {
 			[uploadId],
 		);
 
-		const ws = xlsx.utils.json_to_sheet(rows);
+		const ws = xlsx.utils.json_to_sheet(sanitizeRows(rows));
 		const wb = xlsx.utils.book_new();
 		xlsx.utils.book_append_sheet(wb, ws, `fails_${uploadId}`);
 
@@ -1155,10 +1169,50 @@ router.get('/orders/:orderNumber', async (req, res) => {
 			[order.id],
 		);
 
-		return res.render('admin/order-detail', { order, items, payment });
+		return res.render('admin/order-detail', {
+			order,
+			items,
+			payment,
+			updated: req.query.updated === '1',
+		});
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('주문 상세 로딩 오류');
+	}
+});
+
+// 배송 상태/운송장 번호 업데이트
+router.post('/orders/:orderNumber/delivery', csrfProtection, async (req, res) => {
+	try {
+		const orderNumber = String(req.params.orderNumber || '').trim();
+		const allowedStatuses = new Set(['READY', 'SHIPPING', 'DELIVERED', 'CANCELED']);
+		const deliveryStatus = allowedStatuses.has(req.body.delivery_status) ? req.body.delivery_status : null;
+		const trackingNumber = String(req.body.tracking_number || '').trim().slice(0, 100);
+
+		if (!deliveryStatus) {
+			return res.status(400).send('올바르지 않은 배송 상태입니다.');
+		}
+
+		await ensureOrderShippingColumns();
+		const [result] = await db.execute(
+			`UPDATE orders SET delivery_status = ?, tracking_number = ? WHERE order_number = ?`,
+			[deliveryStatus, trackingNumber || null, orderNumber],
+		);
+
+		if (result.affectedRows === 0) {
+			return res.status(404).send('주문을 찾을 수 없습니다.');
+		}
+
+		await logAdminAction(req.session?.user?.id, 'UPDATE_DELIVERY', {
+			orderNumber,
+			deliveryStatus,
+			trackingNumber,
+		});
+
+		return res.redirect(`/admin/orders/${orderNumber}?updated=1`);
+	} catch (err) {
+		console.error('[admin/delivery]', err);
+		return res.status(500).send('배송 정보 업데이트 오류');
 	}
 });
 
