@@ -29,6 +29,8 @@ const router = express.Router();
 router.get('/', (req, res) => res.render('company/index'));
 router.get('/about', (req, res) => res.render('company/about'));
 router.get('/history', (req, res) => res.render('company/history'));
+router.get('/business', (req, res) => res.render('company/business', { active: 'business' }));
+router.get('/research', (req, res) => res.render('company/research', { active: 'research' }));
 router.get('/contact', (req, res) =>
 	res.render('company/contact', {
 		contactEmail:

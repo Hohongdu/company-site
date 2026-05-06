@@ -29,6 +29,25 @@
         <li><a href="/" class="<%= activeKey==='home'    ? 'is-active' : '' %>" data-i18n-auto>홈</a></li>
         <li><a href="/about" class="<%= activeKey==='about'   ? 'is-active' : '' %>" data-i18n-auto>회사 소개</a></li>
         <li><a href="/history" class="<%= activeKey==='history' ? 'is-active' : '' %>" data-i18n-auto>연혁</a></li>
+
+        <!-- 사업 영역 — hover 드롭다운 -->
+        <li class="site-nav__has-drop">
+          <a href="/business" class="<%= activeKey==='business' ? 'is-active' : '' %>" data-i18n-auto>사업 영역
+            <svg class="site-nav__caret" width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </a>
+          <ul class="site-nav__drop">
+            <li><a href="/business#ceramic" data-i18n-auto>세라믹 가공</a></li>
+            <li><a href="/business#precision" data-i18n-auto>정밀 부품</a></li>
+            <li><a href="/business#materials" data-i18n-auto>특수 소재</a></li>
+            <li><a href="/business#custom" data-i18n-auto>맞춤 제작</a></li>
+          </ul>
+        </li>
+
+        <!-- 연구 개발 — 드롭다운 없이 직접 링크 -->
+        <li><a href="/research" class="<%= activeKey==='research' ? 'is-active' : '' %>" data-i18n-auto>연구 개발</a></li>
+
         <li><a href="/notices" class="<%= activeKey==='notices' ? 'is-active' : '' %>" data-i18n-auto>공지사항</a></li>
         <li><a href="/contact" class="<%= activeKey==='contact' ? 'is-active' : '' %>" data-i18n-auto>문의</a></li>
       </ul>
@@ -115,6 +134,8 @@
     <a href="/" class="mob-drawer__link <%= activeKey==='home'    ? 'is-active' : '' %>" data-i18n-auto>홈</a>
     <a href="/about" class="mob-drawer__link <%= activeKey==='about'   ? 'is-active' : '' %>" data-i18n-auto>회사 소개</a>
     <a href="/history" class="mob-drawer__link <%= activeKey==='history' ? 'is-active' : '' %>" data-i18n-auto>연혁</a>
+    <a href="/business" class="mob-drawer__link <%= activeKey==='business' ? 'is-active' : '' %>" data-i18n-auto>사업 영역</a>
+    <a href="/research" class="mob-drawer__link <%= activeKey==='research' ? 'is-active' : '' %>" data-i18n-auto>연구 개발</a>
     <a href="/notices" class="mob-drawer__link <%= activeKey==='notices' ? 'is-active' : '' %>" data-i18n-auto>공지사항</a>
     <a href="/contact" class="mob-drawer__link <%= activeKey==='contact' ? 'is-active' : '' %>" data-i18n-auto>문의</a>
     <a href="/shop" class="mob-drawer__link" data-i18n-auto>쇼핑몰</a>

@@ -1183,6 +1183,7 @@ router.get('/orders/:orderNumber', async (req, res) => {
 			items,
 			payment,
 			updated: req.query.updated === '1',
+			csrfToken: req.csrfToken(),
 		});
 	} catch (err) {
 		console.error(err);
@@ -1247,7 +1248,7 @@ router.get('/inquiries', async (req, res) => {
 			[PAGE_SIZE, offset],
 		);
 
-		return res.render('admin/inquiries', { inquiries, page, totalPages, total });
+		return res.render('admin/inquiries', { inquiries, page, totalPages, total, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send('문의 목록 로딩 오류');

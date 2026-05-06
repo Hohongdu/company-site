@@ -870,7 +870,7 @@ router.get('/orders/:orderNumber', async (req, res) => {
 		}
 
 		if (!req.session.user || detail.order.user_id !== req.session.user.id) {
-			return res.status(403).render('404', { message: '접근 권한이 없습니다.' });
+			return res.status(403).render('403', { message: '접근 권한이 없습니다.' });
 		}
 
 		return res.render('shop/order-detail', {
