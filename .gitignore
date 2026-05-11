@@ -12,3 +12,15 @@ npm-debug.log
 *.jpg
 screenshot-*.png
 screenshot-*.jpg
+
+# Claude Code worktrees & session files
+.claude/worktrees/
+.playwright-cli/
+
+# 배포/진단 스크립트 (로컬 전용)
+ssh_*.py
+deploy_*.py
+check_*.py
+pi_reset.py
+pm2_restart.py
+commit_msg.txt
