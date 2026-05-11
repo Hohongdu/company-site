@@ -12,22 +12,25 @@ if (process.env.NODE_ENV !== 'production') {
 	});
 }
 
-// [보안] DB_PASS 미설정 시 경고 — 하드코딩 폴백 완전 제거
-if (!process.env.DB_PASS) {
-	console.warn('[WARN] DB_PASS is not set! Database connection will likely fail. Set DB_PASS in .env');
+// [CODEX-1] DB_PASS / DB_PASSWORD 두 이름 모두 허용 (.env.example과 런타임 계약 통일)
+// DB_PASS 우선 사용, 없으면 DB_PASSWORD 폴백 (신규 배포 호환성)
+const _dbPassword = process.env.DB_PASS || process.env.DB_PASSWORD || '';
+if (!_dbPassword) {
+	console.warn('[WARN] DB_PASS(또는 DB_PASSWORD)가 설정되지 않았습니다. DB 연결에 실패할 수 있습니다.');
 }
 
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-	host:     process.env.DB_HOST     || 'localhost',
-	user:     process.env.DB_USER     || 'root',
-	password: process.env.DB_PASS     || '',          // 하드코딩 폴백 제거 — 반드시 .env에 DB_PASS 설정
-	database: process.env.DB_NAME     || 'company_site',
+	host:              process.env.DB_HOST      || 'localhost',
+	port:              parseInt(process.env.DB_PORT || '3306', 10),   // [CODEX-1] DB_PORT 반영
+	user:              process.env.DB_USER      || 'root',
+	password:          _dbPassword,
+	database:          process.env.DB_NAME      || 'company_site',
 	waitForConnections: true,
-	connectionLimit: Number(process.env.DB_CONN_LIMIT || 10),
-	queueLimit: 0,
-	timezone: '+09:00',
+	connectionLimit:   Number(process.env.DB_CONN_LIMIT || 10),
+	queueLimit:        0,
+	timezone:          '+09:00',
 });
 
 module.exports = pool;

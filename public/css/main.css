@@ -203,7 +203,7 @@ img { max-width: 100%; display: block; }
 .text-bg-light { background: var(--c-bg-2) !important; color: var(--c-text-2) !important; }
 
 /* ── Accordion ── */
-.accordion-item { border: 1px solid var(--c-border); border-radius: var(--r-lg) !important; overflow: hidden; }
+.accordion-item { border: 1px solid var(--c-border); border-radius: var(--r-lg) !important; overflow: hidden; background: var(--c-bg); }
 .accordion-item + .accordion-item { margin-top: 8px; }
 .accordion-button {
   font-family: var(--font-head);
@@ -212,6 +212,7 @@ img { max-width: 100%; display: block; }
   color: var(--c-text);
   background: var(--c-bg);
   padding: 18px 22px;
+  align-items: center;
 }
 .accordion-button:not(.collapsed) {
   background: var(--c-accent-lt);
@@ -418,3 +419,128 @@ hr { border-color: var(--c-border); opacity: 1; }
 }
 .lang-option.is-active .lang-option__check { opacity: 1; }
 
+/* ── Site-nav Dropdown ─────────────────────────────── */
+.site-nav__has-dropdown {
+  position: relative;
+}
+.site-nav__chevron {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 2px;
+  transition: transform .2s;
+}
+.site-nav__has-dropdown:hover .site-nav__chevron,
+.site-nav__has-dropdown:focus-within .site-nav__chevron {
+  transform: rotate(180deg);
+}
+.site-nav__dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 160px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 6px 0;
+  z-index: 200;
+  list-style: none;
+  margin: 0;
+}
+.site-nav__has-dropdown:hover .site-nav__dropdown,
+.site-nav__has-dropdown:focus-within .site-nav__dropdown {
+  display: block;
+}
+.site-nav__dropdown li a {
+  display: block;
+  padding: 9px 18px;
+  font-size: 13px;
+  color: var(--c-text);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.site-nav__dropdown li a:hover,
+.site-nav__dropdown li a.is-active {
+  background: var(--c-bg-2);
+  color: var(--c-accent);
+}
+
+/* Dark mode dropdown */
+
+/* ── Mobile Drawer Accordion ───────────────────────── */
+.mob-drawer__accordion {
+  border-bottom: 1px solid var(--c-border);
+}
+.mob-drawer__accordion-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.mob-drawer__accordion-btn.is-active {
+  color: var(--c-accent);
+}
+.mob-drawer__accordion-chevron {
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.mob-drawer__accordion-btn[aria-expanded="true"] .mob-drawer__accordion-chevron {
+  transform: rotate(180deg);
+}
+.mob-drawer__accordion-body {
+  display: none;
+  padding: 0 0 6px 0;
+  background: var(--c-bg-2);
+}
+.mob-drawer__accordion-body.is-open {
+  display: block;
+}
+.mob-drawer__sub-link {
+  display: block;
+  padding: 10px 20px 10px 32px;
+  font-size: 14px;
+  color: var(--c-text-2);
+  text-decoration: none;
+  transition: color .15s, background .15s;
+}
+.mob-drawer__sub-link:hover {
+  color: var(--c-accent);
+  background: var(--c-bg);
+}
+
+/* Dark mode accordion */
+
+/* ── Dark Mode Theme Variables ── */
+
+/* Hardcoded-white elements in dark mode */
+/* Fix: HTML uses .site-nav__menu, not .site-nav__links */
+/* Login overlay */
+
+/* ── Dark Mode Toggle Widget (bottom-left) ── */
+
+/* ── Dark mode: shop account sidebar ───────────────── */
+
+/* ── Dark mode: shop bottom-nav (keep for possible future use) ── */
+
+/* ── Dark mode: badges and alerts ──────────────────── */
+
+/* ── Dark mode: modal / offcanvas ──────────────────── */
+
+/* ── Dark mode: form controls ──────────────────────── */
+
+/* ── Dark mode: tables ─────────────────────────────── */
+
+/* ── Dark mode: accordion ──────────────────────────── */
+
+/* ── Dark mode: cards ──────────────────────────────── */

@@ -4,19 +4,29 @@ const { requireLogin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// 서버 시작 시 1회 실행 — 매 요청마다 ALTER TABLE 반복 방지
-(async () => {
+function renderRouteError(req, res, statusCode, message, backHref = '/') {
+	return res.status(statusCode).render('error', {
+		statusCode,
+		message,
+		backHref,
+	});
+}
+
+async function ensureNoticesTable() {
+	await db.execute(
+		`CREATE TABLE IF NOT EXISTS notices (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(200) NOT NULL,
+      content TEXT NOT NULL,
+      category VARCHAR(30) NOT NULL DEFAULT 'general',
+      views INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+	);
+}
+
+async function ensureNoticeCategoryColumn() {
 	try {
-		await db.execute(
-			`CREATE TABLE IF NOT EXISTS notices (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(200) NOT NULL,
-        content TEXT NOT NULL,
-        category VARCHAR(30) NOT NULL DEFAULT 'general',
-        views INT NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`,
-		);
 		await db.execute(`ALTER TABLE notices ADD COLUMN category VARCHAR(30) NOT NULL DEFAULT 'general'`).catch((err) => {
 			if (!String(err?.message || '').includes('Duplicate column')) throw err;
 		});
@@ -24,7 +34,12 @@ const router = express.Router();
 	} catch (err) {
 		console.error('[company] 스키마 초기화 실패:', err);
 	}
-})();
+}
+
+router.initializeSchema = async function initializeSchema() {
+	await ensureNoticesTable();
+	await ensureNoticeCategoryColumn();
+};
 
 router.get('/', (req, res) => res.render('company/index'));
 router.get('/about', (req, res) => res.render('company/about'));
@@ -59,7 +74,7 @@ router.get('/notices', async (req, res) => {
 		return res.render('company/notices', { notices, query: q, type });
 	} catch (err) {
 		console.error('[공지 목록]', err);
-		return res.status(500).render('500', { message: '공지 목록을 불러오는 중 오류가 발생했습니다.' });
+		return renderRouteError(req, res, 500, '공지 목록을 불러오는 중 오류가 발생했습니다.');
 	}
 });
 
@@ -80,10 +95,13 @@ router.get('/notices/:id', async (req, res) => {
 		if (!notice) return res.status(404).render('404', { message: '공지 없음' });
 		return res.render('company/notice-detail', { notice });
 	} catch (err) {
-		console.error('[공지 상세]', err);
-		return res.status(500).render('500', { message: '공지 상세를 불러오는 중 오류가 발생했습니다.' });
+		console.error(err);
+		return renderRouteError(req, res, 500, '공지 상세 로딩 오류');
 	}
 });
+
+router.get('/biz', (req, res) => res.render('company/business-areas'));
+router.get('/rnd', (req, res) => res.render('company/research-dev'));
 
 router.get('/account', requireLogin, (req, res) =>
 	res.render('company/account', { user: req.session.user }),

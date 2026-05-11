@@ -10,6 +10,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { sendInquiryReplyEmail } = require('../services/notification.service');
 const { sendMail, isConfigured: isEmailConfigured, getDriverName } = require('../services/email.service');
 const searchLogService = require('../services/search-log.service');
+const { logAdminAction } = require('../services/audit.service');
 let sharp = null;
 try {
 	sharp = require('sharp');
@@ -22,6 +23,19 @@ const csurf = require('../lib/csurf');
 
 const router = express.Router();
 const csrfProtection = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
+
+function renderRouteError(req, res, statusCode, message, backHref = req.get('referer') || '/admin') {
+	return res.status(statusCode).render('error', {
+		statusCode,
+		message,
+		backHref,
+	});
+}
+
+async function markUploadFailed(uploadId) {
+	if (!uploadId) return;
+	await db.execute(`UPDATE upload_histories SET status='FAILED' WHERE id=?`, [uploadId]).catch(() => {});
+}
 
 /* =========================
    유틸
@@ -111,30 +125,7 @@ async function ensureProductVisibilityColumn() {
 	}
 }
 
-async function ensureAdminActivityLogTable() {
-	await db.execute(
-		`CREATE TABLE IF NOT EXISTS admin_activity_logs (
-      id BIGINT AUTO_INCREMENT PRIMARY KEY,
-      admin_id BIGINT NULL,
-      action VARCHAR(80) NOT NULL,
-      metadata JSON NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )`,
-	);
-}
-
-async function logAdminAction(adminId, action, metadata) {
-	try {
-		await ensureAdminActivityLogTable();
-		await db.execute(`INSERT INTO admin_activity_logs (admin_id, action, metadata) VALUES (?, ?, ?)`, [
-			adminId || null,
-			action,
-			metadata ? JSON.stringify(metadata) : null,
-		]);
-	} catch (err) {
-		console.error('[admin-log]', err);
-	}
-}
+// logAdminAction은 services/audit.service.js에서 import (인라인 구현 제거)
 
 async function ensureOrderShippingColumns() {
 	try {
@@ -149,10 +140,35 @@ async function ensureOrderShippingColumns() {
 	}
 }
 
+router.initializeSchema = async function initializeSchema() {
+	await ensureNoticesTable();
+	await ensureNoticeCategoryColumn();
+	await ensureProductStockColumn();
+	await ensureProductVisibilityColumn();
+	// admin_activity_logs 테이블은 services/audit.service.js에서 초기화 (app.js에서 호출)
+	await ensureOrderShippingColumns();
+};
+
 /* =========================
    업로드/이미지 설정
 ========================= */
-const upload = multer({ dest: 'uploads/' });
+// [H-4] Excel 업로드 제한: 파일 타입 및 크기 검증 추가
+// 관리자 세션이 탈취되더라도 임의 파일 업로드/디스크 고갈 방지
+const upload = multer({
+	dest: 'uploads/',
+	limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+	fileFilter: (req, file, cb) => {
+		const allowedMimes = [
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+			'application/vnd.ms-excel', // .xls
+		];
+		if (allowedMimes.includes(file.mimetype)) {
+			cb(null, true);
+		} else {
+			cb(new Error('Excel 파일(.xlsx, .xls)만 업로드 가능합니다.'), false);
+		}
+	},
+});
 
 
 
@@ -377,7 +393,7 @@ router.get('/dashboard', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('대시보드 로딩 오류');
+		return renderRouteError(req, res, 500, '대시보드 로딩 오류');
 	}
 });
 
@@ -386,8 +402,6 @@ router.get('/dashboard', async (req, res) => {
 ========================= */
 router.get('/notices', async (req, res) => {
 	try {
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
 		const [notices] = await db.execute(
 			`SELECT id, title, category, created_at, views
        FROM notices
@@ -397,7 +411,7 @@ router.get('/notices', async (req, res) => {
 		return res.render('admin/notices', { notices, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('공지 목록 로딩 오류');
+		return renderRouteError(req, res, 500, '공지 목록 로딩 오류');
 	}
 });
 
@@ -410,21 +424,21 @@ router.post('/notices', csrfProtection, async (req, res) => {
 		const safeCategory = allowed.has(category) ? category : 'general';
 
 		if (!title || !content) {
-			return res.status(400).send('공지 제목과 내용을 입력해주세요.');
+			return renderRouteError(req, res, 400, '공지 제목과 내용을 입력해주세요.');
 		}
 
-		await ensureNoticesTable();
-		await ensureNoticeCategoryColumn();
-		await db.execute(`INSERT INTO notices (title, content, category) VALUES (?, ?, ?)`, [
+		const [noticeInsert] = await db.execute(`INSERT INTO notices (title, content, category) VALUES (?, ?, ?)`, [
 			title,
 			content,
 			safeCategory,
 		]);
 
+		await logAdminAction(req, 'notice_create', 'notice', noticeInsert.insertId, true, { title, category: safeCategory });
+
 		return res.redirect('/admin/notices');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('공지 등록 오류');
+		return renderRouteError(req, res, 500, '공지 등록 오류');
 	}
 });
 
@@ -434,10 +448,12 @@ router.post('/notices/:id/delete', csrfProtection, async (req, res) => {
 		if (!noticeId) return res.redirect('/admin/notices');
 
 		await db.execute('DELETE FROM notices WHERE id = ?', [noticeId]);
+		await logAdminAction(req, 'notice_delete', 'notice', noticeId, true, null);
+
 		return res.redirect('/admin/notices');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('공지 삭제 오류');
+		return renderRouteError(req, res, 500, '공지 삭제 오류');
 	}
 });
 
@@ -446,8 +462,6 @@ router.post('/notices/:id/delete', csrfProtection, async (req, res) => {
 ========================= */
 router.get('/products', async (req, res) => {
 	try {
-		await ensureProductStockColumn();
-		await ensureProductVisibilityColumn();
 
 		const categoryId = Number(req.query.category || 0) || null;
 		const minPrice = Number(req.query.minPrice || 0) || null;
@@ -508,7 +522,7 @@ router.get('/products', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 목록 로딩 오류');
+		return renderRouteError(req, res, 500, '상품 목록 로딩 오류');
 	}
 });
 
@@ -517,7 +531,6 @@ router.get('/products', async (req, res) => {
 ========================= */
 router.get('/products/new', async (req, res) => {
 	try {
-		await ensureProductStockColumn();
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
 		res.render('admin/admin-product-new', {
 			categories,
@@ -525,14 +538,14 @@ router.get('/products/new', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 등록 페이지 로딩 오류');
+		return renderRouteError(req, res, 500, '상품 등록 페이지 로딩 오류');
 	}
 });
 
-router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+// [C-4] app.js에서 app.use('/admin', csrfProtection)로 통합됨 → 라우트 레벨 중복 제거
+router.post('/products/new', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
-		await ensureProductStockColumn();
 
 		let imagePath = image || null;
 		let thumbPath = null;
@@ -545,7 +558,7 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 			thumbPath = processed.image_thumb;
 		}
 
-		await db.execute(
+		const [insertResult] = await db.execute(
 			`INSERT INTO products (code, name, description, price, spec, image, image_thumb, category_id, stock_quantity)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			[
@@ -561,10 +574,15 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 			],
 		);
 
+		await logAdminAction(req, 'product_create', 'product', insertResult.insertId, true, {
+			code: code || null,
+			name,
+		});
+
 		return res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('상품 등록 오류');
+		return renderRouteError(req, res, 500, '상품 등록 오류');
 	}
 });
 
@@ -574,12 +592,11 @@ router.post('/products/new', uploadImage.single('imageFile'), csrfProtection, as
 router.get('/products/:id/edit', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
-		await ensureProductStockColumn();
 
 		const [[product]] = await db.execute('SELECT * FROM products WHERE id = ?', [productId]);
 		const [categories] = await db.execute('SELECT id, name FROM categories ORDER BY name');
 
-		if (!product) return res.status(404).send('상품 없음');
+		if (!product) return renderRouteError(req, res, 404, '상품 없음');
 
 		res.render('admin/admin-product-edit', {
 			product,
@@ -588,19 +605,19 @@ router.get('/products/:id/edit', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 수정 페이지 로딩 오류');
+		return renderRouteError(req, res, 500, '상품 수정 페이지 로딩 오류');
 	}
 });
 
-router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtection, async (req, res) => {
+// [C-4] 라우트 레벨 중복 csrfProtection 제거 (app.js에서 통합)
+router.post('/products/:id/edit', uploadImage.single('imageFile'), async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
 		const { code, name, description, price, spec, category_id, image, stock_quantity } = req.body;
-		await ensureProductStockColumn();
 
 		// 기존 이미지 유지용 조회
 		const [rows] = await db.execute('SELECT image, image_thumb FROM products WHERE id = ? LIMIT 1', [productId]);
-		if (!rows.length) return res.status(404).send('상품 없음');
+		if (!rows.length) return renderRouteError(req, res, 404, '상품 없음');
 
 		let imagePath = rows[0].image || null;
 		let thumbPath = rows[0].image_thumb || null;
@@ -619,7 +636,7 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 			}
 		}
 
-		await db.execute(
+		const [updateResult] = await db.execute(
 			`UPDATE products
        SET code=?, name=?, description=?, price=?, spec=?, image=?, image_thumb=?, category_id=?, stock_quantity=?
        WHERE id=?`,
@@ -637,10 +654,17 @@ router.post('/products/:id/edit', uploadImage.single('imageFile'), csrfProtectio
 			],
 		);
 
+		if (updateResult.affectedRows > 0) {
+			await logAdminAction(req, 'product_update', 'product', productId, true, {
+				code: code || null,
+				name,
+			});
+		}
+
 		return res.redirect('/admin/products');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('상품 수정 오류');
+		return renderRouteError(req, res, 500, '상품 수정 오류');
 	}
 });
 
@@ -654,12 +678,12 @@ router.post('/products/:id/delete', csrfProtection, async (req, res) => {
 
 		await db.execute('DELETE FROM cart_items WHERE product_id = ?', [productId]);
 		await db.execute('DELETE FROM products WHERE id = ?', [productId]);
-		await logAdminAction(req.session?.user?.id, 'product_delete', { productId });
+		await logAdminAction(req, 'product_delete', 'product', productId, true, null);
 
 		res.redirect('/admin/products?notice=' + encodeURIComponent('상품이 삭제되었습니다.'));
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('상품 삭제 오류');
+		return renderRouteError(req, res, 500, '상품 삭제 오류');
 	}
 });
 
@@ -676,12 +700,12 @@ router.post('/products/:id/status', csrfProtection, async (req, res) => {
 
 		const nextStatus = status === 'HIDDEN' ? 'HIDDEN' : 'ACTIVE';
 		await db.execute('UPDATE products SET visibility_status = ? WHERE id = ?', [nextStatus, productId]);
-		await logAdminAction(req.session?.user?.id, 'product_visibility_update', { productId, visibility_status: nextStatus });
+		await logAdminAction(req, 'product_visibility_update', 'product', productId, true, { visibility_status: nextStatus });
 
 		return res.redirect('/admin/products?notice=' + encodeURIComponent('노출 상태가 변경되었습니다.'));
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('상품 상태 변경 오류');
+		return renderRouteError(req, res, 500, '상품 상태 변경 오류');
 	}
 });
 
@@ -697,12 +721,12 @@ router.post('/products/:id/stock', csrfProtection, async (req, res) => {
 		}
 
 		await db.execute('UPDATE products SET stock_quantity = ? WHERE id = ?', [stockQty, productId]);
-		await logAdminAction(req.session?.user?.id, 'product_stock_update', { productId, stock_quantity: stockQty });
+		await logAdminAction(req, 'product_stock_update', 'product', productId, true, { stock_quantity: stockQty });
 
 		return res.redirect('/admin/products?notice=' + encodeURIComponent('재고 수량이 저장되었습니다.'));
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('재고 변경 오류');
+		return renderRouteError(req, res, 500, '재고 변경 오류');
 	}
 });
 
@@ -724,12 +748,12 @@ router.post('/products/bulk-delete', csrfProtection, async (req, res) => {
 		const placeholders = productIds.map(() => '?').join(',');
 		await db.execute(`DELETE FROM cart_items WHERE product_id IN (${placeholders})`, productIds);
 		await db.execute(`DELETE FROM products WHERE id IN (${placeholders})`, productIds);
-		await logAdminAction(req.session?.user?.id, 'product_bulk_delete', { productIds });
+		await logAdminAction(req, 'product_bulk_delete', 'product', null, true, { productIds, count: productIds.length });
 
 		return res.redirect('/admin/products?notice=' + encodeURIComponent(`선택한 상품 ${productIds.length}개가 삭제되었습니다.`));
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('상품 선택 삭제 오류');
+		return renderRouteError(req, res, 500, '상품 선택 삭제 오류');
 	}
 });
 
@@ -770,11 +794,12 @@ router.get('/products/import', csrfProtection, async (req, res) => {
 	}
 });
 
-router.post('/products/import', upload.single('file'), csrfProtection, async (req, res) => {
+// [C-4] 라우트 레벨 중복 csrfProtection 제거 (app.js에서 통합; 토큰은 ?_csrf 쿼리로 전달)
+router.post('/products/import', upload.single('file'), async (req, res) => {
 	let uploadId = null;
 
 	try {
-		if (!req.file) return res.status(400).send('업로드 파일이 필요합니다.');
+		if (!req.file) return renderRouteError(req, res, 400, '업로드 파일이 필요합니다.');
 
 		// 1) upload_histories 기록 생성 (PROCESSING)
 		const originalName = req.file.originalname || null;
@@ -790,17 +815,62 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 		// 2) 파일 읽기
 		const filePath = req.file.path;
 		const workbook = xlsx.readFile(filePath);
-		const sheet = workbook.Sheets[workbook.SheetNames[0]];
+		const sheetNames = Array.isArray(workbook.SheetNames) ? workbook.SheetNames : [];
+		if (!sheetNames.length) {
+			await markUploadFailed(uploadId);
+			await fs.unlink(req.file.path).catch(() => {});
+			return renderRouteError(req, res, 400, '엑셀 파일에 시트가 없습니다.', '/admin/products/import');
+		}
+		const sheet = workbook.Sheets[sheetNames[0]];
 		const rows = xlsx.utils.sheet_to_json(sheet);
+		if (!rows.length) {
+			await markUploadFailed(uploadId);
+			await fs.unlink(req.file.path).catch(() => {});
+			return renderRouteError(req, res, 400, '엑셀 파일에 불러올 데이터가 없습니다.', '/admin/products/import');
+		}
+		if (rows.length > 5000) {
+			await markUploadFailed(uploadId);
+			await fs.unlink(req.file.path).catch(() => {});
+			return renderRouteError(req, res, 400, '엑셀 업로드는 5000행까지만 허용됩니다.', '/admin/products/import');
+		}
+
+		// [항목 4] 헤더 행 구조 검증: 필수 컬럼(name) 존재 여부 확인
+		// xlsx.utils.sheet_to_json 은 첫 행을 헤더로 파싱하므로 rows[0]의 키를 확인
+		const REQUIRED_HEADERS = ['name'];
+		const actualHeaders = Object.keys(rows[0] || {});
+		const missingHeaders = REQUIRED_HEADERS.filter(h => !actualHeaders.includes(h));
+		if (missingHeaders.length > 0) {
+			await markUploadFailed(uploadId);
+			await fs.unlink(req.file.path).catch(() => {});
+			return renderRouteError(
+				req, res, 400,
+				`엑셀 헤더가 올바르지 않습니다. 누락된 필수 컬럼: ${missingHeaders.join(', ')} (현재 헤더: ${actualHeaders.join(', ')})`,
+				'/admin/products/import',
+			);
+		}
 
 		// 카테고리 맵
 		const [categories] = await db.execute('SELECT id, name FROM categories');
 		const categoryMap = new Map(categories.map((c) => [c.name, c.id]));
 
+		// [P-3] N+1 최적화: 루프 전에 엑셀의 모든 code를 한 번에 조회해 Map으로 캐싱
+		// 기존: 행마다 SELECT id FROM products WHERE code = ? → N번 DB 쿼리
+		// 개선: 루프 전 단일 IN 쿼리로 기존 products 조회 → 루프 내 O(1) Map 조회
+		const incomingCodes = rows.map((r) => (r.code ? String(r.code).trim() : null)).filter(Boolean);
+		const existingProductMap = new Map(); // code → product id
+		if (incomingCodes.length > 0) {
+			const placeholders = incomingCodes.map(() => '?').join(',');
+			const [existingProducts] = await db.execute(
+				`SELECT id, code FROM products WHERE code IN (${placeholders})`,
+				incomingCodes,
+			);
+			for (const p of existingProducts) existingProductMap.set(p.code, p.id);
+		}
+
 		let successCount = 0;
 		let failCount = 0;
 
-		// 3) 처리
+		// 3) 처리 (루프 내 SELECT 제거 → 쓰기 쿼리만 실행)
 		for (let i = 0; i < rows.length; i++) {
 			try {
 				const r = rows[i];
@@ -815,36 +885,37 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 
 				if (!name) throw new Error('상품명이 누락되었습니다.');
 
-				// code가 있으면 upsert 느낌으로 처리
-				if (code) {
-					const [[existing]] = await db.execute('SELECT id FROM products WHERE code = ? LIMIT 1', [code]);
-					if (existing) {
-						await db.execute(`UPDATE products SET name=?, description=?, price=?, spec=?, image=?, category_id=? WHERE id=?`, [
-							name,
-							description,
-							price,
-							spec,
-							image || null,
-							categoryId,
-							existing.id,
-						]);
-						successCount++;
-						continue;
-					}
+				// [P-3] 루프 내 SELECT 제거: Map 캐시에서 O(1) 조회
+				if (code && existingProductMap.has(code)) {
+					const existingId = existingProductMap.get(code);
+					await db.execute(`UPDATE products SET name=?, description=?, price=?, spec=?, image=?, category_id=? WHERE id=?`, [
+						name,
+						description,
+						price,
+						spec,
+						image || null,
+						categoryId,
+						existingId,
+					]);
+					successCount++;
+					continue;
 				}
 
-				await db.execute(
+				const [insertResult] = await db.execute(
 					`INSERT INTO products (code, name, description, price, spec, image, category_id)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					[code, name, description, price, spec, image || null, categoryId],
 				);
+				// [P2] 삽입된 실제 ID를 Map에 저장: null 저장 시 동일 파일 내 같은 code가
+				// 다시 나타날 때 UPDATE WHERE id=NULL → 0 rows affected 되는 silent fail 방지
+				if (code) existingProductMap.set(code, insertResult.insertId);
 				successCount++;
 			} catch (e) {
 				failCount++;
 
-				// 실패 row 저장 (테이블 컬럼명은 너 DB에 맞춰 유지)
+				// 실패 row 저장
 				await db.execute(
-					`INSERT INTO upload_history_rows (upload_id, row_number, code, name, category_name, price, spec, image, description, reason)
+					`INSERT INTO upload_history_rows (upload_id, \`row_number\`, code, name, category_name, price, spec, image, description, reason)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 					[
 						uploadId,
@@ -882,7 +953,7 @@ router.post('/products/import', upload.single('file'), csrfProtection, async (re
 
 		// 실패 시에도 히스토리 업데이트(가능하면)
 		if (uploadId) {
-			await db.execute(`UPDATE upload_histories SET status='FAILED' WHERE id=?`, [uploadId]).catch(() => {});
+			await markUploadFailed(uploadId);
 		}
 
 		return res.redirect(`/admin/products/import?ok=0&uploadId=${uploadId || ''}&success=0&fail=0`);
@@ -948,7 +1019,7 @@ router.get('/products/export', async (req, res) => {
 		return res.send(buffer);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('엑셀 다운로드 중 오류가 발생했습니다.');
+		return renderRouteError(req, res, 500, '엑셀 다운로드 중 오류가 발생했습니다.');
 	}
 });
 
@@ -961,39 +1032,39 @@ router.get('/categories', async (req, res) => {
 		res.render('admin/categories', { categories, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('카테고리 로딩 오류');
+		return renderRouteError(req, res, 500, '카테고리 로딩 오류');
 	}
 });
 
-// CRIT-6: csrfProtection 추가 — CSRF 공격으로 카테고리 무단 추가 방지
+// [M-2] 명시적 CSRF 보호 (app-level 외 이중 방어)
 router.post('/categories', csrfProtection, async (req, res) => {
 	try {
 		const name = String(req.body.name || '').trim();
 		const slug = name.toLowerCase().replace(/\s+/g, '-');
 
-		if (!name) return res.status(400).send('카테고리 이름이 필요합니다.');
+		if (!name) return renderRouteError(req, res, 400, '카테고리 이름이 필요합니다.');
 
 		await db.execute('INSERT INTO categories (name, slug) VALUES (?, ?)', [name, slug]);
 		res.redirect('/admin/categories');
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('카테고리 추가 오류');
+		return renderRouteError(req, res, 500, '카테고리 추가 오류');
 	}
 });
 
-// CRIT-6: csrfProtection 추가 — CSRF 공격으로 카테고리 무단 삭제 방지
+// [M-2] 명시적 CSRF 보호
 router.post('/categories/:id/delete', csrfProtection, async (req, res) => {
 	try {
 		const id = Number(req.params.id);
 
 		const [[cnt]] = await db.execute('SELECT COUNT(*) AS cnt FROM products WHERE category_id=?', [id]);
-		if (cnt.cnt > 0) return res.send('이 카테고리를 사용하는 상품이 있습니다.');
+		if (cnt.cnt > 0) return renderRouteError(req, res, 400, '이 카테고리를 사용하는 상품이 있습니다. 상품 카테고리를 먼저 변경해주세요.', '/admin/categories');
 
 		await db.execute('DELETE FROM categories WHERE id=?', [id]);
 		res.redirect('/admin/categories');
 	} catch (err) {
 		console.error(err);
-		res.status(500).send('카테고리 삭제 오류');
+		return renderRouteError(req, res, 500, '카테고리 삭제 오류');
 	}
 });
 
@@ -1017,7 +1088,7 @@ router.get('/categories/export', async (req, res) => {
 		return res.send(buffer);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('카테고리 엑셀 다운로드 오류');
+		return renderRouteError(req, res, 500, '카테고리 엑셀 다운로드 오류');
 	}
 });
 
@@ -1041,22 +1112,22 @@ router.get('/uploads/export', async (req, res) => {
 		return res.send(buffer);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('업로드 히스토리 엑셀 다운로드 오류');
+		return renderRouteError(req, res, 500, '업로드 히스토리 엑셀 다운로드 오류');
 	}
 });
 
 router.get('/uploads/:id/fails/export', async (req, res) => {
 	try {
 		const uploadId = Number(req.params.id);
-		if (!uploadId) return res.status(400).send('upload_id가 올바르지 않습니다.');
+		if (!uploadId) return renderRouteError(req, res, 400, 'upload_id가 올바르지 않습니다.');
 
 		const [rows] = await db.execute(
 			`
       SELECT
-        row_number, code, name, category_name, price, spec, image, description, reason, created_at
+        \`row_number\`, code, name, category_name, price, spec, image, description, reason, created_at
       FROM upload_history_rows
       WHERE upload_id = ?
-      ORDER BY row_number ASC
+      ORDER BY \`row_number\` ASC
     `,
 			[uploadId],
 		);
@@ -1073,7 +1144,7 @@ router.get('/uploads/:id/fails/export', async (req, res) => {
 		return res.send(buffer);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('실패 행 엑셀 다운로드 오류');
+		return renderRouteError(req, res, 500, '실패 행 엑셀 다운로드 오류');
 	}
 });
 
@@ -1140,7 +1211,7 @@ router.get('/orders', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('주문 목록 로딩 오류');
+		return renderRouteError(req, res, 500, '주문 목록 로딩 오류');
 	}
 });
 
@@ -1158,7 +1229,7 @@ router.get('/orders/:orderNumber', async (req, res) => {
 		);
 
 		if (!order) {
-			return res.status(404).send('주문 정보를 찾을 수 없습니다.');
+			return renderRouteError(req, res, 404, '주문 정보를 찾을 수 없습니다.');
 		}
 
 		const [items] = await db.execute(
@@ -1187,7 +1258,7 @@ router.get('/orders/:orderNumber', async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('주문 상세 로딩 오류');
+		return renderRouteError(req, res, 500, '주문 상세 로딩 오류');
 	}
 });
 
@@ -1251,18 +1322,20 @@ router.get('/inquiries', async (req, res) => {
 		return res.render('admin/inquiries', { inquiries, page, totalPages, total, csrfToken: req.csrfToken() });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('문의 목록 로딩 오류');
+		return renderRouteError(req, res, 500, '문의 목록 로딩 오류');
 	}
 });
 
-// CRIT-5: csrfProtection 추가 — CSRF 공격으로 관리자 명의 답변 무단 전송 방지
+// [M-2] 명시적 CSRF 보호
 router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 	try {
 		const inquiryId = Number(req.params.id);
 		const answerContent = String(req.body.answerContent || '').trim();
+		// 체크박스 미선택 시 req.body에 키 자체가 없으므로 === 'on' 으로 판별
+		const wantEmail = req.body.sendEmail === 'on';
 
 		if (!inquiryId || !answerContent) {
-			return res.status(400).send('답변 내용이 필요합니다.');
+			return renderRouteError(req, res, 400, '답변 내용이 필요합니다.');
 		}
 
 		const [[inquiry]] = await db.execute(
@@ -1275,44 +1348,63 @@ router.post('/inquiries/:id/reply', csrfProtection, async (req, res) => {
 		);
 
 		if (!inquiry) {
-			return res.status(404).send('문의가 존재하지 않습니다.');
+			return renderRouteError(req, res, 404, '문의가 존재하지 않습니다.');
 		}
 
 		const recipientEmail = inquiry.user_email || inquiry.guest_email || null;
 		const recipientName = inquiry.user_name || inquiry.guest_name || null;
 
-		// 이메일 발송 시도
-		let notificationChannel = recipientEmail ? 'EMAIL' : 'NONE';
+		// 이메일 발송 여부 결정: 이메일 주소가 있고 관리자가 발송을 선택한 경우에만 발송
+		let notificationChannel = 'NONE';
 		let notificationStatus = 'SKIPPED';
-		let notificationError = recipientEmail ? null : '이메일 정보가 없습니다.';
+		let notificationError = null;
 
-		if (recipientEmail) {
+		if (!recipientEmail) {
+			notificationError = '이메일 정보가 없습니다.';
+		} else if (!wantEmail) {
+			// 관리자가 이메일 발송 체크박스를 해제한 경우
+			notificationChannel = 'NONE';
+			notificationStatus = 'SKIPPED';
+			notificationError = '관리자가 이메일 발송을 건너뜀';
+		} else {
+			notificationChannel = 'EMAIL';
 			const emailResult = await sendInquiryReplyEmail({
 				to: recipientEmail,
 				name: recipientName,
 				inquiryTitle: inquiry.title,
 				replyContent: answerContent,
 			});
-			notificationStatus = emailResult.status || (emailResult.ok ? 'SENT' : 'FAILED');
+			// [M-8] notification_status ENUM 범위 보호: 이메일 서비스가 'DISABLED' 등 유효하지 않은
+			// 상태를 반환할 경우 MySQL strict mode에서 ENUM 위반으로 500 오류 발생.
+			// ENUM('PENDING','SENT','FAILED','SKIPPED') 밖의 값은 모두 'SKIPPED'로 정규화.
+			const VALID_NOTIF_STATUSES = new Set(['PENDING', 'SENT', 'FAILED', 'SKIPPED']);
+			const rawStatus = emailResult.status || (emailResult.ok ? 'SENT' : 'FAILED');
+			notificationStatus = VALID_NOTIF_STATUSES.has(rawStatus) ? rawStatus : 'SKIPPED';
 			notificationError = emailResult.error || null;
 		}
 
 		await db.execute(
 			`UPDATE inquiries
        SET status = 'ANSWERED',
-           answer_content = ?,
-           answered_at = NOW(),
-           notification_channel = ?,
-           notification_status = ?,
-           notification_error = ?
-       WHERE id = ?`,
+		   answer_content = ?,
+		   answered_at = NOW(),
+		   notification_channel = ?,
+		   notification_status = ?,
+		   notification_error = ?
+		   WHERE id = ?`,
 			[answerContent, notificationChannel, notificationStatus, notificationError, inquiryId],
 		);
+
+		await logAdminAction(req, 'inquiry_reply', 'inquiry', inquiryId, true, {
+			notificationChannel,
+			notificationStatus,
+			emailRequested: wantEmail,
+		});
 
 		return res.redirect('/admin/inquiries');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('문의 답변 처리 중 오류가 발생했습니다.');
+		return renderRouteError(req, res, 500, '문의 답변 처리 중 오류가 발생했습니다.');
 	}
 });
 
@@ -1372,7 +1464,7 @@ router.get('/search-stats', requireAdmin, async (req, res) => {
 		});
 	} catch (err) {
 		console.error('[admin/search-stats]', err);
-		res.status(500).send('검색 통계 조회 오류');
+		return renderRouteError(req, res, 500, '검색 통계 조회 오류');
 	}
 });
 
@@ -1391,11 +1483,96 @@ router.get('/api/search-stats', requireAdmin, async (req, res) => {
 		res.json({ ok: true, days, summary, topKeywords, noHitKeywords, dailyVolume });
 	} catch (err) {
 		console.error('[admin/api/search-stats]', err);
-		res.status(500).json({ ok: false, error: err.message });
+		// [M-9] 에러 메시지 직접 노출 방지: SQL 구문/테이블명 등 내부 정보 유출 차단
+		res.status(500).json({ ok: false, error: '검색 통계 조회 중 오류가 발생했습니다.' });
 	}
 });
 
-// 검색어 통계 Excel 내보내기
+// =============================================
+// =============================================
+// 계좌 입금 결제 상태 변경
+// POST /admin/orders/:id/payment-status
+// =============================================
+router.post('/orders/:id/payment-status', requireAdmin, async (req, res) => {
+	try {
+		const orderId = Number(req.params.id);
+		const status = String(req.body.status || '').trim().toUpperCase();
+		const allowed = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED'];
+
+		if (!orderId || !allowed.includes(status)) {
+			return res.status(400).json({ ok: false, message: '올바르지 않은 요청입니다.' });
+		}
+
+		await db.execute(
+			`UPDATE order_payments SET status = ? WHERE order_id = ? AND provider = 'BANK_TRANSFER'`,
+			[status, orderId],
+		);
+
+		if (status === 'CONFIRMED' || status === 'COMPLETED') {
+			await db.execute(`UPDATE orders SET status = 'PAID' WHERE id = ?`, [orderId]);
+		} else if (status === 'CANCELED') {
+			await db.execute(`UPDATE orders SET status = 'CANCELED' WHERE id = ?`, [orderId]);
+		}
+
+		await logAdminAction(req, 'payment_status_update', 'order', orderId, true, { status });
+
+		return res.json({ ok: true });
+	} catch (err) {
+		console.error('[admin/payment-status]', err);
+		return res.status(500).json({ ok: false, message: '상태 변경 중 오류가 발생했습니다.' });
+	}
+});
+
+// =============================================
+// 세금계산서 관리
+// =============================================
+router.get('/tax-invoices', requireAdmin, async (req, res) => {
+	try {
+		const [requests] = await db.execute(
+			`SELECT t.*, o.total_amount, o.status AS order_status
+			 FROM tax_invoice_requests t
+			 LEFT JOIN orders o ON o.id = t.order_id
+			 ORDER BY t.requested_at DESC`,
+		);
+
+		return res.render('admin/tax-invoices', {
+			requests,
+			csrfToken: req.csrfToken ? req.csrfToken() : '',
+			notice: req.query.notice ? String(req.query.notice) : null,
+		});
+	} catch (err) {
+		console.error('[admin/tax-invoices]', err);
+		return renderRouteError(req, res, 500, '세금계산서 목록 로딩 오류');
+	}
+});
+
+router.post('/tax-invoices/:id/status', requireAdmin, csrfProtection, async (req, res) => {
+	try {
+		const id = Number(req.params.id);
+		const status = String(req.body.status || '').trim().toUpperCase();
+		const adminNote = String(req.body.admin_note || '').trim();
+		const allowed = ['REQUESTED', 'PROCESSING', 'ISSUED', 'REJECTED'];
+
+		if (!id || !allowed.includes(status)) {
+			return res.status(400).json({ ok: false, message: '올바르지 않은 요청입니다.' });
+		}
+
+		await db.execute(
+			`UPDATE tax_invoice_requests
+			 SET status = ?, admin_note = ?, processed_at = NOW()
+			 WHERE id = ?`,
+			[status, adminNote || null, id],
+		);
+
+		await logAdminAction(req, 'tax_invoice_status', 'tax_invoice', id, true, { status, adminNote });
+
+		return res.redirect('/admin/tax-invoices?notice=' + encodeURIComponent('상태가 업데이트되었습니다.'));
+	} catch (err) {
+		console.error('[admin/tax-invoices/status]', err);
+		return renderRouteError(req, res, 500, '세금계산서 상태 변경 오류');
+	}
+});
+
 router.get('/search-stats/export', requireAdmin, async (req, res) => {
 	try {
 		const days = Number(req.query.days || 365);

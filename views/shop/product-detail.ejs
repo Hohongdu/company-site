@@ -806,7 +806,8 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
       method:  'POST',
       headers: {
         'Content-Type':     'application/x-www-form-urlencoded',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'x-csrf-token':     body.get('_csrf') || ''
       },
       body: body.toString()
     })

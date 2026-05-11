@@ -9,6 +9,8 @@ function disabledResult(error = '메일 기능이 비활성화되어 있습니�
 	return { ok: false, status: 'DISABLED', provider: 'NONE', error };
 }
 
+// ── HTML 이스케이프 헬퍼 ──────────────────────────────
+// [M-7] 이메일 템플릿 XSS 방지: 사용자 입력 데이터를 HTML에 직접 삽입 전 이스케이프 필수
 // 이메일 HTML에 삽입되는 모든 사용자 입력값을 escape
 // 줄바꿈 보존이 필요한 경우 escLines() 사용
 function esc(str) {
@@ -19,6 +21,9 @@ function esc(str) {
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
 }
+
+// escapeHtml 은 esc 의 alias (origin 코드와 호환)
+const escapeHtml = esc;
 
 function escLines(str) {
 	return esc(str).replace(/\n/g, '<br>');
@@ -59,8 +64,14 @@ function wrapHtml(title, bodyHtml) {
 exports.sendInquiryReplyEmail = async (payload) => {
 	const { to, name, inquiryTitle, replyContent } = payload;
 
-	if (!to) return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
-	if (!isConfigured()) return disabledResult();
+	if (!to) {
+		console.warn(`[notification] ${new Date().toISOString()} sendInquiryReplyEmail SKIPPED: 수신 이메일 없음`);
+		return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
+	}
+	if (!isConfigured()) {
+		console.warn(`[notification] ${new Date().toISOString()} sendInquiryReplyEmail DISABLED: 이메일 드라이버 미설정`);
+		return disabledResult('이메일 발송 비활성화: SMTP 미설정');
+	}
 
 	const greeting = name ? `${esc(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -83,8 +94,14 @@ exports.sendTemporaryPasswordEmail = async (payload) => {
 	const { to, name, tempPassword, temporaryPassword } = payload;
 	const password = tempPassword || temporaryPassword;
 
-	if (!to) return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
-	if (!isConfigured()) return disabledResult();
+	if (!to) {
+		console.warn(`[notification] ${new Date().toISOString()} sendTemporaryPasswordEmail SKIPPED: 수신 이메일 없음`);
+		return { ok: false, status: 'SKIPPED', provider: 'NONE', error: '수신 이메일 없음' };
+	}
+	if (!isConfigured()) {
+		console.warn(`[notification] ${new Date().toISOString()} sendTemporaryPasswordEmail DISABLED: 이메일 드라이버 미설정`);
+		return disabledResult('이메일 발송 비활성화: SMTP 미설정');
+	}
 
 	const greeting = name ? `${esc(name)}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -218,20 +235,29 @@ exports.sendRfqToAdmin = async (payload) => {
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
 	if (!isConfigured()) return disabledResult();
 
+	// [M-7] 사용자 입력 HTML 이스케이프: 관리자 이메일 내 HTML injection 방지
+	const safeName     = escapeHtml(contactName);
+	const safeEmail    = escapeHtml(contactEmail);
+	const safeCompany  = escapeHtml(companyName  || '(미입력)');
+	const safeProduct  = escapeHtml(productName  || '(미입력)');
+	const safePrice    = escapeHtml(targetPrice  || '협의');
+	const safeDelivery = escapeHtml(deliveryDate || '협의');
+	const safeMessage  = message ? escapeHtml(message).replace(/\n/g, '<br>') : null;
+
 	const html = wrapHtml(
 		'새 견적 요청이 접수되었습니다',
 		`<p>새로운 견적 요청이 웹사이트를 통해 접수되었습니다.</p>
 		<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;">
-			<tr><td style="padding:8px 0;color:#666;width:100px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${esc(contactName)}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${esc(contactEmail)}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${esc(companyName || '(미입력)')}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${esc(productName || '(미입력)')}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;width:100px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeName}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeEmail}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeCompany}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeProduct}</td></tr>
 			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">수량</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${Number(quantity)}개</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">목표 단가</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${esc(targetPrice || '협의')}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">희망 납기</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${esc(deliveryDate || '협의')}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">목표 단가</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safePrice}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">희망 납기</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeDelivery}</td></tr>
 			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${Number(id)}</td></tr>` : ''}
 		</table>
-		${message ? `<p style="color:#444;font-size:14px;margin-top:8px;font-weight:600;">요청사항:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${escLines(message)}</div>` : ''}
+		${safeMessage ? `<p style="color:#444;font-size:14px;margin-top:8px;font-weight:600;">요청사항:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${safeMessage}</div>` : ''}
 		<p style="margin-top:20px;">
 			<a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/inquiries"
 			   style="background:#3b5bdb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
@@ -240,7 +266,7 @@ exports.sendRfqToAdmin = async (payload) => {
 		</p>`,
 	);
 
-	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 견적요청: ${esc(contactName)}님`, html });
+	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 견적요청: ${safeName}님`, html });
 };
 
 // ── 7. 샘플 요청 → 관리자 알림 ────────────────────────
@@ -257,20 +283,28 @@ exports.sendSampleRequestToAdmin = async (payload) => {
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
 	if (!isConfigured()) return disabledResult();
 
+	// [M-7] 사용자 입력 HTML 이스케이프: 관리자 이메일 내 HTML injection 방지
+	const safeName        = escapeHtml(contactName);
+	const safeEmail       = escapeHtml(contactEmail);
+	const safeCompany     = escapeHtml(companyName   || '(미입력)');
+	const safeProduct     = escapeHtml(productName   || '(미입력)');
+	const safeApplication = escapeHtml(application   || '(미입력)');
+	const safeCondition   = testCondition ? escapeHtml(testCondition) : null;
+
 	const html = wrapHtml(
 		'새 샘플 요청이 접수되었습니다',
 		`<p>새로운 샘플 요청이 웹사이트를 통해 접수되었습니다.</p>
 		<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;">
-			<tr><td style="padding:8px 0;color:#666;width:120px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${esc(contactName)}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${esc(contactEmail)}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${esc(companyName || '(미입력)')}</td></tr>
-			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${esc(productName || '(미입력)')}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;width:120px;border-bottom:1px solid #f0f0f0;">담당자</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeName}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">이메일</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeEmail}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">회사명</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${safeCompany}</td></tr>
+			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">상품명</td><td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f0f0f0;">${safeProduct}</td></tr>
 			<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #f0f0f0;">샘플 수량</td><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">${Number(quantity)}개</td></tr>
 			${id ? `<tr><td style="padding:8px 0;color:#666;">문의 ID</td><td style="padding:8px 0;">#${Number(id)}</td></tr>` : ''}
 		</table>
 		<p style="color:#444;font-size:14px;margin-top:8px;font-weight:600;">적용 장비/용도:</p>
-		<div style="background:#fff3cd;border-left:4px solid #ffc107;padding:8px 16px;border-radius:4px;margin:8px 0;font-size:14px;line-height:1.7;">${escLines(application || '(미입력)')}</div>
-		${testCondition ? `<p style="color:#444;font-size:14px;margin-top:12px;font-weight:600;">시험 조건:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${escLines(testCondition)}</div>` : ''}
+		<div style="background:#fff3cd;border-left:4px solid #ffc107;padding:8px 16px;border-radius:4px;margin:8px 0;font-size:14px;line-height:1.7;">${safeApplication}</div>
+		${safeCondition ? `<p style="color:#444;font-size:14px;margin-top:12px;font-weight:600;">시험 조건:</p><div style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px 16px;margin:8px 0;font-size:14px;">${safeCondition}</div>` : ''}
 		<p style="margin-top:20px;">
 			<a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/inquiries"
 			   style="background:#198754;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
@@ -279,5 +313,5 @@ exports.sendSampleRequestToAdmin = async (payload) => {
 		</p>`,
 	);
 
-	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 샘플요청: ${esc(contactName)}님`, html });
+	return sendMail({ to: adminEmail, subject: `[ENERMADE] 새 샘플요청: ${safeName}님`, html });
 };

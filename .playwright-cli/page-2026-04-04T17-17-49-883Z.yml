@@ -1,0 +1,207 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - link "ENERMADE" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - list [ref=e6]:
+        - listitem [ref=e7]:
+          - link "홈" [ref=e8] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e9]:
+          - link "회사 소개" [ref=e10] [cursor=pointer]:
+            - /url: /about
+        - listitem [ref=e11]:
+          - link "연혁" [ref=e12] [cursor=pointer]:
+            - /url: /history
+        - listitem [ref=e13]:
+          - link "공지사항" [ref=e14] [cursor=pointer]:
+            - /url: /notices
+        - listitem [ref=e15]:
+          - link "문의" [ref=e16] [cursor=pointer]:
+            - /url: /contact
+      - generic [ref=e17]:
+        - link "쇼핑몰" [ref=e18] [cursor=pointer]:
+          - /url: /shop
+          - img [ref=e19]
+        - link "내 계정" [ref=e22] [cursor=pointer]:
+          - /url: /account
+          - img [ref=e23]
+        - link "관리자" [ref=e26] [cursor=pointer]:
+          - /url: /admin/dashboard
+          - img [ref=e27]
+  - dialog "메뉴" [ref=e32]:
+    - generic [ref=e33]:
+      - link "ENERMADE" [ref=e34] [cursor=pointer]:
+        - /url: /
+      - button "닫기" [ref=e35] [cursor=pointer]:
+        - img [ref=e36]
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e40]: "?"
+        - generic [ref=e41]:
+          - generic [ref=e42]: "??? ???"
+          - generic [ref=e43]: tester@example.com
+      - generic [ref=e44]:
+        - link "내 계정" [ref=e45] [cursor=pointer]:
+          - /url: /account
+        - link "관리자" [ref=e46] [cursor=pointer]:
+          - /url: /admin/dashboard
+        - link "로그아웃" [ref=e47] [cursor=pointer]:
+          - /url: /auth/logout
+    - navigation [ref=e48]:
+      - link "홈" [ref=e49] [cursor=pointer]:
+        - /url: /
+      - link "회사 소개" [ref=e50] [cursor=pointer]:
+        - /url: /about
+      - link "연혁" [ref=e51] [cursor=pointer]:
+        - /url: /history
+      - link "공지사항" [ref=e52] [cursor=pointer]:
+        - /url: /notices
+      - link "문의" [ref=e53] [cursor=pointer]:
+        - /url: /contact
+      - link "쇼핑몰" [ref=e54] [cursor=pointer]:
+        - /url: /shop
+  - main [ref=e55]:
+    - generic [ref=e57]:
+      - heading "내 정보" [level=1] [ref=e58]
+      - paragraph [ref=e59]: 계정 정보 및 환경 설정을 관리합니다.
+    - generic [ref=e62]:
+      - complementary [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]: "?"
+          - generic [ref=e66]: "??? ???"
+          - generic [ref=e67]: tester@example.com
+          - generic [ref=e68]: 관리자
+        - navigation [ref=e69]:
+          - link "내 정보" [ref=e70] [cursor=pointer]:
+            - /url: /account
+            - img [ref=e71]
+            - text: 내 정보
+          - link "쇼핑몰 내 정보" [ref=e74] [cursor=pointer]:
+            - /url: /shop/account
+            - img [ref=e75]
+            - text: 쇼핑몰 내 정보
+          - link "주문 내역" [ref=e77] [cursor=pointer]:
+            - /url: /shop/account/orders
+            - img [ref=e78]
+            - text: 주문 내역
+          - link "문의 내역" [ref=e81] [cursor=pointer]:
+            - /url: /shop/account/inquiries
+            - img [ref=e82]
+            - text: 문의 내역
+          - link "관리자 대시보드" [ref=e85] [cursor=pointer]:
+            - /url: /admin/dashboard
+            - img [ref=e86]
+            - text: 관리자 대시보드
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - heading "기본 정보" [level=4] [ref=e94]
+          - generic [ref=e95]:
+            - generic [ref=e96]: 이름
+            - generic [ref=e97]: "??? ???"
+          - generic [ref=e98]:
+            - generic [ref=e99]: 이메일
+            - generic [ref=e100]: tester@example.com
+          - generic [ref=e101]:
+            - generic [ref=e102]: 계정 구분
+            - generic [ref=e104]: 관리자
+        - generic [ref=e105]:
+          - heading "빠른 이동" [level=4] [ref=e107]
+          - generic [ref=e108]:
+            - link "쇼핑몰 내 정보" [ref=e109] [cursor=pointer]:
+              - /url: /shop/account
+              - img [ref=e111]
+              - generic [ref=e114]: 쇼핑몰 내 정보
+            - link "주문 내역" [ref=e115] [cursor=pointer]:
+              - /url: /shop/account/orders
+              - img [ref=e117]
+              - generic [ref=e120]: 주문 내역
+            - link "문의 내역" [ref=e121] [cursor=pointer]:
+              - /url: /shop/account/inquiries
+              - img [ref=e123]
+              - generic [ref=e125]: 문의 내역
+            - link "찜한 상품" [ref=e126] [cursor=pointer]:
+              - /url: /shop/wishlist
+              - img [ref=e128]
+              - generic [ref=e130]: 찜한 상품
+        - generic [ref=e131]:
+          - heading "환경 설정" [level=4] [ref=e133]
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - generic [ref=e136]: 사이트 언어
+              - generic [ref=e137]: 사이트 번역 언어를 설정합니다.
+            - combobox [ref=e139]:
+              - option "🇰🇷 한국어" [selected]
+              - option "🇺🇸 English"
+              - option "🇯🇵 日本語"
+              - option "🇨🇳 中文(简体)"
+          - generic [ref=e140]:
+            - generic [ref=e141]:
+              - generic [ref=e142]: 테마
+              - generic [ref=e143]: 밝은 테마 / 어두운 테마 (브라우저 설정 따름)
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - text: 밝은 테마 (시스템)
+          - generic [ref=e149]:
+            - generic [ref=e150]:
+              - generic [ref=e151]: 번역 캐시 초기화
+              - generic [ref=e152]: 저장된 번역 데이터를 지웁니다.
+            - button "초기화" [ref=e154] [cursor=pointer]
+        - generic [ref=e156]:
+          - generic [ref=e157]:
+            - generic [ref=e158]: 로그아웃
+            - generic [ref=e159]: 계정에서 로그아웃합니다.
+          - link "로그아웃" [ref=e160] [cursor=pointer]:
+            - /url: /auth/logout
+  - contentinfo [ref=e161]:
+    - generic [ref=e162]:
+      - generic [ref=e163]:
+        - generic [ref=e164]:
+          - generic [ref=e165]: ENERMADE
+          - paragraph [ref=e166]:
+            - text: 고객 맞춤형 세라믹 솔루션 제공업체.
+            - text: 첨단 기술과 풍부한 경험을 바탕으로
+            - text: 최고의 제품을 제공합니다.
+        - generic [ref=e167]:
+          - generic [ref=e168]: 회사
+          - generic [ref=e169]:
+            - link "홈" [ref=e170] [cursor=pointer]:
+              - /url: /
+            - link "회사 소개" [ref=e171] [cursor=pointer]:
+              - /url: /about
+            - link "연혁" [ref=e172] [cursor=pointer]:
+              - /url: /history
+            - link "문의" [ref=e173] [cursor=pointer]:
+              - /url: /contact
+        - generic [ref=e174]:
+          - generic [ref=e175]: 제품
+          - generic [ref=e176]:
+            - link "상품몰" [ref=e177] [cursor=pointer]:
+              - /url: /shop
+            - link "전체 상품" [ref=e178] [cursor=pointer]:
+              - /url: /shop/products
+            - link "공지사항" [ref=e179] [cursor=pointer]:
+              - /url: /notices
+        - generic [ref=e180]:
+          - generic [ref=e181]: 고객지원
+          - generic [ref=e182]:
+            - link "문의하기" [ref=e183] [cursor=pointer]:
+              - /url: /shop/inquiries
+            - link "주문 조회" [ref=e184] [cursor=pointer]:
+              - /url: /shop/orders/guest
+            - link "로그인" [ref=e185] [cursor=pointer]:
+              - /url: /auth/login
+            - link "회원가입" [ref=e186] [cursor=pointer]:
+              - /url: /auth/register
+      - generic [ref=e187]:
+        - generic [ref=e188]: © 2026 ENERMADE. All rights reserved.
+        - generic [ref=e189]: 세라믹 가공 솔루션 전문기업
+  - generic [ref=e191]:
+    - button "🇰🇷 한국어" [ref=e192] [cursor=pointer]:
+      - generic [ref=e193]: 🇰🇷
+      - generic [ref=e194]: 한국어
+      - img [ref=e195]
+    - button "번역 로그" [ref=e197] [cursor=pointer]:
+      - img [ref=e198]
+  - button "다크 모드 토글" [ref=e202] [cursor=pointer]:
+    - img [ref=e204]

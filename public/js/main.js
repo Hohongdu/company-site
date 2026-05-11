@@ -418,6 +418,7 @@
 		root._updateLabel = updateLabel;
 	}
 
+
 	if (document.body) {
 		createLanguageWidget();
 		const defaultLang = localStorage.getItem(storageLangKey) || 'ko';
@@ -425,4 +426,14 @@
 		if (widget && widget._updateLabel) widget._updateLabel(defaultLang);
 		applyLanguage(defaultLang).catch((err) => appendLog('init failed', { error: err.message }));
 	}
+
+  // ── Mobile drawer accordion ──────────────────────────────────
+  document.querySelectorAll('.mob-drawer__accordion-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      var body = this.nextElementSibling;
+      this.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      if (body) body.classList.toggle('is-open', !expanded);
+    });
+  });
 })();

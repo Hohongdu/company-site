@@ -157,6 +157,52 @@ html, body {
   background: var(--c-bg-2);
   color: var(--c-navy);
 }
+/* 쇼핑몰 버튼 — 액센트 강조 */
+.site-nav__actions .nav-shop-btn {
+  position: relative;
+  color: var(--c-accent);
+}
+.site-nav__actions .nav-shop-btn:hover {
+  background: rgba(234,88,12,.1);
+  color: var(--c-accent);
+}
+/* 장바구니 수량 뱃지 (데스크탑) */
+.nav-cart-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+/* 쇼핑몰 링크 (모바일 드로어) */
+.mob-drawer__link--shop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--c-accent) !important;
+}
+.mob-drawer__cart-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
 
 /* Mobile hamburger */
 .site-nav__hamburger {
@@ -371,6 +417,9 @@ html, body {
   box-shadow: var(--sh-xl);
   animation: slideUp .22s ease;
 }
+@media (prefers-reduced-motion: reduce) {
+  .mob-drawer-modal { animation: none !important; }
+}
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -553,7 +602,7 @@ html, body {
   margin-bottom: 4px;
 }
 .hero__stat-num sup { font-size: .9rem; font-weight: 700; }
-.hero__stat-label { font-size: 13px; color: rgba(255,255,255,.45); }
+.hero__stat-label { font-size: 13px; color: rgba(255,255,255,.65); }
 
 /* ══════════════════════════════════════
    FEATURES SECTION
@@ -616,7 +665,7 @@ html, body {
   margin-bottom: 8px;
 }
 .stat-num sup { font-size: 50%; vertical-align: super; }
-.stat-label { font-size: 14px; color: rgba(255,255,255,.45); font-weight: 500; }
+.stat-label { font-size: 14px; color: rgba(255,255,255,.65); font-weight: 500; }
 
 /* ══════════════════════════════════════
    WHY SECTION
@@ -695,8 +744,8 @@ html, body {
    FOOTER
 ══════════════════════════════════════ */
 .site-footer {
-  background: var(--c-bg-navy);
-  color: rgba(255,255,255,.5);
+  background: var(--c-navy);
+  color: rgba(255,255,255,.65);
   padding: 64px 0 0;
 }
 .footer__brand {
@@ -709,14 +758,14 @@ html, body {
   display: block;
 }
 .footer__brand span { color: var(--c-accent); }
-.footer__desc { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.4); }
+.footer__desc { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.65); }
 .footer__heading {
   font-family: var(--font-head);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.55);
   margin-bottom: 16px;
 }
 .footer__links { display: flex; flex-direction: column; gap: 10px; }
@@ -960,7 +1009,7 @@ html, body {
 }
 .contact-info-item__label {
   font-size: 12px;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.6);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
@@ -1063,6 +1112,9 @@ html, body {
   width: max-content;
 }
 .partners-track:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .partners-track { animation: none; }
+}
 .partner-item {
   font-family: var(--font-head);
   font-size: 13px;
@@ -1133,4 +1185,200 @@ html, body {
   .hero__badge-num { font-size: 16px; }
   .notice-row { flex-wrap: wrap; gap: 8px; }
 }
+
+/* ══════════════════════════════════════
+   사업 영역 페이지 (business-areas.ejs)
+══════════════════════════════════════ */
+.biz-area-block {
+  padding: 56px 0;
+}
+.biz-area-img {
+  position: relative;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  aspect-ratio: 4/3;
+}
+.biz-area-img img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transition: transform .4s ease;
+}
+.biz-area-img:hover img { transform: scale(1.03); }
+.biz-area-img__badge {
+  position: absolute;
+  top: 16px; left: 16px;
+  background: var(--c-accent);
+  color: #fff;
+  font-family: var(--font-head);
+  font-size: 22px; font-weight: 800;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.biz-tag {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--c-accent);
+  background: var(--c-accent-lt);
+  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  margin-bottom: 12px;
+}
+.biz-area-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  color: var(--c-text);
+  margin-bottom: 16px;
+}
+.biz-area-desc {
+  font-size: 15px; line-height: 1.8;
+  color: var(--c-muted);
+  margin-bottom: 20px;
+}
+.biz-feature-list {
+  list-style: none;
+  padding: 0; margin: 0 0 24px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.biz-feature-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; font-weight: 600; color: var(--c-text-2);
+}
+.biz-feature-list li svg { flex-shrink: 0; margin-top: 2px; }
+.biz-area-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.biz-divider {
+  border: none;
+  border-top: 1px solid var(--c-border);
+}
+.biz-stat-card {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 28px 16px;
+}
+.biz-stat-num {
+  font-family: var(--font-head);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--c-accent);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.biz-stat-num span {
+  font-size: 60%;
+  font-weight: 700;
+  vertical-align: super;
+}
+.biz-stat-label {
+  font-size: 13px; font-weight: 600; color: var(--c-muted);
+}
+
+/* ══════════════════════════════════════
+   연구 개발 페이지 (research-dev.ejs)
+══════════════════════════════════════ */
+.rnd-spec-card {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 20px;
+}
+.rnd-spec-card__icon {
+  color: var(--c-accent);
+  margin-bottom: 10px;
+}
+.rnd-spec-card__title {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--c-muted); margin-bottom: 4px;
+}
+.rnd-spec-card__value {
+  font-family: var(--font-head);
+  font-size: 1.25rem; font-weight: 800;
+  color: var(--c-text); margin-bottom: 4px;
+}
+.rnd-spec-card__desc {
+  font-size: 12px; color: var(--c-muted); margin: 0;
+}
+.rnd-app-card {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 20px 16px;
+  text-align: center;
+}
+.rnd-app-card__icon { font-size: 28px; margin-bottom: 8px; }
+.rnd-app-card__title {
+  font-weight: 700; font-size: 14px;
+  color: var(--c-text); margin-bottom: 6px;
+}
+.rnd-app-card__desc { font-size: 12px; color: var(--c-muted); margin: 0; }
+
+.rnd-roadmap {
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+  padding-left: 28px;
+}
+.rnd-roadmap::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 10px; bottom: 10px;
+  width: 2px;
+  background: var(--c-border);
+}
+.rnd-roadmap-item {
+  position: relative;
+  padding: 0 0 36px 24px;
+}
+.rnd-roadmap-item__dot {
+  position: absolute;
+  left: -28px; top: 6px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--c-bg);
+  border: 2px solid var(--c-border);
+}
+.rnd-roadmap-item--done .rnd-roadmap-item__dot {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+.rnd-roadmap-item--active .rnd-roadmap-item__dot {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 4px rgba(234,88,12,.2);
+}
+.rnd-roadmap-item__year {
+  font-size: 12px; font-weight: 700;
+  color: var(--c-accent); letter-spacing: .04em;
+  display: block; margin-bottom: 4px;
+}
+.rnd-roadmap-item h4 {
+  font-size: 16px; font-weight: 700;
+  color: var(--c-text); margin-bottom: 4px;
+}
+.rnd-roadmap-item p {
+  font-size: 14px; color: var(--c-muted); margin: 0;
+}
+.rnd-partner-badge {
+  display: inline-block;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 8px 18px;
+  font-size: 13px; font-weight: 600; color: var(--c-text-2);
+}
+
+/* ── 관리자 사이드바 링크 ── */
+.acct-nav-link--admin {
+  margin-top: 8px;
+  color: var(--c-accent) !important;
+  border-top: 1px solid var(--c-border);
+  padding-top: 14px !important;
+}
+.acct-nav-link--admin:hover {
+  background: var(--c-accent-lt) !important;
+}
+
 

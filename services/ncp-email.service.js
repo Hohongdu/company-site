@@ -26,6 +26,19 @@ function isConfigured() {
 	return Boolean(ACCESS_KEY && SECRET_KEY && SENDER);
 }
 
+/**
+ * 이메일 주소 마스킹: user@domain.com → u***@domain.com
+ * @param {string} email
+ * @returns {string}
+ */
+function maskEmail(email) {
+	if (typeof email !== 'string') return '[unknown]';
+	const [local, domain] = email.split('@');
+	if (!local || !domain) return '[invalid]';
+	const masked = local.length <= 1 ? '*' : `${local[0]}${'*'.repeat(Math.min(local.length - 1, 3))}`;
+	return `${masked}@${domain}`;
+}
+
 // ── HMAC-SHA256 서명 생성 ─────────────────────────────────────
 // NCP API GW v2 서명 규칙:
 //   message = "{HTTP_METHOD}\n{URL_PATH}\n{TIMESTAMP}\n{ACCESS_KEY}"
@@ -95,21 +108,22 @@ async function sendMail({ to, subject, html, text }) {
 		advertising: false,     // 광고 메일 여부
 	});
 
+	const maskedTo = maskEmail(to);
 	try {
 		const headers = makeHeaders(Buffer.byteLength(payload));
 		const { status, data } = await httpsPost(NCP_API_HOST, NCP_MAIL_PATH, headers, payload);
 
 		if (status === 201 || status === 200) {
 			const messageId = data?.requestId || data?.mailId || String(status);
-			console.log(`[ncp-email] Sent to ${to}: requestId=${messageId}`);
+			console.log(`[ncp-email] ${new Date().toISOString()} Sent to ${maskedTo} | subject: ${subject} | requestId: ${messageId}`);
 			return { ok: true, status: 'SENT', messageId };
 		}
 
 		const errMsg = data?.message || data?.error || `HTTP ${status}`;
-		console.error(`[ncp-email] API error ${status}:`, data);
+		console.error(`[ncp-email] ${new Date().toISOString()} API error ${status} to ${maskedTo} | subject: ${subject} | error:`, data);
 		return { ok: false, status: 'FAILED', error: errMsg };
 	} catch (err) {
-		console.error('[ncp-email] Send failed:', err.message);
+		console.error(`[ncp-email] ${new Date().toISOString()} Send FAILED to ${maskedTo} | subject: ${subject} | error: ${err.message}`);
 		return { ok: false, status: 'FAILED', error: String(err.message || err) };
 	}
 }

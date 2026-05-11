@@ -1,0 +1,99 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "ENERMADE 회사 홈페이지" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: ENERMADE
+      - link "ENERMADE 쇼핑몰 홈" [ref=e6] [cursor=pointer]:
+        - /url: /shop
+        - generic [ref=e7]: SHOP
+    - generic [ref=e8]:
+      - link "회사 홈페이지로 이동" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - img [ref=e10]
+      - link "상품 검색" [ref=e13] [cursor=pointer]:
+        - /url: /shop/products
+        - img [ref=e14]
+      - link "장바구니 (2개)" [ref=e17] [cursor=pointer]:
+        - /url: /shop/cart
+        - img [ref=e18]
+        - generic [ref=e21]: "2"
+      - link "내 계정" [ref=e22] [cursor=pointer]:
+        - /url: /shop/account
+        - img [ref=e23]
+  - main [ref=e26]:
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - heading "찜한 상품" [level=2] [ref=e31]:
+            - img [ref=e32]
+            - text: 찜한 상품
+          - paragraph [ref=e34]:
+            - text: 총
+            - strong [ref=e35]: "2"
+            - text: 개 상품
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - button "그리드 보기" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+            - button "목록 보기" [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+          - link "+ 상품 보러가기" [ref=e46] [cursor=pointer]:
+            - /url: /shop/products
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - link [ref=e49] [cursor=pointer]:
+            - /url: /shop/products/1
+            - img [ref=e51]
+          - generic [ref=e54]:
+            - generic [ref=e55]: "??"
+            - link "??? ?? ??" [ref=e57] [cursor=pointer]:
+              - /url: /shop/products/1
+            - generic [ref=e58]: 600x600 ?? ?? ??
+            - generic [ref=e59]: 120,000원
+            - generic [ref=e60]:
+              - link "상세보기" [ref=e61] [cursor=pointer]:
+                - /url: /shop/products/1
+              - button "찜 해제" [ref=e63] [cursor=pointer]:
+                - img [ref=e64]
+        - generic [ref=e66]:
+          - link "품절" [ref=e67] [cursor=pointer]:
+            - /url: /shop/products/2
+            - img [ref=e69]
+            - generic [ref=e72]: 품절
+          - generic [ref=e73]:
+            - generic [ref=e74]: "??"
+            - link "??? ??" [ref=e76] [cursor=pointer]:
+              - /url: /shop/products/2
+            - generic [ref=e77]: "?? ?? ?? ??"
+            - generic [ref=e78]: 320,000원
+            - generic [ref=e79]:
+              - link "상세보기" [ref=e80] [cursor=pointer]:
+                - /url: /shop/products/2
+              - button "찜 해제" [ref=e82] [cursor=pointer]:
+                - img [ref=e83]
+  - navigation "주 내비게이션" [ref=e85]:
+    - link "홈" [ref=e86] [cursor=pointer]:
+      - /url: /shop
+      - img [ref=e88]
+      - generic [ref=e91]: 홈
+    - link "상품 목록" [ref=e92] [cursor=pointer]:
+      - /url: /shop/products
+      - img [ref=e94]
+      - generic [ref=e96]: 상품
+    - link "장바구니 (2개)" [ref=e97] [cursor=pointer]:
+      - /url: /shop/cart
+      - generic [ref=e98]:
+        - generic [ref=e99]: "2"
+        - img [ref=e100]
+      - generic [ref=e103]: 장바구니
+    - link "마이페이지" [ref=e104] [cursor=pointer]:
+      - /url: /shop/account
+      - img [ref=e106]
+      - generic [ref=e109]: 마이
+  - button "🇰🇷 한국어" [ref=e112] [cursor=pointer]:
+    - generic [ref=e113]: 🇰🇷
+    - generic [ref=e114]: 한국어
+    - img [ref=e115]
+  - button "다크 모드 토글" [ref=e118] [cursor=pointer]:
+    - img [ref=e120]

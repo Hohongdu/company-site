@@ -5,14 +5,49 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { mergeGuestCartToUserCart } = require('../lib/cart');
 const { sendTemporaryPasswordEmail } = require('../services/notification.service');
+const { sendMail: sendSmtpMail } = require('../services/smtp-email.service');
+
+const { isValidEmail } = require('../lib/validators');
 
 const router = express.Router();
 
-// 비밀번호 재설정: IP당 15분에 5회
-const forgotLimiter = rateLimit({
+// [M-1] 로그인 브루트포스 방지: 15분 내 20회 초과 시 차단 (성공 시 카운트 제외)
+const loginLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
+	max: 20,
+	skipSuccessfulRequests: true,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	keyGenerator: (req) => req.ip,
+	handler: (req, res) => {
+		res.status(429).render('auth/login', {
+			returnTo: '',
+			csrfToken: req.session?.csrfToken || '',
+			query: req.query,
+			error: '로그인 시도 횟수가 너무 많습니다. 15분 후 다시 시도해주세요.',
+		});
+	},
+	skip: () => process.env.NODE_ENV === 'test',
+});
+
+// [M-2] 회원가입 봇/스팸 방지: 1시간 내 IP당 10회 초과 시 차단
+const registerLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 10,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		res.status(429).render('auth/register', {
+			error: '가입 시도 횟수가 너무 많습니다. 1시간 후 다시 시도해주세요.',
+		});
+	},
+});
+
+// [M-1] 비밀번호 찾기 스팸 방지: 1시간 내 5회 초과 시 차단
+const forgotLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
 	max: 5,
-	standardHeaders: true,
+	standardHeaders: 'draft-7',
 	legacyHeaders: false,
 	keyGenerator: (req) => req.ip,
 	handler: (req, res) => {
@@ -20,25 +55,6 @@ const forgotLimiter = rateLimit({
 			csrfToken: req.session?.csrfToken || '',
 			message: '요청이 너무 많습니다. 15분 후 다시 시도해주세요.',
 			messageType: 'error',
-		});
-	},
-	skip: () => process.env.NODE_ENV === 'test',
-});
-
-// 로그인 실패: IP당 15분에 20회 (성공 시 카운트 제외)
-const loginLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 20,
-	skipSuccessfulRequests: true,
-	standardHeaders: true,
-	legacyHeaders: false,
-	keyGenerator: (req) => req.ip,
-	handler: (req, res) => {
-		res.status(429).render('auth/login', {
-			returnTo: '',
-			csrfToken: req.session?.csrfToken || '',
-			error: '로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.',
-			query: req.query,
 		});
 	},
 	skip: () => process.env.NODE_ENV === 'test',
@@ -107,11 +123,12 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 			() => chars[crypto.randomInt(chars.length)], // Node.js 14.10+ 지원
 		).join('');
 
-		// 3) bcrypt 해싱 후 DB 업데이트
+		// [CRIT-2] 이메일 발송을 DB 업데이트보다 먼저 시도
+		// 이메일 실패 시 비밀번호를 절대 덮어쓰지 않음 → 공격자의 계정 잠금 공격 차단
+		// 3) bcrypt 해싱
 		const hashed = await bcrypt.hash(tempPassword, 10);
-		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
 
-		// 4) 이메일 발송 (실패해도 사용자에게 성공 메시지 - 임시 비밀번호는 이미 변경됨)
+		// 4) 이메일 발송 먼저 시도
 		const emailResult = await sendTemporaryPasswordEmail({
 			to: email,
 			name: user.name,
@@ -119,8 +136,17 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 		});
 
 		if (!emailResult.ok) {
-			console.warn(`[forgot] Email send failed for ${email}:`, emailResult.error);
+			console.warn(`[forgot] 이메일 발송 실패 — 비밀번호 변경 취소:`, emailResult.error);
+			// 이메일 실패 시 DB 업데이트 안 함 (기존 비밀번호 유지)
+			return res.render('auth/forgot', {
+				csrfToken: req.csrfToken(),
+				message: '이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+				messageType: 'error',
+			});
 		}
+
+		// 5) 이메일 성공 확인 후에만 DB 비밀번호 업데이트
+		await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, user.id]);
 
 		return res.render('auth/forgot', {
 			csrfToken: req.csrfToken(),
@@ -136,30 +162,59 @@ router.post('/forgot', forgotLimiter, async (req, res) => {
 		});
 	}
 });
-router.get('/register', (req, res) => res.render('auth/register'));
+// [LOW-2] 다른 GET 라우트와 일관되게 csrfToken 명시 전달 — res.locals 미설정 엣지케이스 방어
+router.get('/register', (req, res) => res.render('auth/register', {
+	csrfToken: req.csrfToken ? req.csrfToken() : (req.session?.csrfToken || ''),
+}));
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
 	try {
 		const { name, email, password, passwordConfirm } = req.body;
 
 		// 입력값 기본 검증
+		// [LOW-1] 유효성 오류 시 폼 다시 렌더링 (CSRF 토큰 포함) — 기존 bare text 응답 수정
+		const renderErr = (msg) => res.status(400).render('auth/register', {
+			error: msg,
+			csrfToken: req.csrfToken ? req.csrfToken() : (req.session?.csrfToken || ''),
+			form: { name, email },
+		});
+
 		if (!name || name.trim().length < 2 || name.trim().length > 50)
-			return res.send('이름은 2자 이상 50자 이하로 입력해주세요.');
-		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-			return res.send('올바른 이메일 주소를 입력해주세요.');
+			return renderErr('이름은 2자 이상 50자 이하로 입력해주세요.');
+		if (!email || !isValidEmail(email))
+			return renderErr('올바른 이메일 주소를 입력해주세요.');
 		if (!password || password.length < 8 || password.length > 72)
-			return res.send('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
-		if (password !== passwordConfirm) return res.send('비밀번호가 일치하지 않습니다.');
+			return renderErr('비밀번호는 8자 이상 72자 이하로 입력해주세요.');
+		if (!/[a-zA-Z]/.test(password))
+			return renderErr('비밀번호에 영문자를 포함해야 합니다.');
+		if (!/[0-9]/.test(password))
+			return renderErr('비밀번호에 숫자를 포함해야 합니다.');
+		if (!/[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]/.test(password))
+			return renderErr('비밀번호에 특수문자를 포함해야 합니다.');
+		if (password !== passwordConfirm) return renderErr('비밀번호가 일치하지 않습니다.');
 
 		const hashedPw = await bcrypt.hash(password, 10);
 
 		// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
 		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
 
+		// 환영 이메일 발송 (비차단 — 이메일 실패가 회원가입을 막지 않음)
+		sendSmtpMail({
+			to: email,
+			subject: `[ENERMADE] 회원가입을 환영합니다, ${name}님`,
+			html: `<h2>안녕하세요, ${name}님!</h2><p>ENERMADE에 가입해 주셔서 감사합니다.</p><p>문의사항은 <a href="${process.env.BASE_URL || 'https://enermade.com'}/contact">고객 지원</a>을 이용해 주세요.</p>`,
+		}).catch(err => console.error('[register] welcome email failed:', err));
+
 		return res.redirect('/auth/login');
 	} catch (err) {
 		console.error(err);
-		return res.status(500).send('회원가입 중 오류 발생');
+		// [LOW-1b] 서버 오류도 폼 렌더링으로 통일 — 이메일 중복(ER_DUP_ENTRY) 등 DB 오류 시 UX 개선
+		const isDupEntry = String(err?.code || err?.message || '').includes('ER_DUP_ENTRY') || String(err?.message || '').includes('Duplicate entry');
+		return res.status(500).render('auth/register', {
+			error: isDupEntry ? '이미 사용 중인 이메일입니다.' : '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+			csrfToken: req.csrfToken ? req.csrfToken() : (req.session?.csrfToken || ''),
+			form: { name, email },
+		});
 	}
 });
 

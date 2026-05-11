@@ -1,0 +1,13 @@
+fix: expand translation coverage, dark mode, and admin layout
+
+[i18n] main.js: add timeline, breadcrumb, notice-filter, contact-info selectors to STATIC_SELECTORS
+[i18n] company-top.ejs: tag main nav login button with data-i18n-auto
+[i18n] contact.ejs: wrap SVG+text submit button text in <span data-i18n-auto>; add data-i18n-placeholder to inputs
+[i18n] notice-detail.ejs: wrap SVG+text back button text in <span data-i18n-auto>
+[i18n] notices.ejs: add data-i18n-placeholder to search input; tag search button
+[i18n] history.ejs: tag CTA paragraph with data-i18n-auto
+[i18n] lookup.ejs: add data-i18n-auto to all inline-styled text divs; fix background:#fff -> var(--c-bg)
+[css] main.css: add .lookup-tab-card hover CSS with theme-aware colors
+[layout] admin-header.ejs: change container -> container-fluid px-4 for full-width admin layout
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>

@@ -7,11 +7,13 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 const csurf = require('./lib/csurf');
 
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
+const { ensureAdminActivityLogTable } = require('./services/audit.service');
 
 const companyRouter = require('./routes/company');
 const authRouter = require('./routes/auth');
@@ -20,6 +22,29 @@ const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
+const BASE_URL = process.env.BASE_URL;
+
+// /api/* 공통 limiter: 15분/100회
+const apiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 100,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		res.status(429).json({ success: false, message: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' });
+	},
+});
+
+// /api/auth/* 등 민감 엔드포인트용 엄격한 limiter: 15분/20회
+const sensitiveApiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 20,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	handler: (req, res) => {
+		res.status(429).json({ success: false, message: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' });
+	},
+});
 
 
 
@@ -40,15 +65,49 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet({ contentSecurityPolicy: false }));
 
 // =====================
+// 요청 로거 (morgan 미설치 → 커스텀 미들웨어)
+// 정적 파일(.css/.js/.ico/.png/.webp/.woff 등)은 로그에서 제외
+// =====================
+const STATIC_EXT_RE = /\.(css|js|ico|png|jpg|jpeg|webp|gif|svg|woff|woff2|ttf|eot|map)(\?.*)?$/i;
+
+app.use((req, res, next) => {
+	if (STATIC_EXT_RE.test(req.path)) return next();
+
+	const start = Date.now();
+	res.on('finish', () => {
+		const duration = Date.now() - start;
+		const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || '-';
+		const user = req.session?.user ? `[uid:${req.session.user.id}]` : '-';
+
+		if (process.env.NODE_ENV === 'production') {
+			// 운영: combined 스타일
+			console.log(`[HTTP] ${new Date().toISOString()} ${ip} ${user} "${req.method} ${req.originalUrl}" ${res.statusCode} ${duration}ms`);
+		} else {
+			// 개발: 간결한 dev 스타일
+			const colorCode = res.statusCode >= 500 ? '\x1b[31m' : res.statusCode >= 400 ? '\x1b[33m' : '\x1b[32m';
+			console.log(`${colorCode}${req.method}\x1b[0m ${req.originalUrl} \x1b[90m${res.statusCode} ${duration}ms\x1b[0m`);
+		}
+	});
+	next();
+});
+
+// =====================
 // 세션
 // =====================
 // [M-5] SESSION_SECRET 미설정 시: 운영 환경에서는 서버 시작 자체를 거부
-// 알려진 시크릿('change_me_in_env')으로 세션에 서명하면 공격자가 세션 토큰 위조 가능
 if (!process.env.SESSION_SECRET) {
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error('[FATAL] SESSION_SECRET must be set in .env for production. Refusing to start.');
 	}
 	console.warn('[WARN] SESSION_SECRET is empty. Set it in .env for production safety.');
+}
+
+// [HIGH-3] FILE_TRANSFER_TOKEN_SECRET 미설정 시 경고 — 기본값은 공개된 문자열이므로 위조 토큰 가능
+if (!process.env.FILE_TRANSFER_TOKEN_SECRET) {
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error('[FATAL] FILE_TRANSFER_TOKEN_SECRET must be set in .env for production. Refusing to start.');
+	}
+	console.warn('[WARN] FILE_TRANSFER_TOKEN_SECRET not set. Using insecure default — must be set in .env!');
 }
 
 app.use(
@@ -66,6 +125,29 @@ app.use(
 		},
 	}),
 );
+
+// =====================
+// 회사 정보 locals — CSRF보다 먼저 주입해야 에러 페이지에서도 사용 가능
+// .env의 COMPANY_* 변수로 오버라이드 가능 (하드코딩 제거)
+// =====================
+const COMPANY_INFO = {
+	name:    process.env.COMPANY_NAME    || 'ENERMADE',
+	phone:   process.env.COMPANY_PHONE   || '02-0000-0000',
+	address: process.env.COMPANY_ADDRESS || '서울특별시 강남구 테헤란로 123',
+	email:   process.env.COMPANY_EMAIL   || 'contact@enermade.com',
+	fax:     process.env.COMPANY_FAX     || '',
+};
+
+// =====================
+// 공통 locals (CSRF 이전 — 에러 핸들러에서도 res.locals.company 보장)
+// =====================
+app.use((req, res, next) => {
+	res.locals.currentPath = req.path;
+	res.locals.currentUrl = req.originalUrl;
+	res.locals.user = req.session?.user || null;
+	res.locals.company = COMPANY_INFO;
+	next();
+});
 
 // =====================
 // CSRF (admin/auth만)
@@ -97,22 +179,14 @@ app.use('/admin', (req, res, next) => {
 	}
 	return next();
 });
+// [C-4] Shop 결제/장바구니/리뷰/위시리스트/문의 POST 라우트 CSRF 보호
+app.use('/shop', csrfProtection);
 
 // EJS에서 csrfToken 바로 사용 가능하게 주입
 app.use((req, res, next) => {
 	if (typeof req.csrfToken === 'function') {
 		res.locals.csrfToken = req.csrfToken();
 	}
-	next();
-});
-
-// =====================
-// 공통 locals
-// =====================
-app.use((req, res, next) => {
-	res.locals.currentPath = req.path;
-	res.locals.currentUrl = req.originalUrl;
-	res.locals.user = req.session?.user || null;
 	next();
 });
 
@@ -152,8 +226,9 @@ app.use('/auth', authRouter);
 app.use('/shop', shopRouter);
 app.use('/admin', adminRouter);
 
-// (선택) API 라우팅 - 사용 중이면 유지
-app.use('/api', require('./routes/api'));
+// API 라우팅: 공통 limiter 적용 후 민감 경로는 별도 엄격한 limiter 추가
+app.use('/api/auth', sensitiveApiLimiter);
+app.use('/api', apiLimiter, require('./routes/api'));
 
 // =====================
 // Error Handlers (순서 중요)
@@ -192,14 +267,32 @@ app.use((req, res) => {
 });
 
 // 500 (맨 마지막)
-app.use((err, req, res, next) => {
-	console.error('SERVER ERROR:', err);
+const { sendAdminErrorAlert } = require('./services/smtp-email.service');
 
-	const errorId = `E-${Date.now()}`;
+app.use(async (err, req, res, next) => {
+	const status = err.status || err.statusCode || 500;
+	console.error(`[${status}] ${req.method} ${req.originalUrl}`, err);
+
 	if (res.headersSent) return next(err);
 
-	res.status(500).render('500', {
+	// 관리자 알림 이메일 (비차단)
+	sendAdminErrorAlert({
+		error: err.message || String(err),
+		url: req.originalUrl,
+		method: req.method,
+		userId: req.session?.user?.id,
+		stack: err.stack,
+	}).catch(() => {});
+
+	if (req.xhr || req.headers.accept?.includes('application/json')) {
+		return res.status(status).json({ ok: false, message: '서버 오류가 발생했습니다.' });
+	}
+
+	const errorId = `E-${Date.now()}`;
+	return res.status(status).render('error', {
+		statusCode: status,
 		message: '서버 오류가 발생했습니다.',
+		backHref: req.get('referer') || '/',
 		errorId,
 		currentPath: req.path,
 		currentUrl: req.originalUrl,
@@ -210,10 +303,23 @@ app.use((err, req, res, next) => {
 // =====================
 // Start
 // =====================
+
+// [CODEX-1] 서버 시작 전 DB 연결 검증 — 설정 오류를 첫 요청이 아닌 시작 시점에 감지
+async function initializeSchemas() {
+	// 감사 로그 테이블 초기화 (audit.service.js)
+	await ensureAdminActivityLogTable();
+	for (const router of [companyRouter, shopRouter, adminRouter]) {
+		if (typeof router.initializeSchema === 'function') {
+			await router.initializeSchema();
+		}
+	}
+}
+
 (async () => {
 	try {
 		await db.execute('SELECT 1');
 		console.log('[DB] 데이터베이스 연결 확인 완료');
+		await initializeSchemas();
 	} catch (err) {
 		console.error('[FATAL] 데이터베이스 연결 실패 — 서버 시작 중단:', err.message);
 		process.exit(1);
@@ -234,174 +340,22 @@ if (false) {
 
 // 결제 준비
 // legacy /payments/ready route removed; use /shop/checkout/kakao instead
-legacyPaymentsRoutes.post('/payments/ready', requireLogin, async (req, res) => {
-	try {
-		const { orderId, method } = req.body;
-		const userId = req.session.user.id;
-
-		// 1) 주문 + 상품 정보 조회
-		const [rows] = await db.execute(
-			`SELECT o.*, p.name AS product_name, p.price AS product_price
-       FROM orders o
-       JOIN products p ON o.product_id = p.id
-       WHERE o.id = ? AND o.user_id = ?
-       LIMIT 1`,
-			[orderId, userId],
-		);
-
-		if (rows.length === 0) {
-			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
-		}
-
-		const order = rows[0];
-
-		// 2) PG 분기
-		if (method !== 'KAKAO') {
-			return res.status(400).send('현재는 카카오페이만 지원합니다.');
-		}
-
-		if (!KAKAO_ADMIN_KEY) return res.status(500).send('KAKAO_ADMIN_KEY가 없습니다(.env 확인).');
-		if (!BASE_URL) return res.status(500).send('BASE_URL이 없습니다(.env 확인).');
-
-		// 3) 카카오페이 결제 준비 API 호출
-		const kakaoResponse = await axios.post(
-			'https://kapi.kakao.com/v1/payment/ready',
-			new URLSearchParams({
-				cid: KAKAO_CID,
-				partner_order_id: String(order.id),
-				partner_user_id: String(userId),
-				item_name: order.product_name,
-				quantity: '1',
-				total_amount: String(order.product_price),
-				vat_amount: '0',
-				tax_free_amount: '0',
-				approval_url: `${BASE_URL}/payments/kakao/success?orderId=${order.id}`,
-				cancel_url: `${BASE_URL}/payments/kakao/cancel?orderId=${order.id}`,
-				fail_url: `${BASE_URL}/payments/kakao/fail?orderId=${order.id}`,
-			}).toString(),
-			{
-				headers: {
-					'Authorization': `KakaoAK ${KAKAO_ADMIN_KEY}`,
-					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-				},
-			},
-		);
-
-		const { tid, next_redirect_pc_url } = kakaoResponse.data;
-
-		// 4) tid 저장 (approve에서 필요)
-		await db.execute(
-			`UPDATE orders
-       SET pg_tid = ?, payment_method = 'KAKAO'
-       WHERE id = ?`,
-			[tid, order.id],
-		);
-
-		// 5) 카카오 결제 페이지로 이동
-		return res.redirect(next_redirect_pc_url);
-	} catch (err) {
-		console.error(err.response?.data || err);
-		return res.status(500).send('결제 준비 중 오류가 발생했습니다.');
-	}
+legacyPaymentsRoutes.post('/payments/ready', async (req, res) => {
+	// intentionally disabled
 });
 
 // 결제 승인 콜백
-legacyPaymentsRoutes.get('/payments/kakao/success', requireLogin, async (req, res) => {
-	try {
-		const { pg_token, orderId } = req.query;
-		const userId = req.session.user.id;
-
-		if (!pg_token || !orderId) {
-			return res.status(400).send('잘못된 요청입니다.');
-		}
-
-		// 1) 주문에서 tid 가져오기
-		const [rows] = await db.execute('SELECT * FROM orders WHERE id = ? AND user_id = ? LIMIT 1', [orderId, userId]);
-
-		if (rows.length === 0) {
-			return res.status(404).render('404', { message: '주문을 찾을 수 없습니다.' });
-		}
-
-		const order = rows[0];
-		if (!order.pg_tid) return res.status(400).send('결제 정보(tid)가 없습니다.');
-
-		// 2) 결제 승인 API 호출
-		const approveResponse = await axios.post(
-			'https://kapi.kakao.com/v1/payment/approve',
-			new URLSearchParams({
-				cid: KAKAO_CID,
-				tid: order.pg_tid,
-				partner_order_id: String(order.id),
-				partner_user_id: String(userId),
-				pg_token: String(pg_token),
-			}).toString(),
-			{
-				headers: {
-					'Authorization': `KakaoAK ${KAKAO_ADMIN_KEY}`,
-					'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-				},
-			},
-		);
-		if (process.env.NODE_ENV !== 'production') {
-			console.log('[Kakao approve] query=', req.query);
-			console.log('[Kakao approve] tid=', req.session?.kakaoPay?.tid);
-			console.log('KakaoPay approve result:', approveResponse.data);
-		}
-
-		// 3) 주문 상태 업데이트
-		await db.execute(
-			`UPDATE orders
-       SET status = 'PAID', paid_at = NOW()
-       WHERE id = ?`,
-			[order.id],
-		);
-
-		// 4) 주문 상세로 이동 (shop 라우터가 처리하는 경로)
-		return res.redirect('/shop/orders/' + order.id);
-	} catch (err) {
-		console.error(err.response?.data || err);
-		return res.status(500).send('결제 승인 중 오류가 발생했습니다.');
-	}
+legacyPaymentsRoutes.get('/payments/kakao/success', async (req, res) => {
+	// intentionally disabled
 });
 
 // 결제 취소
-legacyPaymentsRoutes.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
-	try {
-		const { orderId } = req.query;
-		const userId = req.session.user.id;
-
-		if (orderId) {
-			// [C-6 IDOR 수정] AND user_id = ? 추가: 반드시 본인 주문만 취소 처리
-			// orderId만으로 UPDATE하면 숫자 조작으로 타인의 주문 상태 변경 가능
-			await db.execute(
-				`UPDATE orders SET status = 'CANCELED' WHERE id = ? AND user_id = ?`,
-				[orderId, userId],
-			);
-		}
-		return res.redirect('/shop/cart?notice=cancel');
-	} catch (e) {
-		console.error('[kakao/cancel]', e);
-		return res.status(500).send('취소 처리 중 오류가 발생했습니다.');
-	}
+legacyPaymentsRoutes.get('/payments/kakao/cancel', async (req, res) => {
+	// intentionally disabled
 });
 
 // 결제 실패
-legacyPaymentsRoutes.get('/payments/kakao/fail', requireLogin, async (req, res) => {
-	try {
-		const { orderId } = req.query;
-		const userId = req.session.user.id;
-
-		if (orderId) {
-			// [C-6 IDOR 수정] AND user_id = ? 추가
-			await db.execute(
-				`UPDATE orders SET status = 'FAILED' WHERE id = ? AND user_id = ?`,
-				[orderId, userId],
-			);
-		}
-		return res.redirect('/shop/cart?notice=fail');
-	} catch (e) {
-		console.error('[kakao/fail]', e);
-		return res.status(500).send('실패 처리 중 오류가 발생했습니다.');
-	}
+legacyPaymentsRoutes.get('/payments/kakao/fail', async (req, res) => {
+	// intentionally disabled
 });
 }

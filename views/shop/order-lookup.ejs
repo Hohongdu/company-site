@@ -11,27 +11,25 @@
           <div class="alert alert-warning"><%= error %></div>
         <% } %>
 
-        <form action="/shop/orders/guest" method="post" class="row g-3">
-          <div class="col-12 col-md-6">
-            <label class="form-label" data-i18n-auto>주문번호</label>
-            <input class="form-control" name="orderNumber" required value="<%= form.orderNumber %>">
-          </div>
-          <div class="col-12 col-md-6">
-            <label class="form-label" data-i18n-auto>이메일</label>
-            <input class="form-control" type="email" name="guestEmail" value="<%= form.guestEmail %>">
-          </div>
-          <div class="col-12 col-md-6">
-            <label class="form-label" data-i18n-auto>연락처</label>
-            <input class="form-control" name="guestPhone"
-              placeholder="010-0000-0000" value="<%= form.guestPhone %>">
-          </div>
-          <div class="col-12">
-            <button class="btn btn-primary" data-i18n-auto>조회하기</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+            <form action="/shop/orders/guest" method="post" class="row g-3">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-12 col-md-6">
+                    <label class="form-label">주문번호</label>
+                    <input class="form-control" name="orderNumber" required value="<%= form.orderNumber %>">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">이메일</label>
+                    <input class="form-control" type="email" name="guestEmail" value="<%= form.guestEmail %>">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">연락처</label>
+                    <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
+                        value="<%= form.guestPhone %>">
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary">조회하기</button>
+                </div>
+            </form>
 </div>
 
 <%- include('../layouts/shop-bottom') %>

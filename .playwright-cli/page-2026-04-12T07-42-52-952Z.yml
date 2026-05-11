@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - link "ENERMADE" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - list [ref=e6]:
+        - listitem [ref=e7]:
+          - link "홈" [ref=e8] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e9]:
+          - link "회사 소개" [ref=e10] [cursor=pointer]:
+            - /url: /about
+        - listitem [ref=e11]:
+          - link "연혁" [ref=e12] [cursor=pointer]:
+            - /url: /history
+        - listitem [ref=e13]:
+          - link "공지사항" [ref=e14] [cursor=pointer]:
+            - /url: /notices
+        - listitem [ref=e15]:
+          - link "문의" [ref=e16] [cursor=pointer]:
+            - /url: /contact
+      - generic [ref=e17]:
+        - link "쇼핑몰" [ref=e18] [cursor=pointer]:
+          - /url: /shop
+          - img [ref=e19]
+        - button "로그인" [ref=e22] [cursor=pointer]
+  - dialog "메뉴" [ref=e23]:
+    - generic [ref=e24]:
+      - link "ENERMADE" [ref=e25] [cursor=pointer]:
+        - /url: /
+      - button "닫기" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+    - generic [ref=e30]:
+      - button "로그인" [ref=e31] [cursor=pointer]
+      - link "회원가입" [ref=e32] [cursor=pointer]:
+        - /url: /auth/register
+    - navigation [ref=e33]:
+      - link "홈" [ref=e34] [cursor=pointer]:
+        - /url: /
+      - link "회사 소개" [ref=e35] [cursor=pointer]:
+        - /url: /about
+      - link "연혁" [ref=e36] [cursor=pointer]:
+        - /url: /history
+      - link "공지사항" [ref=e37] [cursor=pointer]:
+        - /url: /notices
+      - link "문의" [ref=e38] [cursor=pointer]:
+        - /url: /contact
+      - link "쇼핑몰" [ref=e39] [cursor=pointer]:
+        - /url: /shop
+  - main [ref=e40]:
+    - generic [ref=e42]:
+      - generic [ref=e43]: "500"
+      - heading "서버 오류가 발생했습니다" [level=1] [ref=e44]
+      - paragraph [ref=e45]: 공지 목록을 불러오는 중 오류가 발생했습니다.
+      - generic [ref=e46]:
+        - link "홈으로" [ref=e47] [cursor=pointer]:
+          - /url: /
+        - button "새로고침" [ref=e48] [cursor=pointer]
+  - contentinfo [ref=e49]:
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]: ENERMADE
+          - paragraph [ref=e54]:
+            - text: 고객 맞춤형 세라믹 솔루션 제공업체.
+            - text: 첨단 기술과 풍부한 경험을 바탕으로
+            - text: 최고의 제품을 제공합니다.
+        - generic [ref=e55]:
+          - generic [ref=e56]: 회사
+          - generic [ref=e57]:
+            - link "홈" [ref=e58] [cursor=pointer]:
+              - /url: /
+            - link "회사 소개" [ref=e59] [cursor=pointer]:
+              - /url: /about
+            - link "연혁" [ref=e60] [cursor=pointer]:
+              - /url: /history
+            - link "문의" [ref=e61] [cursor=pointer]:
+              - /url: /contact
+        - generic [ref=e62]:
+          - generic [ref=e63]: 제품
+          - generic [ref=e64]:
+            - link "상품몰" [ref=e65] [cursor=pointer]:
+              - /url: /shop
+            - link "전체 상품" [ref=e66] [cursor=pointer]:
+              - /url: /shop/products
+            - link "공지사항" [ref=e67] [cursor=pointer]:
+              - /url: /notices
+        - generic [ref=e68]:
+          - generic [ref=e69]: 고객지원
+          - generic [ref=e70]:
+            - link "문의하기" [ref=e71] [cursor=pointer]:
+              - /url: /shop/inquiries
+            - link "주문 조회" [ref=e72] [cursor=pointer]:
+              - /url: /shop/orders/guest
+            - link "로그인" [ref=e73] [cursor=pointer]:
+              - /url: /auth/login
+            - link "회원가입" [ref=e74] [cursor=pointer]:
+              - /url: /auth/register
+      - generic [ref=e75]:
+        - generic [ref=e76]: © 2026 ENERMADE. All rights reserved.
+        - generic [ref=e77]: 세라믹 가공 솔루션 전문기업
+  - button "🇰🇷 한국어" [ref=e80] [cursor=pointer]:
+    - generic [ref=e81]: 🇰🇷
+    - generic [ref=e82]: 한국어
+    - img [ref=e83]

@@ -1,0 +1,15 @@
+[     481ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ https://enermade.com/favicon.ico:0
+[   64997ms] [LOG] [PostMessage.ts] load. OS : {"app":{"type":"UNKNOWN","version":"0.0.0"},"browser":"UNKNOWN","isWave":false,"isPayWeb":false,"os":{"name":"UNKNOWN","version":"0.0.0"}} @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/payweb-8e7ba32a.js:8
+[   64998ms] [LOG] [PostMessage.ts] window.KakaoPay is not defined. @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/payweb-8e7ba32a.js:8
+[   65003ms] [LOG] [enableNativeStorageEvent] @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/payweb-8e7ba32a.js:8
+[   65004ms] [LOG] [enableTabViewEvent] @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/payweb-8e7ba32a.js:8
+[   65004ms] [LOG] [enableCommonCallbackEvent] @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/payweb-8e7ba32a.js:8
+[   65058ms] [LOG] [[extractHash]] @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/index-57e1a1ef.js:63
+[   65059ms] [LOG] documentReferrer:   @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/index-57e1a1ef.js:63
+[   65248ms] [INFO] %c✅[TIARA][trackPage] sectionName: online, tiaraData: {"pageName":"PC_payment_QR","actionName":"PC결제_가맹점_QR","customProps":{"qr":"https://online-payment.kakaopay.com/mockup/bridge/mobile-pc/pg/one-time/payment/a80ee10c1ad92080851555907bd9c7ab193a105e020cde41a9733979b6417adc4","tid":"T9db537057126faad7dd","online_channel":"TESLA","payMode":"one-time","payDetailMode":"payment","isZero":"N","webview_type":"payweb"}} color:#EBC153 @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/index-57e1a1ef.js:63
+[   65250ms] [LOG] QrStatus Response: undefined @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/index-57e1a1ef.js:63
+[   65296ms] [LOG] QrStatus Response: {
+  "status": "READY",
+  "expired": false,
+  "needRedirectFailUrl": false
+} @ https://fe.kakaopaycdn.com/online-payment/mockup-online-payment-pc-bridge-client/900f44beb6747c06806e478e3235bf3be6f8eb41/static/index-57e1a1ef.js:63

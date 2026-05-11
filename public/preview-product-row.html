@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Row Preview</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>
+:root {
+  --accent:       #ea580c;
+  --radius:       10px;
+  --radius-lg:    16px;
+  --admin-border: #e4e4e7;
+  --shadow-sm:    0 1px 3px rgba(15,23,42,0.06);
+}
+
+body { background: #f8f8f8; padding: 40px 24px; font-family: 'Noto Sans KR', sans-serif; }
+
+/* Bootstrap overrides */
+.btn, .form-control, .form-select { border-radius: var(--radius) !important; }
+.btn { font-weight: 600; }
+.btn-outline-primary   { border-color: var(--accent) !important; color: var(--accent) !important; border-width: 1.5px !important; }
+.btn-outline-primary:hover { background: var(--accent) !important; color: #fff !important; }
+.btn-outline-danger    { border-width: 1.5px !important; }
+.btn-outline-secondary { border-width: 1.5px !important; }
+
+/* 재고 상태 뱃지 — 고정폭으로 레이아웃 흔들림 방지 */
+.adm-stock-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 7px 16px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+  width: 92px; line-height: 1; box-sizing: border-box;
+}
+.adm-stock-badge--in  { background: #16a34a; color: #fff; }
+.adm-stock-badge--out { background: #dc2626; color: #fff; }
+.adm-stock-badge--low { background: #d97706; color: #fff; }
+
+/* 버튼/셀렉트 — sm 사이즈로 compact */
+.adm-tbl-btn    { min-width: 72px; text-align: center; font-weight: 600; white-space: nowrap; }
+.adm-tbl-select { width: auto !important; min-width: 76px; flex-shrink: 0; }
+
+/* 재고 뱃지도 sm에 맞게 */
+.adm-stock-badge { padding: 4px 12px; font-size: 12px; width: 80px; }
+
+/* 카드 */
+.preview-card {
+  background: #fff; border: 1px solid var(--admin-border);
+  border-radius: var(--radius-lg); padding: 28px 32px;
+  box-shadow: var(--shadow-sm); max-width: 820px; margin: 0 auto;
+}
+.preview-label {
+  font-size: 11px; font-weight: 700; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 16px;
+}
+
+/*
+ * ─── CSS Grid 레이아웃 ───────────────────────────────────────
+ *  col1(auto)  col2(1px)  col3(auto)     col4(1px)  col5(auto)
+ *  ──────────  ─────────  ────────────   ─────────  ──────────
+ *  row1: 뱃지  │          (비어있음)     │          수정
+ *  row2: 인풋  │          판매중+변경    │          삭제
+ *  row3: (없음)│          (비어있음)     │          샵에서 보기
+ *
+ *  각 버튼이 독립 row → 버튼 자연 높이 = row 높이 (여백 없음)
+ *  구분선은 3행 전체 span
+ * ─────────────────────────────────────────────────────────── */
+.prod-row {
+  display: grid;
+  grid-template-columns: auto 1px auto 1px auto;
+  grid-template-rows: auto auto auto;   /* 3행: 뱃지 / 컨트롤 / 샵에서 보기 */
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: center;
+}
+
+/* 재고 열 */
+.prd-badge      { grid-column: 1; grid-row: 1; }
+.prd-stock-ctrl { grid-column: 1; grid-row: 2; display: flex; gap: 8px; align-items: center; }
+/* col1 row3: 비어있음 → row 높이는 actions row3(샵에서 보기)에 맞춰 자동 결정 */
+
+/* 구분선 — 3행 전체 span, 자연 높이만큼만 */
+.prd-div1 { grid-column: 2; grid-row: 1 / 4; align-self: stretch; background: var(--admin-border); }
+.prd-div2 { grid-column: 4; grid-row: 1 / 4; align-self: stretch; background: var(--admin-border); }
+
+/* 상태 열 — row 2에만 배치 */
+.prd-status-ctrl { grid-column: 3; grid-row: 2; display: flex; gap: 8px; align-items: center; }
+
+/* 관리 버튼 — 각각 독립 row, 자연 높이 유지 (늘어나지 않음) */
+.prd-act-1 { grid-column: 5; grid-row: 1; }
+.prd-act-2 { grid-column: 5; grid-row: 2; }
+.prd-act-3 { grid-column: 5; grid-row: 3; }
+</style>
+</head>
+<body>
+<div class="preview-card">
+
+  <!-- ────────── 재고 있음 케이스 ────────── -->
+  <div class="preview-label">재고 있음 케이스</div>
+  <div class="prod-row">
+    <span class="prd-badge adm-stock-badge adm-stock-badge--in">재고 있음</span>
+    <div class="prd-div1"></div>
+    <div class="prd-div2"></div>
+
+    <div class="prd-stock-ctrl">
+      <input class="form-control form-control-sm" type="number" value="9" style="width:90px;">
+      <button class="btn btn-sm btn-outline-secondary adm-tbl-btn">저장</button>
+    </div>
+
+    <div class="prd-status-ctrl">
+      <select class="form-select form-select-sm adm-tbl-select">
+        <option selected>판매중</option>
+        <option>숨김</option>
+      </select>
+      <button class="btn btn-sm btn-outline-secondary adm-tbl-btn">변경</button>
+    </div>
+
+    <a class="prd-act-1 btn btn-sm btn-outline-primary adm-tbl-btn">수정</a>
+    <button class="prd-act-2 btn btn-sm btn-outline-danger adm-tbl-btn">삭제</button>
+    <a class="prd-act-3 btn btn-sm btn-outline-secondary adm-tbl-btn">샵에서 보기</a>
+  </div>
+
+  <hr style="margin: 28px 0; border-color: var(--admin-border);">
+
+  <!-- ────────── 품절 케이스 ────────── -->
+  <div class="preview-label">품절 케이스</div>
+  <div class="prod-row">
+    <span class="prd-badge adm-stock-badge adm-stock-badge--out">품절</span>
+    <div class="prd-div1"></div>
+    <div class="prd-div2"></div>
+
+    <div class="prd-stock-ctrl">
+      <input class="form-control form-control-sm" type="number" value="0" style="width:90px;">
+      <button class="btn btn-sm btn-outline-secondary adm-tbl-btn">저장</button>
+    </div>
+
+    <div class="prd-status-ctrl">
+      <select class="form-select form-select-sm adm-tbl-select">
+        <option>판매중</option>
+        <option selected>숨김</option>
+      </select>
+      <button class="btn btn-sm btn-outline-secondary adm-tbl-btn">변경</button>
+    </div>
+
+    <a class="prd-act-1 btn btn-sm btn-outline-primary adm-tbl-btn">수정</a>
+    <button class="prd-act-2 btn btn-sm btn-outline-danger adm-tbl-btn">삭제</button>
+    <a class="prd-act-3 btn btn-sm btn-outline-secondary adm-tbl-btn">샵에서 보기</a>
+  </div>
+
+  <hr style="margin: 28px 0; border-color: var(--admin-border);">
+
+  <!-- ────────── 재고 부족 케이스 ────────── -->
+  <div class="preview-label">재고 부족 케이스</div>
+  <div class="prod-row">
+    <span class="prd-badge adm-stock-badge adm-stock-badge--low">재고 부족</span>
+    <div class="prd-div1"></div>
+    <div class="prd-div2"></div>
+
+    <div class="prd-stock-ctrl">
+      <input class="form-control form-control-sm" type="number" value="3" style="width:90px;">
+      <button class="btn btn-sm btn-outline-secondary adm-tbl-btn">저장</button>
+    </div>
+
+    <div class="prd-status-ctrl">
+      <select class="form-select form-select-sm adm-tbl-select">
+        <option selected>판매중</option>
+        <option>숨김</option>
+      </select>
+      <button class="btn btn-sm btn-outline-secondary adm-tbl-btn">변경</button>
+    </div>
+
+    <a class="prd-act-1 btn btn-sm btn-outline-primary adm-tbl-btn">수정</a>
+    <button class="prd-act-2 btn btn-sm btn-outline-danger adm-tbl-btn">삭제</button>
+    <a class="prd-act-3 btn btn-sm btn-outline-secondary adm-tbl-btn">샵에서 보기</a>
+  </div>
+
+</div>
+</body>
+</html>

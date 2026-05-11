@@ -1,7 +1,31 @@
 <%- include('../layouts/shop-top', { title: '문의 내역', active: 'account' }) %>
 
 <div class="shop-account-wrap">
-  <%- include('partials/account-sidebar', { activeItem: 'inquiries' }) %>
+  <aside class="acct-sidebar">
+    <div class="acct-sidebar__head">
+      <div class="acct-avatar"><%= user.name.charAt(0) %></div>
+      <div>
+        <div class="acct-user-name"><%= user.name %></div>
+        <div class="acct-user-email"><%= user.email %></div>
+      </div>
+    </div>
+    <nav class="acct-nav">
+      <a class="acct-nav-link" href="/shop/account">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        쇼핑 정보
+      </a>
+      <a class="acct-nav-link is-active" href="/shop/account/inquiries">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        문의 내역
+      </a>
+      <% if (user && user.is_admin) { %>
+      <a class="acct-nav-link acct-nav-link--admin" href="/admin/dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        관리자 대시보드
+      </a>
+      <% } %>
+    </nav>
+  </aside>
 
   <div class="acct-content">
     <div class="acct-card">

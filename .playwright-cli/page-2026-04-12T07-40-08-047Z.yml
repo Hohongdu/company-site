@@ -1,0 +1,260 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - link "ENERMADE" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - list [ref=e6]:
+        - listitem [ref=e7]:
+          - link "홈" [ref=e8] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e9]:
+          - link "회사 소개" [ref=e10] [cursor=pointer]:
+            - /url: /about
+        - listitem [ref=e11]:
+          - link "연혁" [ref=e12] [cursor=pointer]:
+            - /url: /history
+        - listitem [ref=e13]:
+          - link "공지사항" [ref=e14] [cursor=pointer]:
+            - /url: /notices
+        - listitem [ref=e15]:
+          - link "문의" [ref=e16] [cursor=pointer]:
+            - /url: /contact
+      - generic [ref=e17]:
+        - link "쇼핑몰" [ref=e18] [cursor=pointer]:
+          - /url: /shop
+          - img [ref=e19]
+        - button "로그인" [ref=e22] [cursor=pointer]
+  - dialog "메뉴" [ref=e23]:
+    - generic [ref=e24]:
+      - link "ENERMADE" [ref=e25] [cursor=pointer]:
+        - /url: /
+      - button "닫기" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+    - generic [ref=e30]:
+      - button "로그인" [ref=e31] [cursor=pointer]
+      - link "회원가입" [ref=e32] [cursor=pointer]:
+        - /url: /auth/register
+    - navigation [ref=e33]:
+      - link "홈" [ref=e34] [cursor=pointer]:
+        - /url: /
+      - link "회사 소개" [ref=e35] [cursor=pointer]:
+        - /url: /about
+      - link "연혁" [ref=e36] [cursor=pointer]:
+        - /url: /history
+      - link "공지사항" [ref=e37] [cursor=pointer]:
+        - /url: /notices
+      - link "문의" [ref=e38] [cursor=pointer]:
+        - /url: /contact
+      - link "쇼핑몰" [ref=e39] [cursor=pointer]:
+        - /url: /shop
+  - main [ref=e40]:
+    - generic [ref=e41]:
+      - generic: CERAMIC
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: 세라믹 가공 솔루션 전문기업
+          - heading "다양한 소재 무한한 가능성" [level=1] [ref=e47]:
+            - text: 다양한 소재
+            - emphasis [ref=e48]: 무한한 가능성
+          - paragraph [ref=e49]: 고객 맞춤형 세라믹 솔루션 제공업체. 첨단 기술과 풍부한 경험으로 최적의 솔루션을 제안합니다.
+          - generic [ref=e50]:
+            - link "제품 카탈로그" [ref=e51] [cursor=pointer]:
+              - /url: /shop
+            - link "견적 문의하기" [ref=e52] [cursor=pointer]:
+              - /url: /contact
+          - generic [ref=e53]:
+            - generic [ref=e54]:
+              - generic [ref=e55]:
+                - text: "20"
+                - superscript [ref=e56]: +
+              - generic [ref=e57]: 년 이상 경험
+            - generic [ref=e58]:
+              - generic [ref=e59]:
+                - text: "500"
+                - superscript [ref=e60]: +
+              - generic [ref=e61]: 납품 거래처
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - text: "99"
+                - superscript [ref=e64]: "%"
+              - generic [ref=e65]: 고객 만족도
+        - generic [ref=e67]:
+          - img "세라믹 가공 현장" [ref=e69]
+          - generic [ref=e70]:
+            - img [ref=e72]
+            - generic [ref=e74]:
+              - generic [ref=e75]: ISO 9001
+              - generic [ref=e76]: 품질 인증
+    - generic [ref=e78]:
+      - generic [ref=e79]:
+        - generic [ref=e80]: ENERMADE 소개
+        - heading "세라믹 가공 분야의 선도주자" [level=2] [ref=e81]
+        - paragraph [ref=e82]: 다양한 소재를 활용한 고품질 제품으로, 산업용 세라믹부터 정밀 부품까지 폭넓은 솔루션을 제공합니다.
+      - generic [ref=e83]:
+        - generic [ref=e85]:
+          - img [ref=e87]
+          - generic [ref=e89]: 첨단 기술
+          - paragraph [ref=e90]: 최신 세라믹 가공 기술과 장비를 활용하여 최고 품질의 제품을 생산합니다.
+        - generic [ref=e92]:
+          - img [ref=e94]
+          - generic [ref=e97]: 신속한 납기
+          - paragraph [ref=e98]: 일반 제품 7~10일, 맞춤 제작 2~4주. 긴급 주문 별도 협의 가능합니다.
+        - generic [ref=e100]:
+          - img [ref=e102]
+          - generic [ref=e104]: ISO 품질 인증
+          - paragraph [ref=e105]: ISO 9001 인증 품질 관리 시스템으로 일관된 품질을 보장합니다.
+        - generic [ref=e107]:
+          - img [ref=e109]
+          - generic [ref=e113]: 전문 기술 지원
+          - paragraph [ref=e114]: 전문 엔지니어가 도면 상담, 공정 제안, 제품 적용 검토를 지원합니다.
+    - generic [ref=e115]:
+      - paragraph [ref=e117]: 함께하는 파트너사
+      - generic [ref=e119]:
+        - generic [ref=e120]: SAMSUNG ·
+        - generic [ref=e121]: LG CHEM ·
+        - generic [ref=e122]: HYUNDAI MOTOR ·
+        - generic [ref=e123]: SK MATERIALS ·
+        - generic [ref=e124]: POSCO ·
+        - generic [ref=e125]: HANWHA ·
+        - generic [ref=e126]: LOTTE CHEM ·
+        - generic [ref=e127]: KOLON IND ·
+        - generic [ref=e128]: DOOSAN ·
+        - generic [ref=e129]: KIA ·
+        - generic [ref=e130]: SAMSUNG ·
+        - generic [ref=e131]: LG CHEM ·
+        - generic [ref=e132]: HYUNDAI MOTOR ·
+        - generic [ref=e133]: SK MATERIALS ·
+        - generic [ref=e134]: POSCO ·
+        - generic [ref=e135]: HANWHA ·
+        - generic [ref=e136]: LOTTE CHEM ·
+        - generic [ref=e137]: KOLON IND ·
+        - generic [ref=e138]: DOOSAN ·
+        - generic [ref=e139]: KIA ·
+    - generic [ref=e142]:
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - text: "20"
+          - superscript [ref=e145]: +
+        - generic [ref=e146]: 년 이상의 경험
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - text: "500"
+          - superscript [ref=e149]: +
+        - generic [ref=e150]: 납품 거래처
+      - generic [ref=e151]:
+        - generic [ref=e152]:
+          - text: "99"
+          - superscript [ref=e153]: "%"
+        - generic [ref=e154]: 고객 만족도
+      - generic [ref=e155]:
+        - generic [ref=e156]:
+          - text: "24"
+          - superscript [ref=e157]: h
+        - generic [ref=e158]: 기술 지원 대응
+    - generic [ref=e161]:
+      - img "ENERMADE 공장" [ref=e164]
+      - generic [ref=e165]:
+        - generic [ref=e166]: 왜 ENERMADE?
+        - heading "최선을 다해 신뢰를 만듭니다" [level=2] [ref=e167]:
+          - text: 최선을 다해
+          - text: 신뢰를 만듭니다
+        - list [ref=e168]:
+          - listitem [ref=e169]:
+            - img [ref=e171]
+            - generic [ref=e173]:
+              - generic [ref=e174]: 20년 이상의 세라믹 가공 경험과 노하우
+              - paragraph [ref=e175]: 풍부한 현장 경험을 바탕으로 최적의 솔루션을 제안합니다.
+          - listitem [ref=e176]:
+            - img [ref=e178]
+            - generic [ref=e180]:
+              - generic [ref=e181]: ISO 9001 인증 품질 관리 시스템
+              - paragraph [ref=e182]: 엄격한 품질 관리로 일관성 있는 제품을 공급합니다.
+          - listitem [ref=e183]:
+            - img [ref=e185]
+            - generic [ref=e187]:
+              - generic [ref=e188]: 고객 맞춤형 제품 설계 및 제작
+              - paragraph [ref=e189]: 알루미나, 지르코니아 등 다양한 소재 맞춤 가공이 가능합니다.
+          - listitem [ref=e190]:
+            - img [ref=e192]
+            - generic [ref=e194]:
+              - generic [ref=e195]: 신속한 납기와 안정적인 공급
+              - paragraph [ref=e196]: 긴급 주문 및 대량 주문도 안정적으로 처리합니다.
+        - generic [ref=e197]:
+          - link "제품 카탈로그" [ref=e198] [cursor=pointer]:
+            - /url: /shop
+          - link "견적 문의하기" [ref=e199] [cursor=pointer]:
+            - /url: /contact
+    - generic [ref=e201]:
+      - generic [ref=e202]:
+        - generic [ref=e203]: FAQ
+        - heading "자주 묻는 질문" [level=2] [ref=e204]
+        - paragraph [ref=e205]: 고객님들이 자주 문의하시는 내용입니다
+      - generic [ref=e208]:
+        - generic [ref=e209]:
+          - heading "최소 주문 수량이 있나요?" [level=3] [ref=e210]:
+            - button "최소 주문 수량이 있나요?" [expanded] [ref=e211] [cursor=pointer]
+          - generic [ref=e213]: 제품에 따라 최소 주문 수량이 다릅니다. 맞춤 제작의 경우 소량 주문도 가능하니 문의 주시기 바랍니다.
+        - heading "납기는 얼마나 걸리나요?" [level=3] [ref=e215]:
+          - button "납기는 얼마나 걸리나요?" [ref=e216] [cursor=pointer]
+        - heading "샘플 제공이 가능한가요?" [level=3] [ref=e218]:
+          - button "샘플 제공이 가능한가요?" [ref=e219] [cursor=pointer]
+        - heading "기술 지원이 제공되나요?" [level=3] [ref=e221]:
+          - button "기술 지원이 제공되나요?" [ref=e222] [cursor=pointer]
+    - generic [ref=e224]:
+      - generic [ref=e225]: 지금 바로 시작하세요
+      - heading "최적의 세라믹 솔루션을 제안해 드립니다" [level=2] [ref=e226]:
+        - text: 최적의 세라믹 솔루션을
+        - text: 제안해 드립니다
+      - paragraph [ref=e227]: 전문 엔지니어가 귀사의 요구에 맞는 맞춤형 솔루션을 설계합니다
+      - generic [ref=e228]:
+        - link "견적 문의하기" [ref=e229] [cursor=pointer]:
+          - /url: /contact
+        - link "제품 보러가기" [ref=e230] [cursor=pointer]:
+          - /url: /shop
+  - contentinfo [ref=e231]:
+    - generic [ref=e232]:
+      - generic [ref=e233]:
+        - generic [ref=e234]:
+          - generic [ref=e235]: ENERMADE
+          - paragraph [ref=e236]:
+            - text: 고객 맞춤형 세라믹 솔루션 제공업체.
+            - text: 첨단 기술과 풍부한 경험을 바탕으로
+            - text: 최고의 제품을 제공합니다.
+        - generic [ref=e237]:
+          - generic [ref=e238]: 회사
+          - generic [ref=e239]:
+            - link "홈" [ref=e240] [cursor=pointer]:
+              - /url: /
+            - link "회사 소개" [ref=e241] [cursor=pointer]:
+              - /url: /about
+            - link "연혁" [ref=e242] [cursor=pointer]:
+              - /url: /history
+            - link "문의" [ref=e243] [cursor=pointer]:
+              - /url: /contact
+        - generic [ref=e244]:
+          - generic [ref=e245]: 제품
+          - generic [ref=e246]:
+            - link "상품몰" [ref=e247] [cursor=pointer]:
+              - /url: /shop
+            - link "전체 상품" [ref=e248] [cursor=pointer]:
+              - /url: /shop/products
+            - link "공지사항" [ref=e249] [cursor=pointer]:
+              - /url: /notices
+        - generic [ref=e250]:
+          - generic [ref=e251]: 고객지원
+          - generic [ref=e252]:
+            - link "문의하기" [ref=e253] [cursor=pointer]:
+              - /url: /shop/inquiries
+            - link "주문 조회" [ref=e254] [cursor=pointer]:
+              - /url: /shop/orders/guest
+            - link "로그인" [ref=e255] [cursor=pointer]:
+              - /url: /auth/login
+            - link "회원가입" [ref=e256] [cursor=pointer]:
+              - /url: /auth/register
+      - generic [ref=e257]:
+        - generic [ref=e258]: © 2026 ENERMADE. All rights reserved.
+        - generic [ref=e259]: 세라믹 가공 솔루션 전문기업
+  - button "🇰🇷 한국어" [ref=e262] [cursor=pointer]:
+    - generic [ref=e263]: 🇰🇷
+    - generic [ref=e264]: 한국어
+    - img [ref=e265]
