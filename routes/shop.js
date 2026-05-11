@@ -2,6 +2,7 @@ const express = require('express');
 // [P0 버그수정] bcrypt 제거 주석이 잘못됨 — /account/profile 비밀번호 변경에서 실제 사용 중
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');       // [H-3] 주문번호 CSPRNG 생성에 사용
+const rateLimit = require('express-rate-limit');
 const csurf = require('../lib/csurf');
 const db = require('../db');
 const { getGuestCart, ensureUserCartId, getCartViewData, clearCart } = require('../lib/cart');
@@ -13,6 +14,22 @@ const notificationService = require('../services/notification.service');
 const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
+
+// 결제 시작 요청: 동일 IP 1분에 10회로 제한 (중복 주문 생성 방지)
+const checkoutLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: 10,
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: (req) => req.ip,
+	handler: (req, res) => {
+		res.status(429).render('shop/error', {
+			message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+			backHref: '/shop/cart',
+		});
+	},
+	skip: () => process.env.NODE_ENV === 'test',
+});
 
 const renderShopError = (res, message, status = 500, backHref = '/shop/account/orders') =>
 	res.status(status).render('shop/error', {
@@ -246,7 +263,6 @@ router.get('/', async (req, res) => {
 
 router.get('/products', async (req, res) => {
 	try {
-		await ensureProductVisibilityColumn();
 		const categorySlug = req.query.category || 'all';
 		const q = (req.query.q || '').trim();
 
@@ -311,10 +327,6 @@ router.get('/products', async (req, res) => {
 router.get('/products/:id', async (req, res) => {
 	try {
 		const productId = Number(req.params.id);
-
-		await ensureProductVisibilityColumn();
-		await ensureReviewTable();
-		await ensureWishlistTable();
 
 		const [rows] = await db.execute(
 			`
@@ -390,7 +402,6 @@ router.post('/products/:id/reviews', requireLogin, async (req, res) => {
 			return res.redirect(`/shop/products/${productId}`);
 		}
 
-		await ensureReviewTable();
 		await db.execute(
 			`INSERT INTO product_reviews (product_id, user_id, rating, content)
        VALUES (?, ?, ?, ?)`,
@@ -406,7 +417,6 @@ router.post('/products/:id/reviews', requireLogin, async (req, res) => {
 
 router.get('/wishlist', requireLogin, async (req, res) => {
 	try {
-		await ensureWishlistTable();
 		const [items] = await db.execute(
 			`SELECT p.id, p.name, p.price, p.image
        FROM user_wishlist w
@@ -431,7 +441,6 @@ router.post('/wishlist/toggle', requireLogin, async (req, res) => {
 		const productId = Number(req.body.productId);
 		if (!productId) return res.redirect('/shop/products');
 
-		await ensureWishlistTable();
 		const [[existing]] = await db.execute(
 			`SELECT 1 FROM user_wishlist WHERE user_id = ? AND product_id = ? LIMIT 1`,
 			[req.session.user.id, productId],
@@ -584,7 +593,7 @@ router.post('/cart/clear', async (req, res) => {
 	}
 });
 
-router.post('/checkout/kakao', async (req, res) => {
+router.post('/checkout/kakao', checkoutLimiter, async (req, res) => {
 	try {
 		if (!kakaoPayService.isConfigured()) {
 			return res.status(500).send('카카오페이 설정이 필요합니다. 환경변수 KAKAO_ADMIN_KEY와 KAKAO_CID를 확인해주세요.');
@@ -594,7 +603,6 @@ router.post('/checkout/kakao', async (req, res) => {
 		const guestName = isGuest ? String(req.body.guestName || '').trim() : null;
 		const guestEmail = isGuest ? String(req.body.guestEmail || '').trim() : null;
 		const guestPhone = isGuest ? String(req.body.guestPhone || '').trim() : null;
-
 		if (isGuest && (!guestName || (!guestEmail && !guestPhone))) {
 			req.session.cartError = '비회원 주문은 이름과 이메일 또는 연락처가 필요합니다.';
 			return res.redirect('/shop/cart');
@@ -652,12 +660,38 @@ router.post('/checkout/kakao', async (req, res) => {
 });
 
 router.get('/checkout/kakao/approve', async (req, res) => {
-	try {
-		const pgToken = req.query.pg_token;
-		const sessionPayment = req.session.kakaoPay;
+	const pgToken = req.query.pg_token;
+	const sessionPayment = req.session.kakaoPay;
 
-		if (!pgToken || !sessionPayment) {
-			return res.status(400).send('결제 승인 정보가 없습니다.');
+	if (!pgToken || !sessionPayment) {
+		return res.status(400).send('결제 승인 정보가 없습니다.');
+	}
+
+	const connection = await db.getConnection();
+	try {
+		await connection.beginTransaction();
+
+		// 멱등성 체크: 이미 PAID인 주문은 재처리하지 않음 (FOR UPDATE로 행 잠금)
+		const [[order]] = await connection.execute(
+			`SELECT id, status FROM orders WHERE id = ? LIMIT 1 FOR UPDATE`,
+			[sessionPayment.orderId],
+		);
+
+		if (!order) {
+			await connection.rollback();
+			return res.status(404).render('shop/payment-fail', { message: '주문 정보를 찾을 수 없습니다.' });
+		}
+
+		if (order.status === 'PAID') {
+			await connection.commit();
+			const detail = await fetchOrderDetailByNumber(sessionPayment.orderNumber);
+			req.session.kakaoPay = null;
+			return res.render('shop/order-complete', {
+				order: detail?.order,
+				items: detail?.items || [],
+				payment: detail?.payment,
+				approval: null,
+			});
 		}
 
 		const approvalResult = await kakaoPayService.approve({
@@ -667,23 +701,28 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 			pgToken,
 		});
 
-		await db.execute(
-			`UPDATE orders
-       SET status = 'PAID'
-       WHERE id = ?`,
+		await connection.execute(
+			`UPDATE orders SET status = 'PAID' WHERE id = ?`,
 			[sessionPayment.orderId],
 		);
 
-		await db.execute(
-			`UPDATE order_payments
-       SET status = 'APPROVED', approved_at = NOW()
+		await connection.execute(
+			`UPDATE order_payments SET status = 'APPROVED', approved_at = NOW()
        WHERE order_id = ? AND tid = ?`,
 			[sessionPayment.orderId, sessionPayment.tid],
 		);
 
-		const detail = await fetchOrderDetailByNumber(sessionPayment.orderNumber);
+		// 카트 비우기: 로그인 사용자는 DB에서, 게스트는 세션에서 삭제
+		if (req.session.user) {
+			const cartId = await ensureUserCartId(req.session.user.id);
+			await connection.execute(`DELETE FROM cart_items WHERE cart_id = ?`, [cartId]);
+		} else {
+			req.session.guestCart = { items: {} };
+		}
 
-		await clearCart(req);
+		await connection.commit();
+
+		const detail = await fetchOrderDetailByNumber(sessionPayment.orderNumber);
 		req.session.kakaoPay = null;
 
 		return res.render('shop/order-complete', {
@@ -693,40 +732,57 @@ router.get('/checkout/kakao/approve', async (req, res) => {
 			approval: approvalResult,
 		});
 	} catch (err) {
-		console.error(err);
+		await connection.rollback();
+		console.error('[kakao/approve]', err);
 		return res.status(500).render('shop/payment-fail', {
 			message: '카카오페이 결제 승인 중 오류가 발생했습니다.',
 		});
+	} finally {
+		connection.release();
 	}
 });
 
-router.get('/checkout/kakao/cancel', (req, res) => {
-	if (req.session.kakaoPay?.orderId) {
-		db.execute(`UPDATE orders SET status = 'CANCELED' WHERE id = ?`, [req.session.kakaoPay.orderId]).catch((err) =>
-			console.error(err),
-		);
-		db.execute(
-			`UPDATE order_payments SET status = 'CANCELED' WHERE order_id = ? AND tid = ?`,
-			[req.session.kakaoPay.orderId, req.session.kakaoPay.tid],
-		).catch((err) => console.error(err));
-	}
+router.get('/checkout/kakao/cancel', async (req, res) => {
+	const { orderId, tid } = req.session.kakaoPay || {};
 	req.session.kakaoPay = null;
+
+	if (orderId) {
+		try {
+			await db.execute(`UPDATE orders SET status = 'CANCELED' WHERE id = ?`, [orderId]);
+			if (tid) {
+				await db.execute(
+					`UPDATE order_payments SET status = 'CANCELED' WHERE order_id = ? AND tid = ?`,
+					[orderId, tid],
+				);
+			}
+		} catch (err) {
+			console.error('[kakao/cancel] DB 업데이트 실패:', err);
+		}
+	}
+
 	return res.render('shop/payment-fail', {
 		message: '카카오페이 결제가 취소되었습니다.',
 	});
 });
 
-router.get('/checkout/kakao/fail', (req, res) => {
-	if (req.session.kakaoPay?.orderId) {
-		db.execute(`UPDATE orders SET status = 'FAILED' WHERE id = ?`, [req.session.kakaoPay.orderId]).catch((err) =>
-			console.error(err),
-		);
-		db.execute(
-			`UPDATE order_payments SET status = 'FAILED' WHERE order_id = ? AND tid = ?`,
-			[req.session.kakaoPay.orderId, req.session.kakaoPay.tid],
-		).catch((err) => console.error(err));
-	}
+router.get('/checkout/kakao/fail', async (req, res) => {
+	const { orderId, tid } = req.session.kakaoPay || {};
 	req.session.kakaoPay = null;
+
+	if (orderId) {
+		try {
+			await db.execute(`UPDATE orders SET status = 'FAILED' WHERE id = ?`, [orderId]);
+			if (tid) {
+				await db.execute(
+					`UPDATE order_payments SET status = 'FAILED' WHERE order_id = ? AND tid = ?`,
+					[orderId, tid],
+				);
+			}
+		} catch (err) {
+			console.error('[kakao/fail] DB 업데이트 실패:', err);
+		}
+	}
+
 	return res.render('shop/payment-fail', {
 		message: '카카오페이 결제에 실패했습니다. 다시 시도해주세요.',
 	});
@@ -775,7 +831,16 @@ router.post('/orders/guest', async (req, res) => {
 			});
 		}
 
-		if (detail.order.guest_email !== guestEmail && detail.order.guest_phone !== guestPhone) {
+		// 이메일과 전화번호 중 입력된 항목이 있는 경우에만 각각 검증
+		// 둘 중 하나라도 입력됐으면 해당 값이 반드시 일치해야 통과
+		const emailProvided = Boolean(guestEmail);
+		const phoneProvided = Boolean(guestPhone);
+		const emailMatch = !emailProvided || detail.order.guest_email === guestEmail;
+		const phoneMatch = !phoneProvided || detail.order.guest_phone === guestPhone;
+		// 최소한 하나는 일치하는 값이 있어야 하고, 입력한 항목은 모두 일치해야 함
+		const hasAnyMatch = (emailProvided && emailMatch) || (phoneProvided && phoneMatch);
+
+		if (!hasAnyMatch) {
 			return res.render('shop/order-lookup', {
 				error: '주문 정보가 일치하지 않습니다.',
 				result: null,
@@ -805,7 +870,7 @@ router.get('/orders/:orderNumber', async (req, res) => {
 		}
 
 		if (!req.session.user || detail.order.user_id !== req.session.user.id) {
-			return res.status(403).render('404', { message: '접근 권한이 없습니다.' });
+			return res.status(403).render('403', { message: '접근 권한이 없습니다.' });
 		}
 
 		return res.render('shop/order-detail', {
@@ -823,10 +888,6 @@ router.get('/orders/:orderNumber', async (req, res) => {
 router.get('/account', requireLogin, accountCsrf, async (req, res) => {
 	try {
 		const userId = req.session.user.id;
-		await ensureNotificationSettingsTable();
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
 		const [[user]] = await db.execute('SELECT id, name, email FROM users WHERE id = ? LIMIT 1', [userId]);
 		const [[notificationRow]] = await db.execute(
 			`SELECT email_enabled
@@ -926,7 +987,6 @@ router.post('/account/notifications', requireLogin, accountCsrf, async (req, res
 		const userId = req.session.user.id;
 		const emailEnabled = req.body.emailNotifications === 'on' ? 1 : 0;
 
-		await ensureNotificationSettingsTable();
 		await db.execute(
 			`INSERT INTO user_notification_settings (user_id, email_enabled)
        VALUES (?, ?)
@@ -955,7 +1015,6 @@ router.post('/account/addresses', requireLogin, accountCsrf, async (req, res) =>
 			return res.redirect('/shop/account?error=배송지 정보를 입력해주세요.');
 		}
 
-		await ensureAddressTable();
 		await db.execute(
 			`INSERT INTO user_addresses
        (user_id, label, recipient_name, phone, address_line1, address_line2, postal_code)
@@ -995,7 +1054,6 @@ router.post('/account/payments', requireLogin, accountCsrf, async (req, res) => 
 			return res.redirect('/shop/account?error=결제수단 정보를 입력해주세요.');
 		}
 
-		await ensurePaymentMethodTable();
 		await db.execute(
 			`INSERT INTO user_payment_methods (user_id, label, provider, last4)
        VALUES (?, ?, ?, ?)`,
@@ -1035,7 +1093,6 @@ router.post('/account/coupons', requireLogin, accountCsrf, async (req, res) => {
 			return res.redirect('/shop/account?error=쿠폰 코드를 입력해주세요.');
 		}
 
-		await ensureCouponTable();
 		await db.execute(
 			`INSERT INTO user_coupons (user_id, code, description, discount_pct, expires_at)
        VALUES (?, ?, ?, ?, ?)`,
@@ -1118,7 +1175,6 @@ router.post('/account/orders/:orderId/cancel', requireLogin, accountCsrf, async 
 		return res.redirect('/shop/account/orders');
 	}
 
-	await ensureOrderStatusEnum();
 	await db.execute('UPDATE orders SET status = ? WHERE id = ?', ['CANCEL_REQUESTED', orderId]);
 		return res.redirect('/shop/account/orders');
 	} catch (err) {
@@ -1131,12 +1187,6 @@ router.post('/account/delete', requireLogin, accountCsrf, async (req, res) => {
 	const userId = req.session.user.id;
 	const connection = await db.getConnection();
 	try {
-		await ensureAddressTable();
-		await ensurePaymentMethodTable();
-		await ensureCouponTable();
-		await ensureWishlistTable();
-		await ensureReviewTable();
-		await ensureNotificationSettingsTable();
 		const [[user]] = await connection.execute('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
 
 		if (!user) {
@@ -1442,14 +1492,30 @@ router.post('/inquiries/guest', inquiryLookupCsrf, async (req, res) => {
 			});
 		}
 
+		// 입력된 항목(이메일·전화번호)은 반드시 일치해야 하며, 최소 하나는 일치해야 함
+		// OR 조건은 "하나만 맞아도 타인 문의 열람"이 가능하므로 AND 방식으로 검증
+		const conditions = [];
+		const params = [inquiryId];
+		if (guestEmail) {
+			conditions.push('guest_email = ?');
+			params.push(guestEmail);
+		}
+		if (guestPhone) {
+			conditions.push('guest_phone = ?');
+			params.push(guestPhone);
+		}
+		const matchClause = conditions.length > 0
+			? `AND (${conditions.join(' AND ')})`
+			: 'AND FALSE';
+
 		const [[inquiry]] = await db.execute(
 			`SELECT *
        FROM inquiries
        WHERE id = ?
          AND user_id IS NULL
-         AND ((guest_email = ? AND guest_email IS NOT NULL) OR (guest_phone = ? AND guest_phone IS NOT NULL))
+         ${matchClause}
        LIMIT 1`,
-			[inquiryId, guestEmail || null, guestPhone || null],
+			params,
 		);
 
 		if (!inquiry) {
