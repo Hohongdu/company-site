@@ -10,6 +10,10 @@ npm start       # Production server
 npm test        # Run Node.js built-in tests (node --test)
 ```
 
+## Review Notes
+
+- Latest security review: `docs/security-review-2026-04-15.md`
+
 ## Architecture Overview
 
 This is a Korean company website with an e-commerce storefront, built with **Express.js + EJS + MySQL**.
@@ -34,7 +38,7 @@ The app runs behind an Nginx reverse proxy (`trust proxy` is set).
 | `/shop` | `routes/shop.js` | Product listing, cart, checkout |
 | `/admin` | `routes/admin.js` | Admin dashboard (products, orders, inquiries) |
 | `/api` | `routes/api/` | API endpoints |
-| `/payments/kakao/*` | inside shop routes | Kakao Pay callbacks |
+| `/shop/checkout/kakao/*` | `routes/shop.js` | Kakao Pay checkout + callbacks |
 
 ### Authentication
 
@@ -59,6 +63,12 @@ Schema migrations are in `/migrations/`.
 - **Logged-in:** stored in DB (`carts` + `cart_items` tables)
 - Cart is merged from session into DB on login
 
+### Routing Guardrails
+
+- Do not reintroduce app-level `/payments/*` routes in `app.js`
+- Kakao Pay flow is owned by `routes/shop.js` under `/shop/checkout/kakao/*`
+- Keep payment routes mounted before 404/500 handlers; dead callback code should be removed or explicitly disabled with a regression test
+
 ### Services
 
 | File | Purpose |
@@ -68,6 +78,11 @@ Schema migrations are in `/migrations/`.
 | `services/kakao-pay.service.js` | Kakao Pay payment API integration |
 | `services/file-transfer.service.js` | File upload handling |
 | `services/translation.service.js` | Papago (Naver) translation API |
+
+### Notification Guardrails
+
+- When mail sending is intentionally disabled, notification helpers must return `status: 'DISABLED'` and `provider: 'NONE'`
+- Admin inquiry replies are save-only; keep the UI and route contract aligned with "답변 저장만 가능합니다."
 
 ### Environment Variables
 

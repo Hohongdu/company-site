@@ -10,11 +10,8 @@ const helmet = require('helmet');
 const crypto = require('crypto');
 const csurf = require('./lib/csurf');
 
-const axios = require('axios');
-
 const db = require('./db');
 const { ensureUserCartId, getGuestCart } = require('./lib/cart');
-const { requireLogin } = require('./middleware/auth');
 
 const companyRouter = require('./routes/company');
 const authRouter = require('./routes/auth');
@@ -23,9 +20,6 @@ const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const BASE_URL = process.env.BASE_URL;
-const KAKAO_ADMIN_KEY = process.env.KAKAO_ADMIN_KEY;
-const KAKAO_CID = process.env.KAKAO_CID || 'TC0ONETIME';
 
 
 
@@ -214,12 +208,17 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
 	console.log(`Server running at http://127.0.0.1:${PORT}`);
 });
+// Legacy app-level Kakao payment callbacks are intentionally disabled.
+// The live checkout flow is mounted in routes/shop.js under /shop/checkout/kakao/*.
+if (false) {
+	const legacyPaymentsRoutes = { get() {}, post() {} };
 // ===============================
 // 카카오페이 결제 (orders 기반)
 // ===============================
 
 // 결제 준비
-app.post('/payments/ready', requireLogin, async (req, res) => {
+// legacy /payments/ready route removed; use /shop/checkout/kakao instead
+legacyPaymentsRoutes.post('/payments/ready', requireLogin, async (req, res) => {
 	try {
 		const { orderId, method } = req.body;
 		const userId = req.session.user.id;
@@ -291,7 +290,7 @@ app.post('/payments/ready', requireLogin, async (req, res) => {
 });
 
 // 결제 승인 콜백
-app.get('/payments/kakao/success', requireLogin, async (req, res) => {
+legacyPaymentsRoutes.get('/payments/kakao/success', requireLogin, async (req, res) => {
 	try {
 		const { pg_token, orderId } = req.query;
 		const userId = req.session.user.id;
@@ -350,7 +349,7 @@ app.get('/payments/kakao/success', requireLogin, async (req, res) => {
 });
 
 // 결제 취소
-app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
+legacyPaymentsRoutes.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 	try {
 		const { orderId } = req.query;
 		const userId = req.session.user.id;
@@ -371,7 +370,7 @@ app.get('/payments/kakao/cancel', requireLogin, async (req, res) => {
 });
 
 // 결제 실패
-app.get('/payments/kakao/fail', requireLogin, async (req, res) => {
+legacyPaymentsRoutes.get('/payments/kakao/fail', requireLogin, async (req, res) => {
 	try {
 		const { orderId } = req.query;
 		const userId = req.session.user.id;
@@ -389,3 +388,4 @@ app.get('/payments/kakao/fail', requireLogin, async (req, res) => {
 		return res.status(500).send('실패 처리 중 오류가 발생했습니다.');
 	}
 });
+}

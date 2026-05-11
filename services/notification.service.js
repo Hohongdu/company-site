@@ -5,6 +5,10 @@
 
 const { sendMail, isConfigured } = require('./email.service');
 
+function disabledResult(error = '메일 기능이 비활성화되어 있습니다.') {
+	return { ok: false, status: 'DISABLED', provider: 'NONE', error };
+}
+
 // ── 공통 HTML 래퍼 ─────────────────────────────────────
 function wrapHtml(title, bodyHtml) {
 	return `
@@ -41,7 +45,7 @@ exports.sendInquiryReplyEmail = async (payload) => {
 	const { to, name, inquiryTitle, replyContent } = payload;
 
 	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!isConfigured()) return disabledResult();
 
 	const greeting = name ? `${name}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -64,7 +68,7 @@ exports.sendTemporaryPasswordEmail = async (payload) => {
 	const { to, name, tempPassword } = payload;
 
 	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!isConfigured()) return disabledResult();
 
 	const greeting = name ? `${name}님,` : '안녕하세요,';
 	const html = wrapHtml(
@@ -90,7 +94,7 @@ exports.sendNewInquiryToAdmin = async (payload) => {
 		process.env.SMTP_USER;
 
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!isConfigured()) return disabledResult();
 
 	const html = wrapHtml(
 		'새 문의가 접수되었습니다',
@@ -127,7 +131,7 @@ exports.sendOrderConfirmEmail = async (payload) => {
 	const { to, name, orderId, orderItems = [], totalAmount, paymentMethod } = payload;
 
 	if (!to) return { ok: false, status: 'SKIPPED', error: '수신 이메일 없음' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: '메일 드라이버 미설정' };
+	if (!isConfigured()) return disabledResult();
 
 	const greeting = name ? `${name}님,` : '안녕하세요,';
 	const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
@@ -176,7 +180,7 @@ exports.sendOrderConfirmEmail = async (payload) => {
 
 // ── 5. 파일 전송 알림 (기존 stub 유지) ────────────────
 exports.sendFileTransferEmail = async (payload) => {
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: '메일 드라이버 미설정' };
+	if (!isConfigured()) return disabledResult();
 	return sendMail({
 		to: payload.to,
 		subject: '[ENERMADE] 파일 전송 알림',
@@ -196,7 +200,7 @@ exports.sendRfqToAdmin = async (payload) => {
 		process.env.SMTP_USER;
 
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!isConfigured()) return disabledResult();
 
 	const html = wrapHtml(
 		'새 견적 요청이 접수되었습니다',
@@ -235,7 +239,7 @@ exports.sendSampleRequestToAdmin = async (payload) => {
 		process.env.SMTP_USER;
 
 	if (!adminEmail) return { ok: false, status: 'SKIPPED', error: '관리자 이메일 미설정' };
-	if (!isConfigured()) return { ok: false, status: 'DISABLED', error: 'SMTP 미설정' };
+	if (!isConfigured()) return disabledResult();
 
 	const html = wrapHtml(
 		'새 샘플 요청이 접수되었습니다',

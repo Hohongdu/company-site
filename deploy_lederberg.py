@@ -19,15 +19,23 @@ FILES = [
     'routes/admin.js',         # [M-8] notification_status ENUM 범위 버그 수정
 
     # ── Services ──
+    'services/email.service.js',          # 드라이버 라우터 (EMAIL_DRIVER 분기)
     'services/smtp-email.service.js',     # [M-7] HTML 인젝션 방지 (escapeHtml)
+    'services/ncp-email.service.js',      # NCP Outbound Mailer REST API 드라이버
     'services/notification.service.js',
+    'services/search-log.service.js',     # CRLF→LF 정규화
     'services/inquiry.service.js',        # [MED-6] INSERT 컬럼명 수정 (guest_name/guest_email)
 
     # ── Controllers ──
     'controllers/inquiry.controller.js',
 
     # ── Lib ──
+    'lib/cart.js',          # [M-6] 트랜잭션 카트 병합 + 999 수량 상한
+    'lib/csurf.js',         # [M-1] crypto.timingSafeEqual 타이밍 안전 비교
     'lib/validators.js',
+
+    # ── Core ──
+    'db.js',                # [CODEX-1] DB_PASS||DB_PASSWORD 이중 폴백 + DB_PORT
 
     # ── CSS ──
     'public/css/main.css',               # 드롭다운 + 모바일 드로어 스타일
@@ -53,6 +61,7 @@ FILES = [
     # ── Admin views ──
     'views/admin/dashboard.ejs',
     'views/admin/search-stats.ejs',      # [dark-mode] JS 하드코딩
+    'views/admin/inquiries.ejs',         # 이메일 발송 여부 체크박스
 
     # ── Shop account sidebar (admin link) ──
     'views/shop/account.ejs',
