@@ -76,7 +76,8 @@
 
 /* ── Base Reset ── */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+html:has(.mob-drawer.open, .login-overlay.open, .app-sheet.is-open) { overflow-y: hidden; }
 
 body {
   font-family: var(--font-body);
@@ -374,7 +375,9 @@ hr { border-color: var(--c-border); opacity: 1; }
   background: var(--c-bg-navy);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
-  overflow: hidden;
+  max-height: min(18rem, calc(100dvh - 4.5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   min-width: 164px;
   box-shadow: 0 8px 36px rgba(0,0,0,.5);
   animation: langMenuIn .15s ease;

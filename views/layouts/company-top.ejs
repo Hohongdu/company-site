@@ -28,13 +28,13 @@
 
       <!-- Desktop menu -->
       <ul class="site-nav__menu">
-        <li><a href="/" class="<%= activeKey==='home'    ? 'is-active' : '' %>" data-i18n-auto>홈</a></li>
-        <li><a href="/about" class="<%= activeKey==='about'   ? 'is-active' : '' %>" data-i18n-auto>회사 소개</a></li>
-        <li><a href="/history" class="<%= activeKey==='history' ? 'is-active' : '' %>" data-i18n-auto>연혁</a></li>
+        <li><a href="/" class="<%= activeKey==='home'    ? 'is-active' : '' %>" data-i18n-auto data-i18n-header>홈</a></li>
+        <li><a href="/about" class="<%= activeKey==='about'   ? 'is-active' : '' %>" data-i18n-auto data-i18n-header>회사 소개</a></li>
+        <li><a href="/history" class="<%= activeKey==='history' ? 'is-active' : '' %>" data-i18n-auto data-i18n-header>연혁</a></li>
 
         <li class="site-nav__has-drop">
           <div class="site-nav__drop-trigger<%= activeKey === 'business' ? ' is-active' : '' %>">
-            <a href="/business" <% if (activeKey === 'business') { %>aria-current="page"<% } %> data-i18n-auto>사업 영역</a>
+            <a href="/business" <% if (activeKey === 'business') { %>aria-current="page"<% } %> data-i18n-auto data-i18n-header>사업 영역</a>
             <button class="site-nav__drop-toggle" type="button" aria-label="사업 영역 하위 메뉴"
                     aria-expanded="false" aria-controls="businessNavMenu" hidden>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -65,9 +65,9 @@
         </li>
 
         <!-- 연구 개발 — 드롭다운 없이 직접 링크 -->
-        <li><a href="/research" class="<%= activeKey==='research' ? 'is-active' : '' %>" data-i18n-auto>연구 개발</a></li>
+        <li><a href="/research" class="<%= activeKey==='research' ? 'is-active' : '' %>" data-i18n-auto data-i18n-header>연구 개발</a></li>
 
-        <li><a href="/notices" class="<%= activeKey==='notices' ? 'is-active' : '' %>" data-i18n-auto>공지사항</a></li>
+        <li><a href="/notices" class="<%= activeKey==='notices' ? 'is-active' : '' %>" data-i18n-auto data-i18n-header>공지사항</a></li>
       </ul>
 
       <!-- Desktop actions -->
@@ -79,7 +79,7 @@
             <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
             <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <span data-i18n-auto>제품몰</span>
+          <span data-i18n-auto data-i18n-header>제품몰</span>
           <% if (cartCount > 0) { %>
             <span class="nav-cart-badge"><%= cartCount > 99 ? '99+' : cartCount %></span>
           <% } %>
@@ -102,10 +102,10 @@
             </a>
           <% } %>
         <% } else { %>
-          <button class="site-nav__login js-open-login" type="button" data-i18n-auto>로그인</button>
+          <button class="site-nav__login js-open-login" type="button" data-i18n-auto data-i18n-header>로그인</button>
         <% } %>
         <a class="btn btn-primary site-nav__quote" href="/contact"
-           <% if (activeKey === 'contact') { %>aria-current="page"<% } %> data-i18n-auto>견적 문의</a>
+           <% if (activeKey === 'contact') { %>aria-current="page"<% } %> data-i18n-auto data-i18n-header>견적 문의</a>
       </div>
 
       <div class="site-nav__language" id="companyLanguageSlot"></div>

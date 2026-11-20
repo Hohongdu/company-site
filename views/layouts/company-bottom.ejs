@@ -121,22 +121,20 @@
     drawer.inert = false;
     drawer.classList.add('open');
     backdrop && backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
     ham && ham.classList.add('open');
     ham && ham.setAttribute('aria-label', '메뉴 닫기');
     ham && ham.setAttribute('aria-expanded', 'true');
-    closeBtn?.focus();
+    closeBtn?.focus({ preventScroll: true });
   }
   function closeDrawer(restoreFocus = false) {
     if (!drawer?.classList.contains('open')) return;
     drawer.classList.remove('open');
     drawer.inert = true;
     backdrop && backdrop.classList.remove('open');
-    document.body.style.overflow = '';
     ham && ham.classList.remove('open');
     ham && ham.setAttribute('aria-label', '메뉴 열기');
     ham && ham.setAttribute('aria-expanded', 'false');
-    if (restoreFocus) ham?.focus();
+    if (restoreFocus) ham?.focus({ preventScroll: true });
   }
 
   ham      && ham.addEventListener('click', function () {
@@ -169,14 +167,12 @@
     loginTrigger = drawer?.contains(trigger) ? ham : trigger;
     closeDrawer();
     overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    overlay.querySelector('input[name="email"]')?.focus();
+    overlay.querySelector('input[name="email"]')?.focus({ preventScroll: true });
   }
   function closeLogin() {
     if (!overlay.classList.contains('open')) return;
     overlay.classList.remove('open');
-    document.body.style.overflow = '';
-    loginTrigger?.focus();
+    loginTrigger?.focus({ preventScroll: true });
   }
 
   document.querySelectorAll('.js-open-login').forEach(function (el) {

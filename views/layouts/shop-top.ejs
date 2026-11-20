@@ -31,20 +31,20 @@ const navLinks = [
   <div class="shop-shell shop-header__main">
     <a class="shop-brand" href="/shop">
       <span class="shop-brand__name"><%= brand %></span>
-      <span data-i18n-auto>제품몰</span>
+      <span class="shop-brand__label" data-i18n-auto data-i18n-header>제품몰</span>
     </a>
 
     <form class="shop-header__search" action="/shop/products" method="get" role="search" aria-label="제품 검색">
       <% if (atCatalog && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %>
       <input type="search" name="q" value="<%= q %>" aria-label="제품명, 제품코드 또는 규격" placeholder="제품명, 제품코드 또는 규격" enterkeyhint="search"
              data-i18n-placeholder data-i18n-placeholder-ko="제품명, 제품코드 또는 규격">
-      <button type="submit" data-i18n-auto>검색</button>
+      <button type="submit" data-i18n-auto data-i18n-header>검색</button>
     </form>
 
     <div class="shop-header__tools">
-      <a href="<%= user ? '/shop/account' : '/auth/login' %>" data-i18n-auto><%= user ? '내 계정' : '로그인' %></a>
+      <a href="<%= user ? '/shop/account' : '/auth/login' %>" data-i18n-auto data-i18n-header><%= user ? '내 계정' : '로그인' %></a>
       <a class="app-header__btn shop-cart-link" href="/shop/cart" <% if (currentPath === '/shop/cart') { %>aria-current="page"<% } %>>
-        <span data-i18n-auto>장바구니</span><span class="app-header-badge shop-cart-badge" aria-live="polite"><%= count || '' %></span>
+        <span data-i18n-auto data-i18n-header>장바구니</span><span class="app-header-badge shop-cart-badge" aria-live="polite"><%= count || '' %></span>
       </a>
       <div class="shop-language" id="shopLanguageSlot"></div>
     </div>
@@ -52,9 +52,9 @@ const navLinks = [
   <div class="shop-header__nav">
     <nav class="shop-shell shop-header__links" aria-label="제품몰 메뉴">
       <% for (const link of navLinks) { %>
-        <a href="<%= link.href %>" <% if (link.current) { %>aria-current="page"<% } %> data-i18n-auto><%= link.label %></a>
+        <a href="<%= link.href %>" <% if (link.current) { %>aria-current="page"<% } %> data-i18n-auto data-i18n-header><%= link.label %></a>
       <% } %>
-      <a class="shop-header__links__company" href="/" data-i18n-auto>회사 사이트</a>
+      <a class="shop-header__links__company" href="/" data-i18n-auto data-i18n-header>회사 사이트</a>
     </nav>
   </div>
 </header>

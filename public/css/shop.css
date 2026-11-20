@@ -202,7 +202,11 @@
    SHOP 모바일 슬라이드 드로어
 ══════════════════════════════════════ */
 /* 좌우 스크롤 방지 */
-html, body { overflow-x: hidden; max-width: 100%; }
+html, body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
+}
 
 .shop-mob-backdrop {
   display: none;

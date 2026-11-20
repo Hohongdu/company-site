@@ -9,6 +9,28 @@
 		{ code: 'zh-CN', label: '中文(简体)', emoji: '🇨🇳' },
 	];
 
+	// Keep frequently used header labels short and available before body translation.
+	const headerLabels = {
+		en: {
+			홈: 'Home', '회사 소개': 'About', 연혁: 'History', '사업 영역': 'Business',
+			'연구 개발': 'R&D', 공지사항: 'News', 제품몰: 'Store', 로그인: 'Sign in', '내 계정': 'Account',
+			'견적 문의': 'Get a Quote', 장바구니: 'Cart', '제품몰 홈': 'Store Home', '전체 상품': 'Products',
+			'주문 조회': 'Track Order', '회사 사이트': 'Company Site', 검색: 'Search',
+		},
+		ja: {
+			홈: 'ホーム', '회사 소개': '会社概要', 연혁: '沿革', '사업 영역': '事業分野',
+			'연구 개발': '研究開発', 공지사항: 'お知らせ', 제품몰: 'ストア', 로그인: 'ログイン', '내 계정': 'アカウント',
+			'견적 문의': '見積もり', 장바구니: 'カート', '제품몰 홈': 'ストアホーム', '전체 상품': '全商品',
+			'주문 조회': '注文照会', '회사 사이트': '会社サイト', 검색: '検索',
+		},
+		'zh-CN': {
+			홈: '首页', '회사 소개': '公司简介', 연혁: '发展历程', '사업 영역': '业务领域',
+			'연구 개발': '研发', 공지사항: '公告', 제품몰: '商城', 로그인: '登录', '내 계정': '账户',
+			'견적 문의': '询价', 장바구니: '购物车', '제품몰 홈': '商城首页', '전체 상품': '全部商品',
+			'주문 조회': '订单查询', '회사 사이트': '公司网站', 검색: '搜索',
+		},
+	};
+
 	const storageLangKey = 'site_lang';
 	const storageCacheKey = 'site_i18n_cache_v1';
 	const storageDebugKey = 'i18n_debug';
@@ -16,6 +38,7 @@
 	let logListEl = null;
 	let translationTemporarilyBlocked = false;
 	let lastBlockingError = null;
+	let languageRequest;
 
 	function debugEnabled() {
 		return localStorage.getItem(storageDebugKey) === '1' || new URLSearchParams(window.location.search).get('i18nDebug') === '1';
@@ -63,12 +86,13 @@
 		return map[`${lang}::${sourceText}`] || null;
 	}
 
-	async function translateByPapago(text, target) {
+	async function translateByPapago(text, target, signal) {
 		const requestId = `i18n-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 		appendLog('translate request', { requestId, target, textPreview: text.slice(0, 40) });
 
 		const response = await fetch('/api/translate', {
 			method: 'POST',
+			signal,
 			headers: {
 				'Content-Type': 'application/json',
 				'X-I18N-Request-Id': requestId,
@@ -77,6 +101,7 @@
 		});
 
 		const data = await response.json().catch(() => null);
+		if (signal.aborted) return null;
 		if (!response.ok || !data?.ok) {
 			// 인증 실패(401/403)만 전체 번역 차단 — 502/5xx는 개별 텍스트 문제일 수 있으므로 계속 진행
 			if (response.status === 401 || response.status === 403) {
@@ -182,6 +207,9 @@
 	}
 
 	async function applyLanguage(lang) {
+		languageRequest?.abort();
+		languageRequest = new AbortController();
+		const { signal } = languageRequest;
 		document.documentElement.setAttribute('lang', lang);
 		localStorage.setItem(storageLangKey, lang);
 		translationTemporarilyBlocked = false;
@@ -230,6 +258,10 @@
 			if (src) jobs.push({ type: 'placeholder', el, src });
 		});
 		autoEls.forEach(({ el, src }) => {
+			if (el.hasAttribute('data-i18n-header')) {
+				el.textContent = headerLabels[lang]?.[src] ?? src;
+				return;
+			}
 			if (src) jobs.push({ type: 'auto', el, src });
 		});
 
@@ -244,14 +276,23 @@
 			}
 			try {
 				const cached = getCachedValue(lang, job.src);
-				const translated = cached || (await translateByPapago(job.src, lang));
+				const translated = cached || (await translateByPapago(job.src, lang, signal));
+				if (signal.aborted) return;
 				if (!cached) setCachedValue(lang, job.src, translated);
 
 				if (job.type === 'text') job.el.textContent = translated;
 				if (job.type === 'html') job.el.innerHTML = translated;
 				if (job.type === 'placeholder') job.el.setAttribute('placeholder', translated);
-				if (job.type === 'auto') job.el.textContent = translated;
+				if (job.type === 'auto') {
+					const originalHtml = translated === job.src && job.el.getAttribute('data-i18n-auto-html-ko');
+					if (originalHtml) {
+						if (job.el.innerHTML !== originalHtml) job.el.innerHTML = originalHtml;
+					} else {
+						job.el.textContent = translated;
+					}
+				}
 			} catch (err) {
+				if (signal.aborted) return;
 				appendLog('job failed', { type: job.type, srcPreview: job.src.slice(0, 30), error: err.message });
 			}
 		}
@@ -392,7 +433,7 @@
 			option.innerHTML = `<span class="lang-option__flag">${item.emoji}</span><span class="lang-option__label">${item.label}</span><svg class="lang-option__check" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 			option.addEventListener('click', async () => {
 				setMenuOpen(false);
-				btn.focus();
+				btn.focus({ preventScroll: true });
 				updateLabel(item.code);
 				await applyLanguage(item.code);
 			});
@@ -400,12 +441,22 @@
 			return option;
 		});
 
+		function focusOption(option) {
+			if (!option) return;
+			option.focus({ preventScroll: true });
+			const { top, bottom } = option.getBoundingClientRect();
+			const menuTop = menu.getBoundingClientRect().top + menu.clientTop;
+			const menuBottom = menuTop + menu.clientHeight;
+			if (top < menuTop) menu.scrollTop += top - menuTop;
+			else if (bottom > menuBottom) menu.scrollTop += bottom - menuBottom;
+		}
+
 		function setMenuOpen(open) {
 			menu.hidden = !open;
 			btn.setAttribute('aria-expanded', String(open));
 			if (open) {
 				const selected = options.find((option) => option.getAttribute('aria-selected') === 'true');
-				(selected || options[0])?.focus();
+				focusOption(selected || options[0]);
 			}
 		}
 
@@ -422,7 +473,7 @@
 			if (event.key === 'Escape') {
 				event.preventDefault();
 				setMenuOpen(false);
-				btn.focus();
+				btn.focus({ preventScroll: true });
 				return;
 			}
 			const index = options.indexOf(event.target);
@@ -436,7 +487,7 @@
 				default: return;
 			}
 			event.preventDefault();
-			options[nextIndex].focus();
+			focusOption(options[nextIndex]);
 		});
 		root.addEventListener('focusout', (event) => {
 			if (!root.contains(event.relatedTarget)) setMenuOpen(false);
