@@ -375,40 +375,71 @@
 			const labelEl = root.querySelector('.lang-label');
 			if (flagEl) flagEl.textContent = item.emoji;
 			if (labelEl) labelEl.textContent = item.label;
-			root.querySelectorAll('.lang-option').forEach((opt) => {
+			options.forEach((opt) => {
 				const selected = opt.dataset.lang === lang;
 				opt.classList.toggle('is-active', selected);
 				opt.setAttribute('aria-selected', String(selected));
 			});
 		}
 
-		supportedLanguages.forEach((item) => {
+		const options = supportedLanguages.map((item) => {
 			const option = document.createElement('button');
 			option.type = 'button';
+			option.tabIndex = -1;
 			option.className = 'lang-option';
 			option.role = 'option';
 			option.dataset.lang = item.code;
 			option.innerHTML = `<span class="lang-option__flag">${item.emoji}</span><span class="lang-option__label">${item.label}</span><svg class="lang-option__check" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 			option.addEventListener('click', async () => {
-				menu.hidden = true;
-				btn.setAttribute('aria-expanded', 'false');
+				setMenuOpen(false);
 				btn.focus();
 				updateLabel(item.code);
 				await applyLanguage(item.code);
 			});
 			menu.appendChild(option);
+			return option;
 		});
 
+		function setMenuOpen(open) {
+			menu.hidden = !open;
+			btn.setAttribute('aria-expanded', String(open));
+			if (open) {
+				const selected = options.find((option) => option.getAttribute('aria-selected') === 'true');
+				(selected || options[0])?.focus();
+			}
+		}
+
 		btn.addEventListener('click', () => {
-			const isOpen = !menu.hidden;
-			menu.hidden = isOpen;
-			btn.setAttribute('aria-expanded', String(!isOpen));
+			setMenuOpen(menu.hidden);
 		});
 		root.addEventListener('keydown', (event) => {
-			if (event.key !== 'Escape' || menu.hidden) return;
-			menu.hidden = true;
-			btn.setAttribute('aria-expanded', 'false');
-			btn.focus();
+			if (event.target === btn && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+				event.preventDefault();
+				setMenuOpen(true);
+				return;
+			}
+			if (menu.hidden) return;
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				setMenuOpen(false);
+				btn.focus();
+				return;
+			}
+			const index = options.indexOf(event.target);
+			if (index < 0) return;
+			let nextIndex;
+			switch (event.key) {
+				case 'ArrowDown': nextIndex = Math.min(index + 1, options.length - 1); break;
+				case 'ArrowUp': nextIndex = Math.max(index - 1, 0); break;
+				case 'Home': nextIndex = 0; break;
+				case 'End': nextIndex = options.length - 1; break;
+				default: return;
+			}
+			event.preventDefault();
+			options[nextIndex].focus();
+		});
+		root.addEventListener('focusout', (event) => {
+			if (!root.contains(event.relatedTarget)) setMenuOpen(false);
 		});
 
 		if (logBtn && logPanel) {
@@ -420,8 +451,7 @@
 		document.addEventListener('click', (event) => {
 			const isInLog = logPanel && !logPanel.hidden && logPanel.contains(event.target);
 			if (!root.contains(event.target) && !isInLog) {
-				menu.hidden = true;
-				btn.setAttribute('aria-expanded', 'false');
+				setMenuOpen(false);
 			}
 		});
 

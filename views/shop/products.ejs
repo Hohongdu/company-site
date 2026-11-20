@@ -19,15 +19,13 @@ const filtered = currentCategory !== 'all';
   </aside>
 
   <section class="shop-catalog__results" aria-labelledby="shop-results-title">
+    <details class="shop-catalog__mobile-filter" <%= filtered ? 'data-filtered' : '' %>>
+      <summary data-i18n-auto>카테고리</summary>
+      <%- include('partials/catalog-categories') %>
+    </details>
     <div class="shop-results-bar">
-      <div>
-        <h2 id="shop-results-title" data-i18n-auto><%= query ? '검색 결과' : '상품 목록' %></h2>
-        <p><% if (query) { %><strong>“<%= query %>”</strong> · <% } %><%= products.length.toLocaleString('ko-KR') %>개 상품</p>
-      </div>
-      <details class="shop-catalog__mobile-filter" <%= filtered ? 'data-filtered' : '' %>>
-        <summary>필터<% if (filtered) { %> · 1<% } %></summary>
-        <%- include('partials/catalog-categories') %>
-      </details>
+      <h2 id="shop-results-title" data-i18n-auto><%= query ? '검색 결과' : '상품 목록' %></h2>
+      <p><% if (query) { %><strong>“<%= query %>”</strong> · <% } %><%= products.length.toLocaleString('ko-KR') %>개 상품</p>
     </div>
     <% if (query || filtered) { %>
       <div class="shop-active-filters">
