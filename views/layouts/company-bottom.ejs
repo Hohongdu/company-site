@@ -120,6 +120,7 @@
     if (!drawer) return;
     drawer.inert = false;
     drawer.classList.add('open');
+    drawer.scrollTop = 0;
     backdrop && backdrop.classList.add('open');
     ham && ham.classList.add('open');
     ham && ham.setAttribute('aria-label', '메뉴 닫기');

@@ -1,7 +1,7 @@
 // PM2 ecosystem configuration
 // Usage:
 //   pm2 start ecosystem.config.js --env production
-//   pm2 reload ecosystem.config.js --env production  # zero-downtime
+//   pm2 restart ecosystem.config.js --env production
 //   pm2 logs company-site
 //
 // 로그 회전(pm2-logrotate) 설치는 docs/operations.md 참고.

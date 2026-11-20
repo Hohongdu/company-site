@@ -1,4 +1,4 @@
-<%- include('../layouts/shop-top', { title: '결제 상세', active: '', showBack: true, backUrl: '/shop/orders/' + order.order_number }) %>
+<%- include('../layouts/shop-top', { title: '결제 상세' }) %>
 
 <%
 const providerMap = {
@@ -23,6 +23,16 @@ const paidAt    = fmtDatetime(payment.approved_at || payment.requested_at);
 const paidAmt   = Number(payment.amount || order.total_amount || 0);
 const orderAmt  = Number(order.total_amount || 0);
 %>
+
+<section class="shop-page-heading">
+  <div class="shop-shell">
+    <p class="shop-breadcrumb">
+      <a href="/shop/orders/<%= encodeURIComponent(order.order_number) %>" data-i18n-auto>주문 상세</a>
+      <span aria-hidden="true">/</span> 결제 상세
+    </p>
+    <h1 data-i18n-auto>결제 상세</h1>
+  </div>
+</section>
 
 <div style="background:#f5f5f5;min-height:100%;padding-bottom:32px;">
 

@@ -17,12 +17,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
-# .env 로드 (export 없이 정의된 KEY=VALUE 형식도 처리)
+# 앱과 같은 dotenv 문법을 사용하고 필요한 DB 설정만 읽는다.
 if [ -f .env ]; then
-  set -a
-  # shellcheck disable=SC1091
-  . ./.env
-  set +a
+  {
+    IFS= read -r -d '' DB_HOST &&
+    IFS= read -r -d '' DB_PORT &&
+    IFS= read -r -d '' DB_USER &&
+    IFS= read -r -d '' DB_PASS &&
+    IFS= read -r -d '' DB_PASSWORD &&
+    IFS= read -r -d '' DB_NAME
+  } < <(node <<'NODE'
+const { error } = require('dotenv').config({ quiet: true, override: true });
+if (error) throw error;
+
+for (const name of ['DB_HOST', 'DB_PORT', 'DB_USER', 'DB_PASS', 'DB_PASSWORD', 'DB_NAME']) {
+  process.stdout.write((process.env[name] ?? '') + '\0');
+}
+NODE
+  )
 fi
 
 DB_HOST="${DB_HOST:-127.0.0.1}"
@@ -41,6 +53,10 @@ mkdir -p "${BACKUP_DIR}"
 
 TIMESTAMP="$(date +%Y-%m-%d)"
 OUTFILE="${BACKUP_DIR}/${DB_NAME}-${TIMESTAMP}.sql.gz"
+TEMP_OUTFILE="$(mktemp "${OUTFILE}.tmp.XXXXXX")"
+trap 'rm -f -- "${TEMP_OUTFILE}"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "[backup] $(date -Iseconds) start: ${DB_NAME} → ${OUTFILE}"
 
@@ -61,14 +77,15 @@ mysqldump \
   --skip-comments \
   --default-character-set=utf8mb4 \
   "${DB_NAME}" \
-  | gzip -c > "${OUTFILE}"
+  | gzip -c > "${TEMP_OUTFILE}"
 
-# 결과 확인
-if [ ! -s "${OUTFILE}" ]; then
+# 백업이 완료된 후 같은 디렉터리 안에서 최종 파일로 교체한다.
+if [ ! -s "${TEMP_OUTFILE}" ]; then
   echo "[backup] ERROR: 빈 파일 생성됨 — 백업 실패" >&2
-  rm -f "${OUTFILE}"
   exit 2
 fi
+
+mv -f -- "${TEMP_OUTFILE}" "${OUTFILE}"
 
 SIZE_HUMAN="$(du -h "${OUTFILE}" | cut -f1)"
 echo "[backup] $(date -Iseconds) ok: ${OUTFILE} (${SIZE_HUMAN})"

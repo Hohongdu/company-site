@@ -36,3 +36,13 @@ test('장바구니에는 대량 담기 창과 제출 폼이 하나씩만 렌더�
   assert.equal((html.match(/id="bulk-order-form"/g) || []).length, 1);
   assert.equal((html.match(/id="bulkSubmitBtn"/g) || []).length, 1);
 });
+
+test('결제 상세에서 해당 주문 상세로 돌아갈 수 있다', async () => {
+  const html = await renderShopPage('payment-detail', {
+    currentPath: '/shop/orders/ORD-TEST/payment',
+    order: { order_number: 'ORD-TEST', total_amount: 1000 },
+    payment: { provider: 'BANK', amount: 1000 },
+  });
+
+  assert.match(html, /<a href="\/shop\/orders\/ORD-TEST"[^>]*>주문 상세<\/a>/);
+});

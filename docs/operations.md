@@ -14,15 +14,15 @@ pm2 save
 pm2 startup           # 부팅 시 자동 시작 등록 (출력된 명령을 sudo로 실행)
 ```
 
-### 1.2 무중단 재시작 (zero-downtime reload)
+### 1.2 재시작
 
 ```bash
 git pull
 npm ci --omit=dev
-pm2 reload ecosystem.config.js --env production
+pm2 restart ecosystem.config.js --env production
 ```
 
-`reload`는 새 프로세스가 준비되면 기존 프로세스를 종료해 다운타임 없이 교체합니다.
+현재는 PM2 fork 모드에서 프로세스 한 개를 사용합니다. 재시작 중에는 요청 처리가 잠시 중단됩니다.
 
 ### 1.3 상태 확인
 
@@ -66,7 +66,7 @@ pm2 set pm2-logrotate:rotateInterval '0 0 * * *'  # 매일 자정에도 회전
 
 ## 3. MySQL 자동 백업
 
-`scripts/backup-mysql.sh` 가 매일 백업을 생성합니다 (14일 보관).
+`scripts/backup-mysql.sh`는 매일 백업을 생성해 14일간 보관합니다. 실행 전에 프로젝트의 Node.js 의존성을 설치하세요. 같은 날 재실행하면 백업이 완료된 뒤 최종 파일을 교체합니다.
 
 ### 3.1 설정 (최초 1회)
 
