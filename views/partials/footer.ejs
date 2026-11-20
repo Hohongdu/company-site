@@ -1,5 +1,19 @@
+<%
+/* views/partials/footer.ejs — 에러/단순 페이지 전용 미니 footer.
+   메인 footer는 views/layouts/company-bottom.ejs.
+   res.locals.company 는 app.js에서 자동 주입. */
+const _c = (typeof company !== 'undefined' && company) ? company : { name: 'ENERMADE' };
+%>
 <footer class="bg-dark text-white py-3 mt-5">
-    <div class="container text-center small">
-        © <span id="year"></span> 우리 회사. All rights reserved.
+    <div class="container small">
+        <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mb-2" style="opacity:.85;">
+            <a href="/terms" class="text-white text-decoration-none">이용약관</a>
+            <span class="opacity-50">|</span>
+            <a href="/privacy" class="text-white text-decoration-none"><strong>개인정보처리방침</strong></a>
+        </div>
+        <div class="text-center" style="opacity:.65;">
+            © <%= new Date().getFullYear() %> <%= _c.name %>
+            <% if (_c.bizNo) { %> · 사업자등록번호 <%= _c.bizNo %><% } %>
+        </div>
     </div>
 </footer>

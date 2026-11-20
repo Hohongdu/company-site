@@ -17,6 +17,10 @@ const router = express.Router();
 const accountCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 const inquiryLookupCsrf = csurf({ ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] });
 
+function isBankPaymentConfigured() {
+	return /[1-9]/.test(process.env.BANK_ACCOUNT || '');
+}
+
 // [HIGH-5] 카카오페이 결제 시작 rate limiter: IP당 1분 5회 — 재고 잠금(PENDING) 남발 방지
 const kakaoCheckoutLimiter = rateLimit({
 	windowMs: 60 * 1000,
@@ -560,12 +564,14 @@ router.get('/cart', async (req, res) => {
 	try {
 		const data = await getCartViewData(req);
 		const paymentEnabled = kakaoPayService.isConfigured();
+		const bankPaymentEnabled = isBankPaymentConfigured();
 		const cartError = req.session.cartError || null;
 		req.session.cartError = null;
 
 		res.render('shop/cart', {
 			...data,
 			paymentEnabled,
+			bankPaymentEnabled,
 			guestInfo: req.session.guestOrderInfo || {},
 			cartError,
 		});
@@ -886,6 +892,10 @@ router.get('/checkout/kakao/cancel', (req, res) => {
 // ══════════════════════════════════════════
 router.post('/checkout/bank', bankCheckoutLimiter, async (req, res) => {
 	try {
+		if (!isBankPaymentConfigured()) {
+			req.session.cartError = '계좌 입금 결제를 현재 이용할 수 없습니다.';
+			return res.redirect('/shop/cart');
+		}
 		const isGuest = !req.session.user;
 		const guestName = isGuest ? String(req.body.guestName || '').trim() : null;
 		const guestEmail = isGuest ? String(req.body.guestEmail || '').trim() : null;
@@ -1091,49 +1101,36 @@ router.get('/orders/guest', (req, res) => {
 
 router.post('/orders/guest', guestOrderLookupLimiter, async (req, res) => {
 	try {
+		res.set('Cache-Control', 'no-store');
 		const orderNumber = String(req.body.orderNumber || '').trim();
 		const guestEmail = String(req.body.guestEmail || '').trim();
 		const guestPhone = String(req.body.guestPhone || '').trim();
+		const confirmationMethod = req.body.confirmationMethod === 'phone' ? 'phone' : 'email';
+		const form = { orderNumber, guestEmail, guestPhone, confirmationMethod };
 
 		if (!orderNumber || (!guestEmail && !guestPhone)) {
 			return res.render('shop/order-lookup', {
 				error: '주문번호와 이메일 또는 연락처를 입력해주세요.',
 				result: null,
-				form: { orderNumber, guestEmail, guestPhone },
+				form,
 			});
 		}
 
 		const detail = await fetchOrderDetailByNumber(orderNumber);
-		if (!detail?.order) {
+		const order = detail?.order;
+		const emailMatch = guestEmail && order?.guest_email?.toLowerCase() === guestEmail.toLowerCase();
+		const phoneNumber = guestPhone.replace(/[\s()-]/g, '');
+		const phoneMatch = phoneNumber && order?.guest_phone?.replace(/[\s()-]/g, '') === phoneNumber;
+		if (!order || order.user_id || (!emailMatch && !phoneMatch)) {
 			return res.render('shop/order-lookup', {
-				error: '주문 정보를 찾을 수 없습니다.',
+				error: '입력하신 정보로 주문을 확인할 수 없습니다. 주문번호와 주문 시 입력한 정보를 다시 확인해주세요.',
 				result: null,
-				form: { orderNumber, guestEmail, guestPhone },
-			});
-		}
-
-		if (detail.order.user_id) {
-			return res.render('shop/order-lookup', {
-				error: '회원 주문은 로그인 후 주문 내역에서 확인해주세요.',
-				result: null,
-				form: { orderNumber, guestEmail, guestPhone },
-			});
-		}
-
-		// [H-2] 비회원 주문조회 인증: 빈 문자열/null edge case 방지
-		// 이메일 또는 연락처 중 하나가 입력되었고 DB 값과 정확히 일치해야 통과
-		const emailMatch = guestEmail && detail.order.guest_email && detail.order.guest_email === guestEmail;
-		const phoneMatch = guestPhone && detail.order.guest_phone && detail.order.guest_phone === guestPhone;
-		if (!emailMatch && !phoneMatch) {
-			return res.render('shop/order-lookup', {
-				error: '주문 정보가 일치하지 않습니다.',
-				result: null,
-				form: { orderNumber, guestEmail, guestPhone },
+				form,
 			});
 		}
 
 		return res.render('shop/order-detail', {
-			order: detail.order,
+			order,
 			items: detail.items || [],
 			payment: detail.payment,
 			isGuestLookup: true,

@@ -19,21 +19,20 @@
 
       <!-- Form -->
       <div class="col-12 col-lg-7">
-        <div style="background:var(--c-bg-2);border:1px solid var(--c-border);border-radius:var(--r-xl);padding:36px;">
-          <span class="sec-label" style="margin-bottom:12px;">견적 및 기술 문의</span>
-          <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;color:var(--c-text);">무엇을 도와드릴까요?</h2>
-          <p class="txt-muted" style="font-size:13px;margin-bottom:28px;">모든 항목을 입력하신 후 문의 보내기를 눌러주세요.</p>
+        <div class="contact-form-card">
+          <h2>견적 및 기술 문의</h2>
+          <p>제품명, 소재, 규격, 수량을 함께 알려주시면 검토에 도움이 됩니다.</p>
 
           <form id="inquiryForm" class="d-grid gap-3">
             <div class="row g-3">
               <div class="col-12 col-sm-6">
                 <label class="form-label" for="inq-name">이름 <span style="color:var(--c-danger)">*</span></label>
-                <input id="inq-name" name="name" class="form-control" required maxlength="50" placeholder="성함을 입력해주세요"
+                <input id="inq-name" name="name" class="form-control" autocomplete="name" required maxlength="50" placeholder="성함을 입력해주세요"
                   data-i18n-placeholder data-i18n-placeholder-ko="성함을 입력해주세요">
               </div>
               <div class="col-12 col-sm-6">
                 <label class="form-label" for="inq-email">이메일 <span style="color:var(--c-danger)">*</span></label>
-                <input id="inq-email" name="email" type="email" class="form-control" required placeholder="example@company.com">
+                <input id="inq-email" name="email" type="email" class="form-control" autocomplete="email" required placeholder="example@company.com">
               </div>
             </div>
             <div>

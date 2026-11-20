@@ -4,6 +4,8 @@ dist/
 output/
 uploads/
 tmp/
+logs/
+backups/
 npm-debug.log
 .DS_Store
 

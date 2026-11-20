@@ -350,7 +350,7 @@
 		const showLog = isAdminUser();
 		root.innerHTML = `
 			<div class="lang-trigger">
-				<button class="lang-toggle" type="button" aria-expanded="false" aria-haspopup="listbox">
+				<button class="lang-toggle" type="button" aria-expanded="false" aria-haspopup="listbox" aria-controls="siteLanguageMenu">
 					<span class="lang-flag">🌐</span>
 					<span class="lang-label">언어</span>
 					<svg class="lang-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -359,9 +359,10 @@
 				</button>
 				${showLog ? '<button class="lang-log-btn" type="button" title="번역 로그"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v5h5M9 12h6M9 16h6" stroke-linecap="round"/></svg></button>' : ''}
 			</div>
-			<div class="lang-menu" role="listbox" hidden></div>
+			<div class="lang-menu" id="siteLanguageMenu" role="listbox" aria-label="언어" hidden></div>
 		`;
-		document.body.appendChild(root);
+		const mount = document.querySelector('#companyLanguageSlot, #shopLanguageSlot') || document.body;
+		mount.appendChild(root);
 
 		const logPanel = showLog ? createI18nLogPanel() : null;
 		const btn = root.querySelector('.lang-toggle');
@@ -375,7 +376,9 @@
 			if (flagEl) flagEl.textContent = item.emoji;
 			if (labelEl) labelEl.textContent = item.label;
 			root.querySelectorAll('.lang-option').forEach((opt) => {
-				opt.classList.toggle('is-active', opt.dataset.lang === lang);
+				const selected = opt.dataset.lang === lang;
+				opt.classList.toggle('is-active', selected);
+				opt.setAttribute('aria-selected', String(selected));
 			});
 		}
 
@@ -389,6 +392,7 @@
 			option.addEventListener('click', async () => {
 				menu.hidden = true;
 				btn.setAttribute('aria-expanded', 'false');
+				btn.focus();
 				updateLabel(item.code);
 				await applyLanguage(item.code);
 			});
@@ -399,6 +403,12 @@
 			const isOpen = !menu.hidden;
 			menu.hidden = isOpen;
 			btn.setAttribute('aria-expanded', String(!isOpen));
+		});
+		root.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape' || menu.hidden) return;
+			menu.hidden = true;
+			btn.setAttribute('aria-expanded', 'false');
+			btn.focus();
 		});
 
 		if (logBtn && logPanel) {

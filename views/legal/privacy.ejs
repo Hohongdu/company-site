@@ -1,0 +1,165 @@
+<%- include('../layouts/company-top', { title: '개인정보처리방침', active: '' }) %>
+
+<div class="page-banner">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">홈</a></li>
+        <li class="breadcrumb-item active">개인정보처리방침</li>
+      </ol>
+    </nav>
+    <h1>개인정보처리방침</h1>
+    <p>시행일: <%= legal.privacyEffectiveDate %></p>
+  </div>
+</div>
+
+<section class="sec-py">
+  <div class="container" style="max-width:880px;">
+    <div class="legal-doc">
+
+      <div class="alert alert-warning" role="alert" style="margin-bottom:24px;">
+        <strong>⚠ 임시 개인정보처리방침 안내</strong><br>
+        본 방침은 골격 템플릿이며, 정식 운영 전 법무 검토와 회사 실제 정보(사업자번호, 개인정보 보호책임자 등)로 교체되어야 합니다.
+      </div>
+
+      <p><strong><%= company.name %></strong>(이하 "회사")는 「개인정보 보호법」 제30조에 따라 정보주체의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같은 개인정보 처리방침을 수립·공개합니다.</p>
+
+      <h2>제1조 (개인정보의 처리 목적)</h2>
+      <p>회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 「개인정보 보호법」 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.</p>
+      <ol>
+        <li><strong>회원 가입 및 관리</strong>: 회원자격 유지·관리, 본인확인, 부정이용 방지, 각종 고지·통지</li>
+        <li><strong>재화 또는 서비스 제공</strong>: 주문·계약, 결제, 배송, 본인인증, 요금정산</li>
+        <li><strong>고객 문의 응대</strong>: 견적 요청 및 문의에 대한 응대·기록 보관</li>
+        <li><strong>마케팅 및 광고에의 활용</strong>: 신규 서비스 안내, 이벤트 정보 제공 (선택 동의 시에 한함)</li>
+      </ol>
+
+      <h2>제2조 (처리하는 개인정보의 항목)</h2>
+      <p>회사는 다음의 개인정보 항목을 처리하고 있습니다.</p>
+      <table class="legal-table">
+        <thead>
+          <tr><th>구분</th><th>수집 항목</th><th>수집 시점</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>회원가입</td><td>이름, 이메일, 비밀번호</td><td>회원가입 신청 시</td></tr>
+          <tr><td>주문/결제</td><td>수령인 이름, 주소, 전화번호, 결제정보</td><td>주문 시</td></tr>
+          <tr><td>비회원 주문</td><td>주문자 이름, 이메일, 전화번호, 주소</td><td>비회원 주문 시</td></tr>
+          <tr><td>고객 문의·견적</td><td>이름, 이메일, 전화번호, 회사명, 문의 내용</td><td>문의 접수 시</td></tr>
+          <tr><td>자동 수집</td><td>접속 IP, 쿠키, 접속 일시, 서비스 이용 기록</td><td>서비스 이용 중</td></tr>
+        </tbody>
+      </table>
+
+      <h2>제3조 (개인정보의 처리 및 보유 기간)</h2>
+      <ol>
+        <li>회원 가입 정보: 회원 탈퇴 시까지. 단, 관계 법령에 의해 보존할 필요가 있는 경우 해당 기간까지 보관</li>
+        <li>주문/결제 정보: 「전자상거래 등에서의 소비자보호에 관한 법률」에 따라
+          <ul>
+            <li>계약 또는 청약철회 등에 관한 기록: 5년</li>
+            <li>대금결제 및 재화 등의 공급에 관한 기록: 5년</li>
+            <li>소비자의 불만 또는 분쟁처리에 관한 기록: 3년</li>
+          </ul>
+        </li>
+        <li>접속 로그: 「통신비밀보호법」에 따라 3개월</li>
+      </ol>
+
+      <h2>제4조 (개인정보의 제3자 제공)</h2>
+      <ol>
+        <li>회사는 정보주체의 동의, 법률의 특별한 규정 등 「개인정보 보호법」 제17조 및 제18조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.</li>
+        <li>회사는 결제 처리를 위하여 다음과 같이 개인정보를 제공합니다.
+          <table class="legal-table">
+            <thead><tr><th>제공받는 자</th><th>제공 목적</th><th>제공 항목</th><th>보유 기간</th></tr></thead>
+            <tbody>
+              <tr><td>카카오페이</td><td>결제 처리</td><td>주문번호, 결제금액, 결제수단</td><td>관계 법령에 따름</td></tr>
+            </tbody>
+          </table>
+        </li>
+      </ol>
+
+      <h2>제5조 (개인정보처리의 위탁)</h2>
+      <p>회사는 원활한 서비스 제공을 위해 다음과 같이 개인정보 처리 업무를 위탁할 수 있습니다. 위탁 시에는 「개인정보 보호법」 제26조에 따라 필요한 사항을 위탁계약 등에 반영하고 있습니다.</p>
+      <table class="legal-table">
+        <thead><tr><th>수탁자</th><th>위탁 업무</th></tr></thead>
+        <tbody>
+          <tr><td>네이버클라우드플랫폼 / Papago</td><td>다국어 번역 처리</td></tr>
+          <tr><td>이메일 발송 서비스 제공자</td><td>알림 메일 발송</td></tr>
+        </tbody>
+      </table>
+
+      <h2>제6조 (정보주체와 법정대리인의 권리·의무 및 행사방법)</h2>
+      <ol>
+        <li>정보주체는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다.
+          <ul>
+            <li>개인정보 열람 요구</li>
+            <li>오류 등이 있을 경우 정정 요구</li>
+            <li>삭제 요구</li>
+            <li>처리정지 요구</li>
+          </ul>
+        </li>
+        <li>제1항에 따른 권리 행사는 회사에 대해 서면, 전자우편 등을 통하여 하실 수 있으며 회사는 이에 대해 지체 없이 조치하겠습니다.</li>
+      </ol>
+
+      <h2>제7조 (개인정보의 파기)</h2>
+      <ol>
+        <li>회사는 개인정보 보유기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.</li>
+        <li>전자적 파일 형태의 정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 파기합니다.</li>
+      </ol>
+
+      <h2>제8조 (개인정보의 안전성 확보 조치)</h2>
+      <ul>
+        <li>관리적 조치: 내부관리계획 수립·시행, 정기적 직원 교육</li>
+        <li>기술적 조치: 개인정보처리시스템 등의 접근권한 관리, 접근통제시스템 설치, 비밀번호 암호화(bcrypt), 보안프로그램 설치</li>
+        <li>물리적 조치: 전산실, 자료보관실 등의 접근통제</li>
+      </ul>
+
+      <h2>제9조 (개인정보 자동 수집 장치의 설치·운영 및 거부)</h2>
+      <p>회사는 이용자에게 개별적인 맞춤서비스를 제공하기 위해 이용정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다. 이용자는 웹브라우저에서 옵션을 설정함으로써 모든 쿠키를 허용하거나, 쿠키가 저장될 때마다 확인을 거치거나, 모든 쿠키의 저장을 거부할 수 있습니다.</p>
+
+      <h2>제10조 (개인정보 보호책임자)</h2>
+      <% if (company.privacyOfficer && company.privacyOfficer.name) { %>
+        <table class="legal-table">
+          <tbody>
+            <tr><td style="width:140px;">성명</td><td><%= company.privacyOfficer.name %></td></tr>
+            <tr><td>이메일</td><td><%= company.privacyOfficer.email || company.email %></td></tr>
+            <tr><td>전화</td><td><%= company.phone %></td></tr>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="alert alert-secondary" role="alert">
+          개인정보 보호책임자 정보를 .env(<code>COMPANY_PRIVACY_OFFICER_NAME</code>, <code>COMPANY_PRIVACY_OFFICER_EMAIL</code>)에 입력하면 자동 노출됩니다.
+        </div>
+      <% } %>
+
+      <h2>제11조 (권익침해 구제방법)</h2>
+      <p>정보주체는 개인정보침해로 인한 구제를 받기 위하여 개인정보분쟁조정위원회, 한국인터넷진흥원 개인정보침해신고센터 등에 분쟁해결이나 상담 등을 신청할 수 있습니다.</p>
+      <ul>
+        <li>개인정보분쟁조정위원회: (국번없이) 1833-6972 / www.kopico.go.kr</li>
+        <li>개인정보침해신고센터: (국번없이) 118 / privacy.kisa.or.kr</li>
+        <li>대검찰청: (국번없이) 1301 / www.spo.go.kr</li>
+        <li>경찰청: (국번없이) 182 / cyberbureau.police.go.kr</li>
+      </ul>
+
+      <h2>제12조 (개인정보처리방침의 변경)</h2>
+      <p>이 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.</p>
+
+      <div class="legal-footer">
+        <p><strong>부칙</strong></p>
+        <p>본 개인정보처리방침은 <%= legal.privacyEffectiveDate %>부터 적용됩니다.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<style>
+  .legal-doc { font-size: 15px; line-height: 1.8; color: #333; }
+  .legal-doc h2 { font-size: 18px; font-weight: 700; margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #eee; }
+  .legal-doc h2:first-child { margin-top: 0; }
+  .legal-doc ol, .legal-doc ul { padding-left: 24px; margin-bottom: 16px; }
+  .legal-doc li { margin-bottom: 6px; }
+  .legal-doc p { margin-bottom: 12px; }
+  .legal-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #eee; color: #666; font-size: 13px; }
+  .legal-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  .legal-table th, .legal-table td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; vertical-align: top; }
+  .legal-table th { background: #f6f8fa; font-weight: 600; }
+</style>
+
+<%- include('../layouts/company-bottom') %>

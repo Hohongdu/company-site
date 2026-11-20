@@ -5,17 +5,9 @@
   backUrl: '/shop/products'
 }) %>
 
-<!-- ─────────────────────────────────────────────
-   상품 상세 화면
-   구조: 풀블리드 이미지 → 상품 정보 → 구매 CTA(sticky bottom) → 리뷰 → 연관 상품
-   app-main에 has-bottom-cta 클래스 추가 → 콘텐츠가 CTA 뒤에 숨지 않도록 패딩
-   ───────────────────────────────────────────── -->
-<script>
-/* has-bottom-cta 클래스를 app-main에 추가 */
-document.getElementById('app-main').classList.add('has-bottom-cta');
-</script>
-
-<!-- ── 상품 이미지 ── -->
+<div class="shop-shell shop-section">
+  <p class="shop-breadcrumb"><a href="/shop">제품몰 홈</a><span aria-hidden="true">/</span> <a href="/shop/products">전체 상품</a></p>
+  <div class="shop-detail-overview">
 <div class="app-detail-img">
   <% if (product.image) { %>
     <img src="<%= product.image %>" alt="<%= product.name %>" loading="eager">
@@ -55,34 +47,6 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
     <% } %>
   </div>
 
-  <!-- 가격 + 납기 뱃지 -->
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-    <div class="app-detail-price" style="margin-bottom:0;">
-      <%= Number(product.price || 0).toLocaleString() %><span>원</span>
-    </div>
-    <%# 납기 예측 뱃지 — stock_quantity 기반 %>
-    <% if (product.stock_quantity > 0) { %>
-      <span style="
-        background:#dcfce7;color:#15803d;
-        font-size:11px;font-weight:700;
-        padding:3px 8px;border-radius:20px;
-        letter-spacing:.02em;
-      " data-i18n-auto>⚡ 즉시출고</span>
-    <% } else if (product.stock_quantity === 0) { %>
-      <span style="
-        background:#fff7ed;color:#c2410c;
-        font-size:11px;font-weight:700;
-        padding:3px 8px;border-radius:20px;
-      " data-i18n-auto>🏭 제작 2주</span>
-    <% } else { %>
-      <span style="
-        background:#f1f5f9;color:#64748b;
-        font-size:11px;font-weight:700;
-        padding:3px 8px;border-radius:20px;
-      " data-i18n-auto>📞 납기 협의</span>
-    <% } %>
-  </div>
-
   <!-- 규격/스펙 -->
   <% if (product.code || product.spec) { %>
     <div class="app-spec-box">
@@ -101,10 +65,117 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
     </div>
   <% } %>
 
+  <!-- 가격 + 납기 뱃지 -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+    <div class="app-detail-price" style="margin-bottom:0;">
+      <%= Number(product.price || 0).toLocaleString() %><span>원</span>
+    </div>
+    <%# 납기 예측 뱃지 — stock_quantity 기반 %>
+    <% if (product.stock_quantity > 0) { %>
+      <span style="
+        background:#dcfce7;color:#15803d;
+        font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:20px;
+        letter-spacing:.02em;
+      " data-i18n-auto>재고 보유</span>
+    <% } else if (product.stock_quantity === 0) { %>
+      <span style="
+        background:#fff7ed;color:#c2410c;
+        font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:20px;
+      " data-i18n-auto>주문 제작</span>
+    <% } else { %>
+      <span style="
+        background:#f1f5f9;color:#64748b;
+        font-size:11px;font-weight:700;
+        padding:3px 8px;border-radius:20px;
+      " data-i18n-auto>납기 문의</span>
+    <% } %>
+  </div>
+
+
+<div class="app-bottom-cta" id="detailBottomCta">
+  <form action="/shop/cart/add" method="post" id="detailCartForm"
+        style="width:100%;">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="productId" value="<%= product.id %>">
+
+    <div class="app-bottom-cta__inner">
+
+      <!-- 수량 조절 -->
+      <div class="app-qty">
+        <button class="app-qty__btn" type="button"
+                data-qty-dec="detailQty" aria-label="수량 감소">−</button>
+        <input class="app-qty__input" id="detailQty" name="quantity"
+               type="number" min="1" max="999" value="1" aria-label="주문 수량">
+        <button class="app-qty__btn" type="button"
+                data-qty-inc="detailQty" aria-label="수량 증가">+</button>
+      </div>
+
+      <!-- 장바구니 담기 버튼 -->
+      <button class="app-btn app-btn--primary" type="submit"
+              id="detailAddBtn"
+              form="detailCartForm"
+              style="flex:1;min-width:0;"
+              aria-label="장바구니 담기">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
+                stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round"/>
+        </svg>
+        장바구니 담기
+      </button>
+
+      <!-- 샘플 요청 -->
+      <button class="app-btn app-btn--outline"
+              type="button"
+              data-sheet-open="sampleSheet"
+              data-sheet-overlay="rfqSheetOverlay"
+              style="flex:1;min-width:0;font-size:12px;">
+        샘플 요청
+      </button>
+
+      <!-- 견적 요청 버튼 (RFQ Drawer 열기) -->
+      <button class="app-btn app-btn--outline shop-detail-quote"
+              type="button"
+              data-sheet-open="rfqSheet"
+              data-sheet-overlay="rfqSheetOverlay"
+              style="flex:1.4;min-width:0;">
+        견적 문의
+      </button>
+
+    </div>
+  </form>
+</div><!-- /detailBottomCta -->
+  <!-- 찜하기 (로그인 유저만) -->
+  <% if (user) { %>
+    <form action="/shop/wishlist/toggle" method="post" style="margin-top:20px;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+      <button class="app-btn <%= wished ? 'app-btn--primary' : 'app-btn--outline' %>"
+              type="submit"
+              style="width:100%;gap:6px;">
+        <svg width="15" height="15" viewBox="0 0 24 24"
+             fill="<%= wished ? 'currentColor' : 'none' %>" aria-hidden="true">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <%= wished ? '찜 해제' : '찜하기' %>
+      </button>
+    </form>
+  <% } %>
+
+
+    </div>
+  </div>
+  <div class="shop-detail-details">
   <!-- 상품 설명 -->
   <% if (product.description) { %>
-    <div style="margin-top:16px;font-size:14px;color:var(--c-text-2);line-height:1.7;">
-      <%= product.description %>
+    <div class="shop-detail-description">
+      <h2>상품 설명</h2>
+      <p><%= product.description %></p>
     </div>
   <% } %>
 
@@ -155,36 +226,13 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
     </div>
   </div>
 
-  <!-- 찜하기 (로그인 유저만) -->
-  <% if (user) { %>
-    <form action="/shop/wishlist/toggle" method="post" style="margin-top:20px;">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="productId" value="<%= product.id %>">
-      <button class="app-btn <%= wished ? 'app-btn--primary' : 'app-btn--outline' %>"
-              type="submit"
-              style="width:100%;gap:6px;">
-        <svg width="15" height="15" viewBox="0 0 24 24"
-             fill="<%= wished ? 'currentColor' : 'none' %>" aria-hidden="true">
-          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
-                stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
-        <%= wished ? '찜 해제' : '찜하기' %>
-      </button>
-    </form>
-  <% } %>
-
-  <!-- 안내 문구 -->
-  <p style="font-size:12px;color:var(--c-muted-2);margin-top:12px;text-align:center;">
-    비회원도 장바구니 사용 가능 (세션 종료 시 초기화)
-  </p>
-
-</div><!-- /app-detail-body -->
+</div><!-- /shop-detail-details -->
 
 
 <!-- ══════════════════════════════════════════
    리뷰 섹션
 ══════════════════════════════════════════ -->
-<div class="app-section--pad" id="reviews">
+<div class="app-section--pad shop-detail-secondary" id="reviews">
 
   <div class="app-sec-head">
     <div>
@@ -249,7 +297,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
    연관 상품 — 가로 스크롤
 ══════════════════════════════════════════ -->
 <% if (related && related.length > 0) { %>
-  <div class="app-related">
+  <div class="app-related shop-detail-secondary">
     <div class="app-sec-head" style="padding:0 16px;">
       <h2 class="app-sec-title">연관 상품</h2>
       <a class="app-sec-more" href="/shop/products">전체 보기 →</a>
@@ -285,9 +333,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
   </div>
 <% } %>
 
-<!-- 하단 여백 (sticky CTA 높이만큼) -->
-<div style="height:16px;"></div>
-
+</div><!-- /shop-shell -->
 
 <!-- ══════════════════════════════════════════
    장바구니 담기 확인 모달
@@ -339,66 +385,7 @@ document.getElementById('app-main').classList.add('has-bottom-cta');
 </div>
 
 
-<!-- ══════════════════════════════════════════
-   Sticky 하단 구매 CTA
-   form submit → fetch → 모달 표시 (기존 redirect 대신)
-   수량 조절은 shop-bottom.ejs의 공통 핸들러(data-qty-inc/dec) 사용
-══════════════════════════════════════════ -->
-<div class="app-bottom-cta" id="detailBottomCta">
-  <form action="/shop/cart/add" method="post" id="detailCartForm"
-        style="width:100%;">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <input type="hidden" name="productId" value="<%= product.id %>">
 
-    <div class="app-bottom-cta__inner">
-
-      <!-- 수량 조절 -->
-      <div class="app-qty">
-        <button class="app-qty__btn" type="button"
-                data-qty-dec="detailQty" aria-label="수량 감소">−</button>
-        <input class="app-qty__input" id="detailQty" name="quantity"
-               type="number" min="1" value="1" readonly>
-        <button class="app-qty__btn" type="button"
-                data-qty-inc="detailQty" aria-label="수량 증가">+</button>
-      </div>
-
-      <!-- 장바구니 담기 버튼 -->
-      <button class="app-btn app-btn--outline" type="submit"
-              id="detailAddBtn"
-              form="detailCartForm"
-              style="flex:1;min-width:0;"
-              aria-label="장바구니 담기">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
-                stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-          <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round"/>
-        </svg>
-        담기
-      </button>
-
-      <!-- 샘플 요청 -->
-      <button class="app-btn app-btn--outline"
-              type="button"
-              data-sheet-open="sampleSheet"
-              data-sheet-overlay="rfqSheetOverlay"
-              style="flex:1;min-width:0;font-size:12px;">
-        🧪 샘플
-      </button>
-
-      <!-- 견적 요청 버튼 (RFQ Drawer 열기) -->
-      <button class="app-btn app-btn--primary"
-              type="button"
-              data-sheet-open="rfqSheet"
-              data-sheet-overlay="rfqSheetOverlay"
-              style="flex:1.4;min-width:0;">
-        📋 견적 요청
-      </button>
-
-    </div>
-  </form>
-</div><!-- /detailBottomCta -->
 
 
 <!-- ══════════════════════════════════════════

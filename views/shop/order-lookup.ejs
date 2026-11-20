@@ -1,35 +1,58 @@
-<%- include('../layouts/shop-top', { title: '비회원 주문 조회' , active: 'order_lookup' }) %>
+<%- include('../layouts/shop-top', { title: '비회원 주문 조회' }) %>
+<% const method = form.confirmationMethod === 'phone' || (!form.guestEmail && form.guestPhone) ? 'phone' : 'email'; %>
 
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-6">
-      <div class="shop-card p-4">
-        <h3 class="fw-bold mb-2" data-i18n-auto>비회원 주문 조회</h3>
-        <p class="text-muted mb-4" data-i18n-auto>주문번호와 이메일 또는 연락처를 입력하면 주문 상태를 확인할 수 있습니다.</p>
+<section class="shop-page-heading">
+  <div class="shop-shell">
+    <p class="shop-breadcrumb"><a href="/shop">제품몰 홈</a><span aria-hidden="true">/</span> 주문 조회</p>
+    <h1 data-i18n-auto>주문 조회</h1>
+    <p data-i18n-auto>주문 내역과 현재 처리 상태를 확인하세요.</p>
+  </div>
+</section>
 
-        <% if (error) { %>
-          <div class="alert alert-warning"><%= error %></div>
-        <% } %>
-
-            <form action="/shop/orders/guest" method="post" class="row g-3">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <div class="col-12 col-md-6">
-                    <label class="form-label">주문번호</label>
-                    <input class="form-control" name="orderNumber" required value="<%= form.orderNumber %>">
-                </div>
-                <div class="col-12 col-md-6">
-                    <label class="form-label">이메일</label>
-                    <input class="form-control" type="email" name="guestEmail" value="<%= form.guestEmail %>">
-                </div>
-                <div class="col-12 col-md-6">
-                    <label class="form-label">연락처</label>
-                    <input class="form-control" name="guestPhone" placeholder="010-0000-0000"
-                        value="<%= form.guestPhone %>">
-                </div>
-                <div class="col-12">
-                    <button class="btn btn-primary">조회하기</button>
-                </div>
-            </form>
+<div class="shop-shell shop-section shop-lookup">
+  <section class="shop-panel shop-lookup__guest" aria-labelledby="guest-lookup-title">
+    <h2 id="guest-lookup-title" data-i18n-auto>비회원 주문 조회</h2>
+    <p class="shop-muted" data-i18n-auto>주문번호와 주문 시 입력한 이메일 또는 연락처 중 하나를 입력하세요.</p>
+    <% if (error) { %>
+      <p class="app-alert app-alert--warn" role="alert"><%= error %></p>
+    <% } %>
+    <form action="/shop/orders/guest" method="post" class="shop-lookup-form" data-order-lookup>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="app-field">
+        <label class="app-field__label" for="lookup-order-number">주문번호</label>
+        <input class="app-field__input" id="lookup-order-number" name="orderNumber" required value="<%= form.orderNumber || '' %>"
+               placeholder="ORD-로 시작하는 번호" autocomplete="off" spellcheck="false" aria-describedby="lookup-order-help">
+      </div>
+      <fieldset class="shop-lookup-method" hidden>
+        <legend>확인 방법</legend>
+        <div>
+          <label><input type="radio" name="confirmationMethod" value="email" <%= method === 'email' ? 'checked' : '' %>> 이메일</label>
+          <label><input type="radio" name="confirmationMethod" value="phone" <%= method === 'phone' ? 'checked' : '' %>> 연락처</label>
+        </div>
+      </fieldset>
+      <div class="app-field" data-order-contact="email">
+        <label class="app-field__label" for="lookup-email">주문 이메일</label>
+        <input class="app-field__input" id="lookup-email" type="email" name="guestEmail"
+               value="<%= form.guestEmail || '' %>" autocomplete="email" placeholder="name@example.com">
+      </div>
+      <div class="app-field" data-order-contact="phone">
+        <label class="app-field__label" for="lookup-phone">주문 연락처</label>
+        <input class="app-field__input" id="lookup-phone" type="tel" name="guestPhone"
+               value="<%= form.guestPhone || '' %>" autocomplete="tel" placeholder="010-0000-0000">
+      </div>
+      <button class="app-btn app-btn--primary" type="submit" data-i18n-auto>주문 조회하기</button>
+      <details class="shop-lookup-help" id="lookup-order-help">
+        <summary>주문번호는 어디에 있나요?</summary>
+        <p>주문 완료 화면에 표시된 ORD-로 시작하는 번호를 확인하세요.</p>
+        <a class="shop-text-link" href="/contact">주문번호 찾기 문의</a>
+      </details>
+    </form>
+  </section>
+  <aside class="shop-lookup__member">
+    <h2 data-i18n-auto>회원 주문</h2>
+    <p class="shop-muted" data-i18n-auto>로그인하면 내 주문 내역을 한곳에서 확인할 수 있습니다.</p>
+    <a class="app-btn app-btn--outline" href="<%= user ? '/shop/account/orders' : '/auth/login?redirect=%2Fshop%2Faccount%2Forders' %>"><%= user ? '내 주문 내역' : '로그인' %></a>
+  </aside>
 </div>
 
 <%- include('../layouts/shop-bottom') %>

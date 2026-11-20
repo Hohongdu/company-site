@@ -1,0 +1,35 @@
+<%
+const href = '/shop/products/' + product.id;
+const image = product.image_thumb || product.image;
+const stock = product.stock_quantity;
+const availability = stock > 0 ? '재고 보유' : stock === 0 ? '주문 제작' : '납기 문의';
+%>
+<article class="shop-product">
+  <a class="shop-product__image" href="<%= href %>" tabindex="-1" aria-hidden="true">
+    <% if (image) { %>
+      <img src="<%= image %>" alt="" loading="lazy">
+    <% } else { %>
+      <span>제품 이미지 없음</span>
+    <% } %>
+  </a>
+  <div class="shop-product__body">
+    <% if (product.category_name) { %><p class="shop-product__category" data-i18n-auto><%= product.category_name %></p><% } %>
+    <h3><a href="<%= href %>" data-i18n-auto><%= product.name %></a></h3>
+    <dl class="shop-product__specs">
+      <div><dt>제품코드</dt><dd><%= product.code || '–' %></dd></div>
+      <div><dt>규격</dt><dd data-i18n-auto><%= product.spec || '–' %></dd></div>
+    </dl>
+  </div>
+  <div class="shop-product__purchase">
+    <span class="shop-stock<%= stock > 0 ? ' shop-stock--available' : '' %>" data-i18n-auto><%= availability %></span>
+    <strong><%= Number(product.price || 0).toLocaleString('ko-KR') %><span>원</span></strong>
+    <form class="shop-product__actions" action="/shop/cart/add" method="post" <%= quickAdd ? 'data-catalog-cart' : '' %>>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="productId" value="<%= product.id %>">
+      <input type="hidden" name="quantity" value="1">
+      <button class="app-btn app-btn--primary app-btn--sm" type="submit" aria-label="<%= product.name %> 장바구니 담기" data-i18n-auto>담기</button>
+      <a class="app-btn app-btn--outline app-btn--sm" href="<%= href %>" aria-label="<%= product.name %> 상세 보기" data-i18n-auto>상세</a>
+    </form>
+    <% if (quickAdd) { %><p class="shop-product__feedback" role="status"></p><% } %>
+  </div>
+</article>

@@ -22,6 +22,7 @@ const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
+const LISTEN_HOST = process.env.LISTEN_HOST || undefined;
 const BASE_URL = process.env.BASE_URL;
 
 // /api/* 공통 limiter: 15분/100회
@@ -34,20 +35,6 @@ const apiLimiter = rateLimit({
 		res.status(429).json({ success: false, message: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' });
 	},
 });
-
-// /api/auth/* 등 민감 엔드포인트용 엄격한 limiter: 15분/20회
-const sensitiveApiLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 20,
-	standardHeaders: 'draft-7',
-	legacyHeaders: false,
-	handler: (req, res) => {
-		res.status(429).json({ success: false, message: '요청이 너무 많습니다. 잠시 후 다시 시도하세요.' });
-	},
-});
-
-
-
 
 // =====================
 // 기본 설정
@@ -129,13 +116,27 @@ app.use(
 // =====================
 // 회사 정보 locals — CSRF보다 먼저 주입해야 에러 페이지에서도 사용 가능
 // .env의 COMPANY_* 변수로 오버라이드 가능 (하드코딩 제거)
+// 전자상거래법 시행령 제10조: 사업자 정보 표시 의무 항목 (CEO, bizNo, mailOrderNo)
 // =====================
 const COMPANY_INFO = {
 	name:    process.env.COMPANY_NAME    || 'ENERMADE',
+	ceo:     process.env.COMPANY_CEO     || '',
 	phone:   process.env.COMPANY_PHONE   || '02-0000-0000',
 	address: process.env.COMPANY_ADDRESS || '서울특별시 강남구 테헤란로 123',
 	email:   process.env.COMPANY_EMAIL   || 'contact@enermade.com',
 	fax:     process.env.COMPANY_FAX     || '',
+	bizNo:        process.env.COMPANY_BIZ_NO         || '',
+	mailOrderNo:  process.env.COMPANY_MAIL_ORDER_NO  || '',
+	privacyOfficer: {
+		name:  process.env.COMPANY_PRIVACY_OFFICER_NAME  || '',
+		email: process.env.COMPANY_PRIVACY_OFFICER_EMAIL || '',
+	},
+};
+
+// 법적 문서 시행일 (약관/개인정보처리방침)
+const LEGAL_INFO = {
+	termsEffectiveDate:   process.env.LEGAL_TERMS_EFFECTIVE_DATE   || '2026-01-01',
+	privacyEffectiveDate: process.env.LEGAL_PRIVACY_EFFECTIVE_DATE || '2026-01-01',
 };
 
 // =====================
@@ -146,6 +147,7 @@ app.use((req, res, next) => {
 	res.locals.currentUrl = req.originalUrl;
 	res.locals.user = req.session?.user || null;
 	res.locals.company = COMPANY_INFO;
+	res.locals.legal = LEGAL_INFO;
 	next();
 });
 
@@ -226,8 +228,7 @@ app.use('/auth', authRouter);
 app.use('/shop', shopRouter);
 app.use('/admin', adminRouter);
 
-// API 라우팅: 공통 limiter 적용 후 민감 경로는 별도 엄격한 limiter 추가
-app.use('/api/auth', sensitiveApiLimiter);
+// API 라우팅: 공통 limiter 적용
 app.use('/api', apiLimiter, require('./routes/api'));
 
 // =====================
@@ -308,7 +309,8 @@ app.use(async (err, req, res, next) => {
 async function initializeSchemas() {
 	// 감사 로그 테이블 초기화 (audit.service.js)
 	await ensureAdminActivityLogTable();
-	for (const router of [companyRouter, shopRouter, adminRouter]) {
+	// authRouter 포함 — 회원가입 동의 컬럼 자동 마이그레이션
+	for (const router of [companyRouter, authRouter, shopRouter, adminRouter]) {
 		if (typeof router.initializeSchema === 'function') {
 			await router.initializeSchema();
 		}
@@ -325,37 +327,7 @@ async function initializeSchemas() {
 		process.exit(1);
 	}
 
-	app.listen(PORT, () => {
-		console.log(`Server running at http://127.0.0.1:${PORT}`);
+	app.listen(PORT, LISTEN_HOST, () => {
+		console.log(`Server running at http://${LISTEN_HOST || '127.0.0.1'}:${PORT}`);
 	});
 })();
-
-// Legacy app-level Kakao payment callbacks are intentionally disabled.
-// The live checkout flow is mounted in routes/shop.js under /shop/checkout/kakao/*.
-if (false) {
-	const legacyPaymentsRoutes = { get() {}, post() {} };
-// ===============================
-// 카카오페이 결제 (orders 기반)
-// ===============================
-
-// 결제 준비
-// legacy /payments/ready route removed; use /shop/checkout/kakao instead
-legacyPaymentsRoutes.post('/payments/ready', async (req, res) => {
-	// intentionally disabled
-});
-
-// 결제 승인 콜백
-legacyPaymentsRoutes.get('/payments/kakao/success', async (req, res) => {
-	// intentionally disabled
-});
-
-// 결제 취소
-legacyPaymentsRoutes.get('/payments/kakao/cancel', async (req, res) => {
-	// intentionally disabled
-});
-
-// 결제 실패
-legacyPaymentsRoutes.get('/payments/kakao/fail', async (req, res) => {
-	// intentionally disabled
-});
-}

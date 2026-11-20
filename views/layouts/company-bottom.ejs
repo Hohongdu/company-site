@@ -6,7 +6,7 @@
     <div class="row g-5">
       <div class="col-12 col-md-4">
         <span class="footer__brand"><%= (typeof company !== 'undefined' && company) ? company.name : 'ENERMADE' %></span>
-        <p class="footer__desc">고객 맞춤형 세라믹 솔루션 제공업체.<br>첨단 기술과 풍부한 경험을 바탕으로<br>최고의 제품을 제공합니다.</p>
+        <p class="footer__desc" data-i18n-auto>산업용 세라믹과 정밀 부품의 설계·가공·맞춤 제작</p>
       </div>
       <div class="col-6 col-md-2 offset-md-1">
         <div class="footer__heading" data-i18n-auto>회사</div>
@@ -18,8 +18,10 @@
         </div>
       </div>
       <div class="col-6 col-md-2">
-        <div class="footer__heading" data-i18n-auto>제품</div>
+        <div class="footer__heading" data-i18n-auto>사업 및 제품</div>
         <div class="footer__links">
+          <a href="/business" data-i18n-auto>사업 영역</a>
+          <a href="/research" data-i18n-auto>연구 개발</a>
           <a href="/shop" data-i18n-auto>상품몰</a>
           <a href="/shop/products" data-i18n-auto>전체 상품</a>
           <a href="/notices" data-i18n-auto>공지사항</a>
@@ -35,12 +37,64 @@
         </div>
       </div>
     </div>
+
+    <!-- 전자상거래법 시행령 제10조 의무 표시 사항 -->
+    <% const c = (typeof company !== 'undefined' && company) ? company : {}; %>
+    <div class="footer__biz">
+      <dl class="footer__biz-grid">
+        <% if (c.name) { %>
+          <div><dt>상호</dt><dd><%= c.name %></dd></div>
+        <% } %>
+        <% if (c.ceo) { %>
+          <div><dt>대표자</dt><dd><%= c.ceo %></dd></div>
+        <% } %>
+        <% if (c.bizNo) { %>
+          <div><dt>사업자등록번호</dt><dd><%= c.bizNo %></dd></div>
+        <% } %>
+        <% if (c.mailOrderNo) { %>
+          <div><dt>통신판매업신고</dt><dd><%= c.mailOrderNo %></dd></div>
+        <% } %>
+        <% if (c.address) { %>
+          <div class="footer__biz-wide"><dt>주소</dt><dd><%= c.address %></dd></div>
+        <% } %>
+        <% if (c.phone) { %>
+          <div><dt>전화</dt><dd><a href="tel:<%= c.phone.replace(/[^0-9+]/g, '') %>"><%= c.phone %></a></dd></div>
+        <% } %>
+        <% if (c.fax) { %>
+          <div><dt>팩스</dt><dd><%= c.fax %></dd></div>
+        <% } %>
+        <% if (c.email) { %>
+          <div><dt>이메일</dt><dd><a href="mailto:<%= c.email %>"><%= c.email %></a></dd></div>
+        <% } %>
+      </dl>
+      <div class="footer__legal-links">
+        <a href="/terms">이용약관</a>
+        <span class="footer__legal-sep">|</span>
+        <a href="/privacy"><strong>개인정보처리방침</strong></a>
+      </div>
+    </div>
+
     <div class="footer__bottom">
-      <span>© <%= new Date().getFullYear() %> <%= (typeof company !== 'undefined' && company) ? company.name : 'ENERMADE' %>. All rights reserved.</span>
+      <span>© <%= new Date().getFullYear() %> <%= c.name || 'ENERMADE' %>. All rights reserved.</span>
       <span>세라믹 가공 솔루션 전문기업</span>
     </div>
   </div>
 </footer>
+
+<style>
+  .footer__biz { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .footer__biz-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 24px; margin: 0 0 16px; font-size: 12px; color: rgba(255,255,255,0.7); }
+  .footer__biz-grid > div { display: flex; gap: 8px; min-width: 0; }
+  .footer__biz-grid dt { flex: 0 0 auto; color: rgba(255,255,255,0.45); font-weight: 500; min-width: 84px; }
+  .footer__biz-grid dd { margin: 0; flex: 1 1 auto; word-break: keep-all; }
+  .footer__biz-grid dd a { color: inherit; text-decoration: none; }
+  .footer__biz-grid dd a:hover { text-decoration: underline; }
+  .footer__biz-wide { grid-column: 1 / -1; }
+  .footer__legal-links { display: flex; gap: 12px; align-items: center; font-size: 13px; padding-top: 8px; }
+  .footer__legal-links a { color: rgba(255,255,255,0.85); text-decoration: none; }
+  .footer__legal-links a:hover { color: #fff; text-decoration: underline; }
+  .footer__legal-sep { color: rgba(255,255,255,0.3); }
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>window.__SITE_USER_IS_ADMIN = <%- (user && user.is_admin) ? 'true' : 'false' %>;</script>
@@ -64,26 +118,41 @@
 
   function openDrawer() {
     if (!drawer) return;
+    drawer.inert = false;
     drawer.classList.add('open');
     backdrop && backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
     ham && ham.classList.add('open');
     ham && ham.setAttribute('aria-label', '메뉴 닫기');
+    ham && ham.setAttribute('aria-expanded', 'true');
+    closeBtn?.focus();
   }
-  function closeDrawer() {
-    if (!drawer) return;
+  function closeDrawer(restoreFocus = false) {
+    if (!drawer?.classList.contains('open')) return;
     drawer.classList.remove('open');
+    drawer.inert = true;
     backdrop && backdrop.classList.remove('open');
     document.body.style.overflow = '';
     ham && ham.classList.remove('open');
     ham && ham.setAttribute('aria-label', '메뉴 열기');
+    ham && ham.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) ham?.focus();
   }
 
   ham      && ham.addEventListener('click', function () {
-    drawer && drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+    drawer && drawer.classList.contains('open') ? closeDrawer(true) : openDrawer();
   });
-  closeBtn  && closeBtn.addEventListener('click', closeDrawer);
-  backdrop  && backdrop.addEventListener('click', closeDrawer);
+  closeBtn?.addEventListener('click', () => closeDrawer(true));
+  backdrop?.addEventListener('click', () => closeDrawer(true));
+  drawer?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const controls = drawer.querySelectorAll('a[href], button:not([disabled])');
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (document.activeElement !== (event.shiftKey ? first : last)) return;
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  });
 
   // 웹 전환시 사이드바 닫기
   window.addEventListener('resize', function () {
@@ -95,21 +164,31 @@
   const loginCloseBtn = document.getElementById('loginClose');
   if (!overlay) return;
 
-  function openLogin() {
+  let loginTrigger;
+  function openLogin(trigger) {
+    loginTrigger = drawer?.contains(trigger) ? ham : trigger;
+    closeDrawer();
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+    overlay.querySelector('input[name="email"]')?.focus();
   }
   function closeLogin() {
+    if (!overlay.classList.contains('open')) return;
     overlay.classList.remove('open');
     document.body.style.overflow = '';
+    loginTrigger?.focus();
   }
 
   document.querySelectorAll('.js-open-login').forEach(function (el) {
-    el.addEventListener('click', function (e) { e.preventDefault(); openLogin(); });
+    el.addEventListener('click', function (e) { e.preventDefault(); openLogin(el); });
   });
   if (loginCloseBtn) loginCloseBtn.addEventListener('click', closeLogin);
   overlay.addEventListener('click', function (e) { if (e.target === overlay) closeLogin(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLogin(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (overlay.classList.contains('open')) closeLogin();
+    else closeDrawer(true);
+  });
 
 })();
 </script>

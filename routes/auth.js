@@ -11,14 +11,37 @@ const { isValidEmail } = require('../lib/validators');
 
 const router = express.Router();
 
+// 개인정보 보호법 제15조 (구분 동의) 증거 보존용 컬럼 자동 추가
+// migrations/2026-05-26-user-consents.sql 의 인라인 구현
+async function ensureUserConsentColumns() {
+	const cols = [
+		{ name: 'terms_agreed_at',     ddl: 'DATETIME NULL COMMENT "이용약관 동의 시각"' },
+		{ name: 'privacy_agreed_at',   ddl: 'DATETIME NULL COMMENT "개인정보처리방침 동의 시각"' },
+		{ name: 'marketing_agreed_at', ddl: 'DATETIME NULL COMMENT "마케팅 수신 동의 시각 (선택)"' },
+		{ name: 'consent_ip',          ddl: 'VARCHAR(64) NULL COMMENT "동의 당시 IP"' },
+		{ name: 'consent_user_agent',  ddl: 'VARCHAR(255) NULL COMMENT "동의 당시 User-Agent"' },
+	];
+	for (const col of cols) {
+		try {
+			await db.execute(`ALTER TABLE users ADD COLUMN ${col.name} ${col.ddl}`);
+		} catch (err) {
+			if (!String(err?.message || '').includes('Duplicate column')) throw err;
+		}
+	}
+}
+
+router.initializeSchema = async function initializeSchema() {
+	await ensureUserConsentColumns();
+};
+
 // [M-1] 로그인 브루트포스 방지: 15분 내 20회 초과 시 차단 (성공 시 카운트 제외)
+// keyGenerator 생략 → 라이브러리 기본값(ipKeyGenerator)이 IPv6 안전하게 처리
 const loginLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	max: 20,
 	skipSuccessfulRequests: true,
 	standardHeaders: 'draft-7',
 	legacyHeaders: false,
-	keyGenerator: (req) => req.ip,
 	handler: (req, res) => {
 		res.status(429).render('auth/login', {
 			returnTo: '',
@@ -49,7 +72,6 @@ const forgotLimiter = rateLimit({
 	max: 5,
 	standardHeaders: 'draft-7',
 	legacyHeaders: false,
-	keyGenerator: (req) => req.ip,
 	handler: (req, res) => {
 		res.status(429).render('auth/forgot', {
 			csrfToken: req.session?.csrfToken || '',
@@ -169,7 +191,7 @@ router.get('/register', (req, res) => res.render('auth/register', {
 
 router.post('/register', registerLimiter, async (req, res) => {
 	try {
-		const { name, email, password, passwordConfirm } = req.body;
+		const { name, email, password, passwordConfirm, agreeTerms, agreePrivacy, agreeMarketing } = req.body;
 
 		// 입력값 기본 검증
 		// [LOW-1] 유효성 오류 시 폼 다시 렌더링 (CSRF 토큰 포함) — 기존 bare text 응답 수정
@@ -193,10 +215,27 @@ router.post('/register', registerLimiter, async (req, res) => {
 			return renderErr('비밀번호에 특수문자를 포함해야 합니다.');
 		if (password !== passwordConfirm) return renderErr('비밀번호가 일치하지 않습니다.');
 
+		// [필수] 약관·개인정보 동의 검증 (개인정보 보호법 제15조)
+		// 체크박스는 체크 시에만 req.body에 "1"이 들어오므로 falsy 검증
+		if (agreeTerms !== '1') return renderErr('이용약관에 동의해야 회원가입이 가능합니다.');
+		if (agreePrivacy !== '1') return renderErr('개인정보 수집·이용에 동의해야 회원가입이 가능합니다.');
+
 		const hashedPw = await bcrypt.hash(password, 10);
 
-		// ✅ is_admin 기본 0 (컬럼 추가된 상태 기준)
-		await db.execute('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, 0)', [name, email, hashedPw]);
+		// 동의 기록 — 분쟁 시 증거 (trust proxy로 req.ip는 X-Forwarded-For 기반)
+		const now = new Date();
+		const marketingAt = agreeMarketing === '1' ? now : null;
+		const ip = (req.ip || '').slice(0, 64);
+		const ua = String(req.get('user-agent') || '').slice(0, 255);
+
+		await db.execute(
+			`INSERT INTO users
+			   (name, email, password, is_admin,
+			    terms_agreed_at, privacy_agreed_at, marketing_agreed_at,
+			    consent_ip, consent_user_agent)
+			 VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)`,
+			[name, email, hashedPw, now, now, marketingAt, ip, ua],
+		);
 
 		// 환영 이메일 발송 (비차단 — 이메일 실패가 회원가입을 막지 않음)
 		sendSmtpMail({
