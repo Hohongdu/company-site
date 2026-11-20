@@ -43,6 +43,23 @@ function getTransporter() {
 	return _transporter;
 }
 
+function plainTextFromHtml(html) {
+	const parts = [];
+	let cursor = 0;
+	while (cursor < html.length) {
+		const open = html.indexOf('<', cursor);
+		if (open === -1) break;
+		const close = html.indexOf('>', open + 1);
+		if (close === -1) break;
+
+		// Keep empty angle brackets as text, matching the previous fallback.
+		parts.push(html.slice(cursor, close === open + 1 ? close + 1 : open));
+		cursor = close + 1;
+	}
+	parts.push(html.slice(cursor));
+	return parts.join('');
+}
+
 /**
  * @param {{ to: string, subject: string, html: string, text?: string }} opts
  * @returns {Promise<{ ok: boolean, status: string, messageId?: string, error?: string }>}
@@ -60,7 +77,7 @@ async function sendMail({ to, subject, html, text }) {
 			to,
 			subject,
 			html,
-			text: text || html.replace(/<[^>]+>/g, ''),
+			text: text || plainTextFromHtml(html),
 		});
 
 		console.log(`[smtp-email] ${new Date().toISOString()} Sent to ${maskedTo} | subject: ${subject} | messageId: ${info.messageId}`);

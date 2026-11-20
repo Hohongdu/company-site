@@ -107,4 +107,9 @@ router.get('/account', requireLogin, (req, res) =>
 	res.render('company/account', { user: req.session.user }),
 );
 
+// 법적 의무 페이지 (개인정보 보호법 제30조, 전자상거래법 제13조)
+// res.locals.company / res.locals.legal 은 app.js에서 자동 주입
+router.get('/terms', (req, res) => res.render('legal/terms'));
+router.get('/privacy', (req, res) => res.render('legal/privacy'));
+
 module.exports = router;

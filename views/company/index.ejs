@@ -1,321 +1,145 @@
-<%- include('../layouts/company-top', { title: 'ENERMADE', active: 'home' }) %>
+<%- include('../layouts/company-top', { title: '산업용 세라믹 정밀 가공', active: 'home' }) %>
 
-<!-- ===== HERO ===== -->
-<section class="hero">
-  <div class="hero__grid" aria-hidden="true"></div>
-  <div class="hero__outline-text" aria-hidden="true">CERAMIC</div>
-  <div class="container hero__inner">
-    <div class="row align-items-center gy-5" style="min-height:88vh;">
-      <div class="col-12 col-lg-6 py-5">
-        <p class="hero__eyebrow">세라믹 가공 솔루션 전문기업</p>
-        <h1 class="hero__title">
-          다양한 소재<br>
-          <em>무한한 가능성</em>
-        </h1>
-        <p class="hero__sub">고객 맞춤형 세라믹 솔루션 제공업체. 첨단 기술과 풍부한 경험으로 최적의 솔루션을 제안합니다.</p>
-        <div class="hero__actions">
-          <a href="/shop" class="btn btn-primary btn-lg">제품 카탈로그</a>
-          <a href="/contact" class="btn btn-outline-light btn-lg">견적 문의하기</a>
-        </div>
-        <div class="hero__stats">
-          <div class="hero__stat">
-            <div class="hero__stat-num">20<sup>+</sup></div>
-            <div class="hero__stat-label">년 이상 경험</div>
-          </div>
-          <div class="hero__stat">
-            <div class="hero__stat-num">500<sup>+</sup></div>
-            <div class="hero__stat-label">납품 거래처</div>
-          </div>
-          <div class="hero__stat">
-            <div class="hero__stat-num">99<sup>%</sup></div>
-            <div class="hero__stat-label">고객 만족도</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-lg-5 offset-lg-1 d-none d-lg-block">
-        <div class="hero__visual">
-          <div class="hero__img-wrap">
-            <img src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80"
-              alt="세라믹 가공 현장" />
-          </div>
-          <div class="hero__badge">
-            <div class="hero__badge-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <div class="hero__badge-num">ISO 9001</div>
-              <div class="hero__badge-label">품질 인증</div>
-            </div>
-          </div>
-        </div>
+<% const businessAreas = [
+  { id: 'ceramic', name: '세라믹 가공', description: '알루미나·지르코니아·탄화규소의 CNC 가공, 연삭, 연마' },
+  { id: 'precision', name: '정밀 부품', description: '산업용 부품의 설계·가공부터 3차원 측정 검사까지' },
+  { id: 'materials', name: '특수 소재', description: '고온·고압과 마모 환경에 대응하는 세라믹 소재' },
+  { id: 'custom', name: '맞춤 제작', description: '도면과 샘플을 바탕으로 소량 시제품부터 양산까지' },
+]; %>
+
+<section class="home-hero" aria-labelledby="home-title">
+  <div class="container home-hero__layout">
+    <div class="home-hero__content">
+      <p class="home-hero__eyebrow" data-i18n-auto>산업용 세라믹 · 정밀 부품</p>
+      <h1 id="home-title" class="home-hero__title">
+        <span data-i18n-auto>공정에 맞춘</span>
+        <span data-i18n-auto>정밀 세라믹</span>
+      </h1>
+      <p class="home-hero__lead" data-i18n-auto>소재 선정과 설계부터 정밀 가공, 시제품, 양산까지. 사용 환경에 맞는 세라믹 부품을 제작합니다.</p>
+      <div class="home-actions">
+        <a class="btn btn-primary" href="/contact" data-i18n-auto>견적 문의하기</a>
+        <a class="btn btn-outline-dark" href="/shop/products" data-i18n-auto>제품 카탈로그</a>
       </div>
     </div>
+    <figure class="company-figure home-hero__image">
+      <img src="/images/precision-ceramic-components.webp"
+           srcset="/images/precision-ceramic-components-720.webp 720w, /images/precision-ceramic-components.webp 1440w"
+           sizes="(max-width: 991px) calc(100vw - 2rem), 58vw"
+           width="1440" height="960" fetchpriority="high"
+           alt="가공된 세라믹 링, 부싱, 플레이트와 노즐의 예시">
+      <figcaption data-i18n-auto>정밀 세라믹 부품 예시</figcaption>
+    </figure>
   </div>
 </section>
 
-<!-- ===== FEATURES ===== -->
-<section class="sec-py" id="about">
+<section class="home-section" id="about" aria-labelledby="business-title">
   <div class="container">
-    <div class="text-center mb-5">
-      <span class="sec-label">ENERMADE 소개</span>
-      <h2 style="font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;margin-bottom:14px;">세라믹 가공 분야의 선도주자</h2>
-      <p class="txt-muted mx-auto" style="max-width:560px;font-size:15px;">
-        다양한 소재를 활용한 고품질 제품으로, 산업용 세라믹부터 정밀 부품까지 폭넓은 솔루션을 제공합니다.
-      </p>
+    <div class="home-section__header">
+      <h2 id="business-title" data-i18n-auto>사업 영역</h2>
+      <a class="home-text-link" href="/business" data-i18n-auto>사업 영역 전체 보기</a>
     </div>
-    <div class="row g-4">
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card">
-          <div class="feat-card__icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-            </svg>
+    <ul class="home-areas">
+      <% for (const area of businessAreas) { %>
+        <li>
+          <a href="/business#<%= area.id %>">
+            <h3 data-i18n-auto><%= area.name %></h3>
+            <p data-i18n-auto><%= area.description %></p>
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  </div>
+</section>
+
+<section class="home-section home-quality" id="why" aria-labelledby="quality-title">
+  <div class="container home-quality__layout">
+    <div class="home-quality__intro">
+      <h2 id="quality-title" data-i18n-auto>품질 관리와 기술 지원</h2>
+      <p data-i18n-auto>전문 엔지니어가 도면 검토, 소재와 가공 방법 제안, 제품 적용 검토를 지원합니다.</p>
+      <a class="home-text-link" href="/research" data-i18n-auto>연구 개발 살펴보기</a>
+    </div>
+    <dl class="home-quality__facts">
+      <div><dt>ISO 9001</dt><dd data-i18n-auto>품질 관리 시스템</dd></div>
+      <div><dt>20<sup>+</sup></dt><dd data-i18n-auto>년 이상의 경험</dd></div>
+      <div><dt>500<sup>+</sup></dt><dd data-i18n-auto>납품 거래처</dd></div>
+      <div><dt>99<sup>%</sup></dt><dd data-i18n-auto>고객 만족도</dd></div>
+      <div><dt>24<sup>h</sup></dt><dd data-i18n-auto>기술 지원 대응</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="home-partners" aria-labelledby="partners-title">
+  <div class="container home-partners__layout">
+    <h2 id="partners-title" data-i18n-auto>함께하는 파트너사</h2>
+    <ul>
+      <li>SAMSUNG</li>
+      <li>LG CHEM</li>
+      <li>HYUNDAI MOTOR</li>
+      <li>SK MATERIALS</li>
+      <li>POSCO</li>
+      <li>HANWHA</li>
+      <li>LOTTE CHEM</li>
+      <li>KOLON IND</li>
+      <li>DOOSAN</li>
+      <li>KIA</li>
+    </ul>
+  </div>
+</section>
+
+<% const questions = [
+  {
+    question: '최소 주문 수량이 있나요?',
+    answer: '제품에 따라 최소 주문 수량이 다릅니다. 맞춤 제작의 경우 소량 주문도 가능하니 문의 주시기 바랍니다.',
+  },
+  {
+    question: '납기는 얼마나 걸리나요?',
+    answer: '일반 제품은 주문 후 7~10일, 맞춤 제작은 2~4주 정도 소요됩니다. 긴급 주문의 경우 별도 협의가 가능합니다.',
+  },
+  {
+    question: '샘플 제공이 가능한가요?',
+    answer: '네, 일부 제품에 한해 샘플 제공이 가능합니다. 샘플 비용 및 배송비는 별도 협의가 필요합니다.',
+  },
+  {
+    question: '기술 지원이 제공되나요?',
+    answer: '제품 적용 검토, 도면 상담, 공정 제안 등 전문 엔지니어가 프로젝트 단계별로 기술 지원을 제공합니다.',
+  },
+]; %>
+
+<section class="home-section home-faq" id="faq" aria-labelledby="faq-title">
+  <div class="container home-faq__layout">
+    <div class="home-faq__intro">
+      <h2 id="faq-title" data-i18n-auto>자주 묻는 질문</h2>
+      <a class="home-text-link" href="/contact" data-i18n-auto>기술 문의 남기기</a>
+    </div>
+    <div class="accordion accordion-flush" id="faqAccordion">
+      <% questions.forEach(({ question, answer }, index) => {
+        const expanded = index === 0;
+        const panelId = 'faq' + (index + 1);
+      %>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button<%= expanded ? '' : ' collapsed' %>" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#<%= panelId %>"
+                    aria-expanded="<%= expanded %>" aria-controls="<%= panelId %>" data-i18n-auto>
+              <%= question %>
+            </button>
+          </h3>
+          <div id="<%= panelId %>" class="accordion-collapse collapse<%= expanded ? ' show' : '' %>" data-bs-parent="#faqAccordion">
+            <p class="accordion-body" data-i18n-auto><%= answer %></p>
           </div>
-          <div class="feat-card__title">첨단 기술</div>
-          <p class="feat-card__desc">최신 세라믹 가공 기술과 장비를 활용하여 최고 품질의 제품을 생산합니다.</p>
         </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card">
-          <div class="feat-card__icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="feat-card__title">신속한 납기</div>
-          <p class="feat-card__desc">일반 제품 7~10일, 맞춤 제작 2~4주. 긴급 주문 별도 협의 가능합니다.</p>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card">
-          <div class="feat-card__icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="feat-card__title">ISO 품질 인증</div>
-          <p class="feat-card__desc">ISO 9001 인증 품질 관리 시스템으로 일관된 품질을 보장합니다.</p>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="feat-card">
-          <div class="feat-card__icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="feat-card__title">전문 기술 지원</div>
-          <p class="feat-card__desc">전문 엔지니어가 도면 상담, 공정 제안, 제품 적용 검토를 지원합니다.</p>
-        </div>
-      </div>
+      <% }); %>
     </div>
   </div>
 </section>
 
-<!-- ===== PARTNERS ===== -->
-<section class="partners-section">
-  <div class="container">
-    <p class="partners-label">함께하는 파트너사</p>
-  </div>
-  <div class="partners-track-wrap">
-    <div class="partners-track">
-      <span class="partner-item">SAMSUNG</span>
-      <span class="partner-item">LG CHEM</span>
-      <span class="partner-item">HYUNDAI MOTOR</span>
-      <span class="partner-item">SK MATERIALS</span>
-      <span class="partner-item">POSCO</span>
-      <span class="partner-item">HANWHA</span>
-      <span class="partner-item">LOTTE CHEM</span>
-      <span class="partner-item">KOLON IND</span>
-      <span class="partner-item">DOOSAN</span>
-      <span class="partner-item">KIA</span>
-      <span class="partner-item">SAMSUNG</span>
-      <span class="partner-item">LG CHEM</span>
-      <span class="partner-item">HYUNDAI MOTOR</span>
-      <span class="partner-item">SK MATERIALS</span>
-      <span class="partner-item">POSCO</span>
-      <span class="partner-item">HANWHA</span>
-      <span class="partner-item">LOTTE CHEM</span>
-      <span class="partner-item">KOLON IND</span>
-      <span class="partner-item">DOOSAN</span>
-      <span class="partner-item">KIA</span>
+<section class="cta-section" aria-labelledby="quote-title">
+  <div class="container home-quote">
+    <div>
+      <h2 id="quote-title" data-i18n-auto>가공 조건을 알려주세요</h2>
+      <p data-i18n-auto>소재, 규격, 수량, 사용 환경을 알려주시면 적합한 가공 방법을 함께 검토합니다.</p>
     </div>
-  </div>
-</section>
-
-<!-- ===== STATS ===== -->
-<section class="stats-section">
-  <div class="container">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-num">20<sup>+</sup></div>
-        <div class="stat-label">년 이상의 경험</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">500<sup>+</sup></div>
-        <div class="stat-label">납품 거래처</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">99<sup>%</sup></div>
-        <div class="stat-label">고객 만족도</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">24<sup>h</sup></div>
-        <div class="stat-label">기술 지원 대응</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== WHY ENERMADE ===== -->
-<section class="sec-py" id="why">
-  <div class="container">
-    <div class="row align-items-center g-5">
-      <div class="col-12 col-lg-6 order-lg-2">
-        <div class="why-img" style="aspect-ratio:4/3;">
-          <img src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1400&q=80"
-            alt="ENERMADE 공장" />
-        </div>
-      </div>
-      <div class="col-12 col-lg-6 order-lg-1">
-        <span class="sec-label">왜 ENERMADE?</span>
-        <h2 style="font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:28px;">최선을 다해<br>신뢰를 만듭니다</h2>
-        <ul class="why-list">
-          <li class="why-item">
-            <div class="why-item__check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <div class="why-item__title">20년 이상의 세라믹 가공 경험과 노하우</div>
-              <p class="why-item__desc">풍부한 현장 경험을 바탕으로 최적의 솔루션을 제안합니다.</p>
-            </div>
-          </li>
-          <li class="why-item">
-            <div class="why-item__check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <div class="why-item__title">ISO 9001 인증 품질 관리 시스템</div>
-              <p class="why-item__desc">엄격한 품질 관리로 일관성 있는 제품을 공급합니다.</p>
-            </div>
-          </li>
-          <li class="why-item">
-            <div class="why-item__check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <div class="why-item__title">고객 맞춤형 제품 설계 및 제작</div>
-              <p class="why-item__desc">알루미나, 지르코니아 등 다양한 소재 맞춤 가공이 가능합니다.</p>
-            </div>
-          </li>
-          <li class="why-item">
-            <div class="why-item__check">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div>
-              <div class="why-item__title">신속한 납기와 안정적인 공급</div>
-              <p class="why-item__desc">긴급 주문 및 대량 주문도 안정적으로 처리합니다.</p>
-            </div>
-          </li>
-        </ul>
-        <div class="d-flex gap-3 mt-5 flex-wrap">
-          <a href="/shop" class="btn btn-primary">제품 카탈로그</a>
-          <a href="/contact" class="btn btn-outline-dark">견적 문의하기</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== FAQ ===== -->
-<section class="sec-py" style="background:var(--c-bg-2);" id="faq">
-  <div class="container">
-    <div class="text-center mb-5">
-      <span class="sec-label">FAQ</span>
-      <h2 style="font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:800;margin-bottom:12px;">자주 묻는 질문</h2>
-      <p class="txt-muted">고객님들이 자주 문의하시는 내용입니다</p>
-    </div>
-    <div class="row justify-content-center">
-      <div class="col-12 col-lg-8">
-        <div class="accordion" id="faqAccordion">
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="true">
-                최소 주문 수량이 있나요?
-              </button>
-            </h3>
-            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                제품에 따라 최소 주문 수량이 다릅니다. 맞춤 제작의 경우 소량 주문도 가능하니 문의 주시기 바랍니다.
-              </div>
-            </div>
-          </div>
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                납기는 얼마나 걸리나요?
-              </button>
-            </h3>
-            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                일반 제품은 주문 후 7~10일, 맞춤 제작은 2~4주 정도 소요됩니다. 긴급 주문의 경우 별도 협의가 가능합니다.
-              </div>
-            </div>
-          </div>
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                샘플 제공이 가능한가요?
-              </button>
-            </h3>
-            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                네, 일부 제품에 한해 샘플 제공이 가능합니다. 샘플 비용 및 배송비는 별도 협의가 필요합니다.
-              </div>
-            </div>
-          </div>
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                기술 지원이 제공되나요?
-              </button>
-            </h3>
-            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                제품 적용 검토, 도면 상담, 공정 제안 등 전문 엔지니어가 프로젝트 단계별로 기술 지원을 제공합니다.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== CTA ===== -->
-<section class="cta-section">
-  <div class="cta-section__diag" aria-hidden="true"></div>
-  <div class="container text-center" style="position:relative;z-index:1;">
-    <span class="sec-label white mx-auto justify-content-center" style="display:flex;margin-bottom:16px;">지금 바로 시작하세요</span>
-    <h2>최적의 세라믹 솔루션을<br>제안해 드립니다</h2>
-    <p data-i18n-auto>전문 엔지니어가 귀사의 요구에 맞는 맞춤형 솔루션을 설계합니다</p>
-    <div class="d-flex gap-3 justify-content-center flex-wrap">
-      <a href="/contact" class="btn btn-dark btn-lg">견적 문의하기</a>
-      <a href="/shop" class="btn btn-outline-light btn-lg">제품 보러가기</a>
-    </div>
+    <a class="btn btn-primary" href="/contact" data-i18n-auto>견적 문의하기</a>
   </div>
 </section>
 

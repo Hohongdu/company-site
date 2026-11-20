@@ -2,6 +2,52 @@
 	const $ = (sel, el = document) => el.querySelector(sel);
 	const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
 
+	const businessNav = $('.site-nav__has-drop');
+	if (businessNav) {
+		const toggle = $('.site-nav__drop-toggle', businessNav);
+		const panel = document.getElementById(toggle.getAttribute('aria-controls'));
+		let closeTimer;
+		let pinned = false;
+
+		const setOpen = (open) => {
+			clearTimeout(closeTimer);
+			panel.hidden = !open;
+			toggle.setAttribute('aria-expanded', String(open));
+			businessNav.classList.toggle('is-open', open);
+			if (!open) pinned = false;
+		};
+
+		businessNav.addEventListener('pointerenter', (event) => {
+			if (event.pointerType === 'mouse') setOpen(true);
+		});
+		businessNav.addEventListener('pointerleave', (event) => {
+			if (event.pointerType !== 'mouse' || pinned) return;
+			closeTimer = setTimeout(() => {
+				if (!panel.contains(document.activeElement)) setOpen(false);
+			}, 240);
+		});
+		toggle.addEventListener('click', () => {
+			pinned = !pinned;
+			setOpen(pinned);
+		});
+		businessNav.addEventListener('focusout', (event) => {
+			if (!businessNav.contains(event.relatedTarget) && !businessNav.matches(':hover')) setOpen(false);
+		});
+		panel.addEventListener('click', (event) => {
+			if (event.target.closest('a')) setOpen(false);
+		});
+		document.addEventListener('pointerdown', (event) => {
+			if (!businessNav.contains(event.target)) setOpen(false);
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape' || panel.hidden) return;
+			if (panel.contains(document.activeElement)) toggle.focus();
+			setOpen(false);
+		});
+		window.matchMedia('(max-width: 991px)').addEventListener('change', () => setOpen(false));
+		toggle.hidden = false;
+	}
+
 	// Drawer
 	const drawer = $('#drawer');
 	const drawerBackdrop = $('#drawerBackdrop');

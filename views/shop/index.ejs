@@ -1,209 +1,58 @@
-<%- include('../layouts/shop-top', { title: 'SHOP', active: 'home' }) %>
+<%- include('../layouts/shop-top', { title: '산업용 세라믹', active: 'home' }) %>
 
-<!-- ─────────────────────────────────────────────
-   홈 화면
-   구조: 히어로 → 검색바 → 카테고리 칩 → 상품 그리드
-   ───────────────────────────────────────────── -->
-
-<!-- 히어로 배너 -->
-<div class="app-hero">
-  <p class="app-hero__eyebrow" data-i18n-auto>ENERMADE 쇼핑몰</p>
-  <h1 class="app-hero__title" data-i18n-auto>고객 맞춤형<br>세라믹 솔루션</h1>
-  <p class="app-hero__sub" data-i18n-auto>산업용 고성능 세라믹 부품을 공급합니다.<br>고객 요구에 최적화된 솔루션을 제공합니다.</p>
-  <div class="app-hero__actions">
-    <a href="/shop/products" class="app-btn app-btn--primary" data-i18n-auto>전체 상품 보기</a>
-    <a href="/shop/inquiries" class="app-btn app-btn--outline"
-       style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);"
-       data-i18n-auto>견적 문의하기</a>
-  </div>
-</div>
-
-<!-- 검색바 -->
-<div class="app-section">
-  <form class="app-searchbar" action="/shop/products" method="get" role="search">
-    <span class="app-searchbar__icon" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </span>
-    <input type="search" name="q" placeholder="상품명, 카테고리 검색" autocomplete="off"
-           aria-label="상품 검색">
-    <button class="app-searchbar__submit" type="submit" aria-label="검색 실행">검색</button>
-  </form>
-</div>
-
-<!-- 카테고리 칩 (가로 스크롤) -->
-<div class="app-section">
-  <div class="app-sec-head">
-    <div>
-      <h2 class="app-sec-title" data-i18n-auto>신규 상품</h2>
-      <p class="app-sec-sub">
-        총 <strong><%= Number((typeof totalCount !== 'undefined' ? totalCount : null) || (latest || []).length || 0).toLocaleString() %></strong>개 제품
-      </p>
-    </div>
-    <a class="app-sec-more" href="/shop/products" data-i18n-auto>전체 보기 →</a>
-  </div>
-
-  <div class="app-chips">
-    <a class="app-chip is-active" href="/shop/products?category=all" data-i18n-auto>전체</a>
-    <% (categories || []).slice(0, 10).forEach(function(cat) { %>
-      <a class="app-chip" href="/shop/products?category=<%= cat.slug %>"><%= cat.name %></a>
-    <% }); %>
-  </div>
-</div>
-
-<!-- 상품 그리드 -->
-<div class="app-section--pad" style="padding-top: 12px;">
-
-  <% if (!latest || latest.length === 0) { %>
-    <!-- 빈 상태 -->
-    <div class="app-empty">
-      <div class="app-empty__icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-          <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"
-                stroke="currentColor" stroke-width="1.5"/>
-          <path d="M16 3H8l-2 4h12l-2-4z" stroke="currentColor" stroke-width="1.5"
-                stroke-linejoin="round"/>
-        </svg>
+<section class="shop-home-hero">
+  <div class="shop-shell shop-home-hero__layout">
+    <div class="shop-home-hero__content">
+      <h1 data-i18n-auto>산업용 세라믹 제품몰</h1>
+      <p class="shop-home-hero__intro" data-i18n-auto>제품명·제품코드·규격으로 찾아보세요. 별도 규격이나 대량 발주는 견적으로 문의할 수 있습니다.</p>
+      <div class="shop-actions">
+        <a class="app-btn app-btn--primary" href="/shop/products" data-i18n-auto>전체 상품 보기</a>
+        <a class="app-btn app-btn--outline" href="/shop/inquiries" data-i18n-auto>견적 문의</a>
       </div>
-      <p class="app-empty__title" data-i18n-auto>등록된 상품이 없습니다</p>
-      <p class="app-empty__desc" data-i18n-auto>곧 새 상품이 등록될 예정입니다</p>
     </div>
+    <figure class="shop-home-hero__media">
+      <img src="/images/precision-ceramic-components-720.webp"
+           srcset="/images/precision-ceramic-components-720.webp 720w, /images/precision-ceramic-components.webp 1440w"
+           sizes="(max-width: 799px) calc(100vw - 24px), (max-width: 1340px) 51vw, 665px"
+           alt="세라믹 링, 부싱, 플레이트 및 노즐 예시" width="720" height="480" fetchpriority="high">
+      <figcaption data-i18n-auto>정밀 세라믹 부품 예시</figcaption>
+    </figure>
+  </div>
+</section>
 
+<section class="shop-shell shop-section" aria-labelledby="shop-categories-title">
+  <div class="shop-section__heading">
+    <h2 id="shop-categories-title" data-i18n-auto>카테고리</h2>
+  </div>
+  <% if (categories.length) { %>
+    <ul class="shop-category-tiles">
+      <% for (const category of categories) { %>
+        <li><a href="/shop/products?category=<%= encodeURIComponent(category.slug) %>" data-i18n-auto><%= category.name %></a></li>
+      <% } %>
+    </ul>
   <% } else { %>
-    <div class="app-product-grid">
-      <% (latest || []).forEach(function(product) { %>
-        <% const thumb = product.image_thumb || product.image; %>
-
-        <div class="app-product-card">
-          <!-- 썸네일 -->
-          <div class="app-product-card__thumb">
-            <a href="/shop/products/<%= product.id %>" aria-label="<%= product.name %> 상세 보기">
-              <% if (thumb) { %>
-                <img src="<%= thumb %>" alt="<%= product.name %>" loading="lazy">
-              <% } else { %>
-                <div class="app-product-card__placeholder">
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="18" height="18" rx="2"
-                          stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M3 9l4-4 4 4 4-4 4 4" stroke="currentColor" stroke-width="1.5"
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-              <% } %>
-            </a>
-          </div>
-
-          <!-- 상품 정보 -->
-          <div class="app-product-card__body">
-            <% if (product.category_name) { %>
-              <span class="app-product-card__cat"><%= product.category_name %></span>
-            <% } %>
-            <div class="app-product-card__name">
-              <a href="/shop/products/<%= product.id %>"
-                 style="color:inherit;text-decoration:none;"><%= product.name %></a>
-            </div>
-            <% if (product.spec) { %>
-              <div class="app-product-card__spec"><%= product.spec %></div>
-            <% } %>
-            <div class="app-product-card__price">
-              <%= Number(product.price || 0).toLocaleString() %><span>원</span>
-            </div>
-          </div>
-
-          <!-- 담기 버튼 -->
-          <div class="app-product-card__action">
-            <button class="app-btn app-btn--primary app-btn--sm"
-                    style="flex:1;"
-                    type="button"
-                    data-product-id="<%= product.id %>"
-                    data-cart-btn>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2"
-                      stroke-linecap="round"/>
-              </svg>
-              <span class="btn-label" data-i18n-auto>담기</span>
-            </button>
-            <a class="app-btn app-btn--outline app-btn--sm"
-               href="/shop/products/<%= product.id %>" aria-label="<%= product.name %> 상세">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                      stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </a>
-          </div>
-        </div><!-- /app-product-card -->
-
-      <% }); %>
-    </div><!-- /app-product-grid -->
-
-    <!-- 더 보기 버튼 -->
-    <div style="text-align:center;margin-top:24px;">
-      <a href="/shop/products" class="app-btn app-btn--outline" data-i18n-auto>
-        전체 상품 보기
-      </a>
-    </div>
-
+    <p class="shop-muted">등록된 카테고리가 없습니다.</p>
   <% } %>
-</div>
+</section>
 
-<!-- ─────────────────────────────────────────────
-   장바구니 AJAX 스크립트 (기존 동작 100% 유지)
-   selector: [data-cart-btn] — 카드 담기 버튼
-   ───────────────────────────────────────────── -->
-<script>
-(function () {
-  'use strict';
-
-  document.querySelectorAll('[data-cart-btn]').forEach(function (btn) {
-    btn.addEventListener('click', async function () {
-      var productId = btn.dataset.productId;
-      /* 홈에서는 수량 입력 없이 항상 1개 */
-      var quantity  = 1;
-      var label     = btn.querySelector('.btn-label');
-
-      /* 로딩 상태 */
-      btn.disabled = true;
-      if (label) label.textContent = '...';
-
-      try {
-        var res = await fetch('/shop/cart/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-Token': '<%= csrfToken %>',
-          },
-          body: JSON.stringify({ productId: productId, quantity: quantity }),
-        });
-        var data = await res.json().catch(function () { return {}; });
-
-        if (res.ok && data.ok) {
-          if (label) label.textContent = '✓';
-          /* 헤더 배지 + 탭바 배지 동시 업데이트 */
-          document.querySelectorAll('.app-header-badge, .app-tab-badge, .shop-cart-badge').forEach(function (el) {
-            el.textContent = data.cartCount || '';
-            el.style.display = data.cartCount > 0 ? '' : 'none';
-          });
-        } else {
-          if (label) label.textContent = '오류';
-        }
-      } catch (err) {
-        if (label) label.textContent = '오류';
-        console.error('장바구니 추가 실패:', err);
-      }
-
-      /* 1.8초 후 원래 상태로 복원 */
-      setTimeout(function () {
-        btn.disabled = false;
-        if (label) label.textContent = '담기';
-      }, 1800);
-    });
-  });
-})();
-</script>
+<section class="shop-shell shop-section shop-section--latest" aria-labelledby="shop-latest-title">
+  <div class="shop-section__heading">
+    <h2 id="shop-latest-title" data-i18n-auto>최근 등록 상품</h2>
+    <a class="shop-text-link" href="/shop/products" data-i18n-auto>전체 상품 보기</a>
+  </div>
+  <% if (latest.length) { %>
+    <div class="shop-product-grid shop-product-grid--home">
+      <% for (const product of latest) { %>
+        <%- include('partials/catalog-product', { product, quickAdd: true }) %>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="shop-empty">
+      <h3 data-i18n-auto>현재 등록된 상품이 없습니다</h3>
+      <p data-i18n-auto>필요한 제품의 소재와 규격을 알려주시면 확인해 드립니다.</p>
+      <a class="app-btn app-btn--outline" href="/shop/inquiries" data-i18n-auto>제품 문의하기</a>
+    </div>
+  <% } %>
+</section>
 
 <%- include('../layouts/shop-bottom') %>

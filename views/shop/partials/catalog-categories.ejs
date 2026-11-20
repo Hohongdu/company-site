@@ -1,0 +1,11 @@
+<ul class="shop-filter-list">
+  <% for (const item of [{ slug: 'all', name: '전체 상품' }, ...categories]) {
+    const params = new URLSearchParams();
+    if (item.slug !== 'all') params.set('category', item.slug);
+    if (query) params.set('q', query);
+    const suffix = params.toString();
+  %>
+    <li><a href="/shop/products<%= suffix ? '?' + suffix : '' %>"
+           <% if (currentCategory === item.slug) { %>aria-current="page"<% } %> data-i18n-auto><%= item.name %></a></li>
+  <% } %>
+</ul>

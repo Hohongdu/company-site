@@ -1,22 +1,52 @@
 </main><!-- /app-main -->
 
-<%
-/*
- * shop-bottom.ejs — 하단 탭바 활성 탭 판단
- *
- * 버그 수정: EJS include()는 각 파일을 독립 함수 스코프로 실행하므로
- * shop-top.ejs에서 const로 선언한 isHome 등의 변수는 여기서 참조 불가.
- * → res.locals에 주입된 currentPath / cartCount / user 를 직접 사용해 재계산.
- */
-const _cp  = (typeof currentPath !== 'undefined' && currentPath) ? String(currentPath) : '/';
-const _cnt = Number(typeof cartCount !== 'undefined' ? cartCount : 0);
+<% const _c = (typeof company !== 'undefined' && company) ? company : {}; %>
 
-const isHome     = _cp === '/shop' || _cp === '/shop/';
-const isProducts = _cp.indexOf('/shop/products') === 0;
-const isCart     = _cp.indexOf('/shop/cart')     === 0;
-const isAccount  = _cp.indexOf('/shop/account')  === 0;
-const safeCartCount = _cnt;
-%>
+<!-- ── 사업자 정보 (전자상거래법 시행령 제10조 의무 표시) ── -->
+<!-- 앱 레이아웃이지만 결제 페이지인 만큼 법적 표시 의무가 있어 footer drawer 형태로 노출 -->
+<footer class="app-biz-footer" aria-label="제품몰 안내">
+  <div class="shop-shell shop-footer__links">
+    <strong><%= _c.name || 'ENERMADE' %> 제품몰</strong>
+    <a href="/shop/inquiries">견적 문의</a>
+    <a href="/shop/orders/guest">주문 조회</a>
+    <a href="/shop/inquiries/guest">문의 조회</a>
+    <a href="/">회사 사이트</a>
+  </div>
+  <details>
+    <summary>사업자 정보 보기</summary>
+    <dl class="app-biz-grid">
+      <% if (_c.name) { %><div><dt>상호</dt><dd><%= _c.name %></dd></div><% } %>
+      <% if (_c.ceo) { %><div><dt>대표자</dt><dd><%= _c.ceo %></dd></div><% } %>
+      <% if (_c.bizNo) { %><div><dt>사업자등록번호</dt><dd><%= _c.bizNo %></dd></div><% } %>
+      <% if (_c.mailOrderNo) { %><div><dt>통신판매업신고</dt><dd><%= _c.mailOrderNo %></dd></div><% } %>
+      <% if (_c.address) { %><div class="app-biz-wide"><dt>주소</dt><dd><%= _c.address %></dd></div><% } %>
+      <% if (_c.phone) { %><div><dt>전화</dt><dd><%= _c.phone %></dd></div><% } %>
+      <% if (_c.email) { %><div><dt>이메일</dt><dd><%= _c.email %></dd></div><% } %>
+    </dl>
+    <div class="app-biz-legal">
+      <a href="/terms">이용약관</a>
+      <span>|</span>
+      <a href="/privacy"><strong>개인정보처리방침</strong></a>
+    </div>
+    <div class="app-biz-copy">© <%= new Date().getFullYear() %> <%= _c.name || 'ENERMADE' %></div>
+  </details>
+</footer>
+
+<style>
+  /* 하단 탭바와 겹치지 않도록 padding-bottom 추가 — app-ui.css의 .app-tabbar 높이를 고려 */
+  .app-biz-footer { padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 80px); background: #f8f9fa; border-top: 1px solid #e9ecef; font-size: 12px; color: #555; }
+  .app-biz-footer details summary { cursor: pointer; user-select: none; font-weight: 600; color: #333; padding: 4px 0; }
+  .app-biz-footer details[open] summary { margin-bottom: 12px; }
+  .app-biz-grid { display: grid; gap: 6px 16px; grid-template-columns: 1fr; margin: 0 0 12px; }
+  .app-biz-grid > div { display: flex; gap: 8px; min-width: 0; }
+  .app-biz-grid dt { flex: 0 0 84px; color: #888; font-weight: 500; }
+  .app-biz-grid dd { margin: 0; flex: 1; word-break: keep-all; }
+  .app-biz-legal { display: flex; gap: 8px; align-items: center; padding: 8px 0; }
+  .app-biz-legal a { color: #333; text-decoration: none; }
+  .app-biz-legal a:hover { text-decoration: underline; }
+  .app-biz-legal span { color: #ccc; }
+  .app-biz-copy { color: #999; font-size: 11px; padding-top: 4px; border-top: 1px solid #e9ecef; }
+</style>
 
 <!-- ─────────────────────────────────────────────
    JS 로딩 — 반드시 이 순서 유지
@@ -26,6 +56,7 @@ const safeCartCount = _cnt;
 <script>window.__SITE_USER_IS_ADMIN = <%- (user && user.is_admin) ? 'true' : 'false' %>;</script>
 <!-- i18n 번역 시스템 등 전역 스크립트 -->
 <script src="/js/main.js"></script>
+<script src="/js/shop-catalog.js"></script>
 
 <!-- ─────────────────────────────────────────────
    앱 공통 JS — 바텀시트 열기/닫기
@@ -42,14 +73,12 @@ const safeCartCount = _cnt;
       var overlay = document.getElementById(overlayId);
       if (sheet)   sheet.classList.add('is-open');
       if (overlay) overlay.classList.add('is-open');
-      document.body.style.overflow = 'hidden';
     },
     close: function (sheetId, overlayId) {
       var sheet   = document.getElementById(sheetId);
       var overlay = document.getElementById(overlayId);
       if (sheet)   sheet.classList.remove('is-open');
       if (overlay) overlay.classList.remove('is-open');
-      document.body.style.overflow = '';
     }
   };
 
@@ -75,7 +104,6 @@ const safeCartCount = _cnt;
         document.querySelectorAll('.app-sheet-overlay.is-open').forEach(function (o) {
           o.classList.remove('is-open');
         });
-        document.body.style.overflow = '';
       }
       return;
     }
@@ -85,7 +113,6 @@ const safeCartCount = _cnt;
       document.querySelectorAll('.app-sheet.is-open').forEach(function (s) {
         s.classList.remove('is-open');
       });
-      document.body.style.overflow = '';
     }
   });
 

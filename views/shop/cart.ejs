@@ -1,11 +1,13 @@
 <%- include('../layouts/shop-top', { title: '장바구니', active: 'cart' }) %>
 
-<!-- ─────────────────────────────────────────────
-   장바구니 화면
-   구조: 오류 알림 → 카트 아이템 리스트 → 주문 요약 → sticky 결제 CTA
-   비회원 주문 폼은 결제 버튼 위에 위치 (기존 동작 유지)
-   ───────────────────────────────────────────── -->
-
+<section class="shop-page-heading">
+  <div class="shop-shell">
+    <p class="shop-breadcrumb"><a href="/shop">제품몰 홈</a><span aria-hidden="true">/</span> 장바구니</p>
+    <h1 data-i18n-auto>장바구니</h1>
+    <p data-i18n-auto>담은 부품의 수량과 주문 금액을 확인하세요.</p>
+  </div>
+</section>
+<div class="shop-shell shop-section shop-cart-layout">
 <% if (cartError) { %>
   <div class="app-section">
     <div class="app-alert app-alert--warn"><%= cartError %></div>
@@ -14,7 +16,7 @@
 
 <!-- ── 대량 주문 진입 버튼 ── -->
 <div class="app-section--pad" style="padding-bottom:0;padding-top:16px;">
-  <button class="app-btn app-btn--outline" style="width:100%;gap:8px;justify-content:flex-start;"
+  <button class="app-btn app-btn--outline"
           data-sheet-open="bulkOrderSheet" data-sheet-overlay="appSheetOverlay"
           type="button">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -23,14 +25,13 @@
       <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke="currentColor" stroke-width="1.8"/>
       <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" stroke-width="1.8"/>
     </svg>
-    <span data-i18n-auto>📦 대량 주문 (제품코드·수량 일괄 입력)</span>
-    <span style="margin-left:auto;font-size:11px;color:var(--c-muted);">B2B</span>
+    <span data-i18n-auto>제품코드로 대량 담기</span>
   </button>
 </div>
 
 <!-- ── 빈 장바구니 ── -->
 <% if (!items || items.length === 0) { %>
-  <div class="app-section--pad" style="padding-top:48px;">
+  <div class="app-section--pad">
     <div class="app-empty">
       <div class="app-empty__icon">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
@@ -42,7 +43,7 @@
         </svg>
       </div>
       <p class="app-empty__title">장바구니가 비어 있어요</p>
-      <p class="app-empty__desc">마음에 드는 상품을 담아보세요</p>
+      <p class="app-empty__desc">상품을 살펴보거나 제품코드로 한 번에 담을 수 있습니다.</p>
       <a href="/shop/products" class="app-btn app-btn--primary app-btn--sm">상품 보러가기</a>
     </div>
   </div>
@@ -58,7 +59,7 @@
     </div>
   <% } %>
 
-  <!-- ── 카트 아이템 목록 ── -->
+  <div class="shop-cart__grid">
   <div class="app-cart-list">
     <% items.forEach(function(it) { %>
       <div class="app-cart-item">
@@ -158,12 +159,12 @@
   </div><!-- /app-cart-list -->
 
 
-  <!-- ── 주문 요약 ── -->
-  <div class="app-section--pad" style="padding-top:8px;padding-bottom:120px;">
+  <aside class="shop-panel shop-cart__summary" aria-labelledby="shop-cart-summary-title">
+    <h2 id="shop-cart-summary-title" data-i18n-auto>주문 요약</h2>
     <div class="app-order-summary">
       <div class="app-order-summary__row">
         <span>총 상품금액</span>
-        <span id="summaryTotal"><%= Number(totalAmount || 0).toLocaleString() %>원</span>
+        <span id="summaryTotal"><%= Number(totalAmount || 0).toLocaleString('ko-KR') %>원</span>
       </div>
       <div class="app-order-summary__row">
         <span>배송비</span>
@@ -171,78 +172,48 @@
       </div>
       <div class="app-order-summary__row app-order-summary__row--total">
         <span>총 주문금액</span>
-        <span id="summaryFinal"><%= Number(totalAmount || 0).toLocaleString() %>원</span>
+        <span id="summaryFinal"><%= Number(totalAmount || 0).toLocaleString('ko-KR') %>원</span>
       </div>
     </div>
 
-    <!-- 비회원 주문 정보 폼 -->
-    <% if (paymentEnabled && isGuest) { %>
-      <div class="app-guest-form">
-        <p class="app-guest-form__title">비회원 주문 정보</p>
-        <div class="app-field">
-          <label class="app-field__label" for="guestName">이름</label>
-          <input class="app-field__input" id="guestName" name="guestName"
-                 form="checkoutForm"
-                 required value="<%= guestInfo?.guestName || '' %>">
-        </div>
-        <div class="app-field">
-          <label class="app-field__label" for="guestEmail">이메일</label>
-          <input class="app-field__input" id="guestEmail" name="guestEmail"
-                 type="email" form="checkoutForm"
-                 placeholder="또는 연락처 입력"
-                 value="<%= guestInfo?.guestEmail || '' %>">
-        </div>
-        <div class="app-field">
-          <label class="app-field__label" for="guestPhone">연락처</label>
-          <input class="app-field__input" id="guestPhone" name="guestPhone"
-                 form="checkoutForm"
-                 placeholder="010-0000-0000"
-                 value="<%= guestInfo?.guestPhone || '' %>">
-        </div>
-      </div>
-    <% } %>
-  </div>
-
-
-  <!-- ── Sticky 결제 CTA ── -->
-  <div class="app-cart-cta">
-    <div class="app-cart-cta__inner" style="flex-direction:column;gap:8px;">
-      <% if (paymentEnabled) { %>
-        <%# 비회원 필드는 위 guest-form의 input들이 form="checkoutForm"으로 연결됨 %>
-        <form action="/shop/checkout/kakao" method="post"
-              id="checkoutForm" style="display:flex;">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button class="app-btn app-btn--primary" type="submit"
-                  style="flex:1;font-size:16px;font-weight:700;">
-            주문서 작성
-            <span style="font-size:14px;font-weight:400;opacity:.85;margin-left:6px;">
-              (<span id="ctaTotal"><%= Number(totalAmount || 0).toLocaleString() %></span>원)
-            </span>
-          </button>
-        </form>
-        <form action="/shop/checkout/bank" method="post"
-              id="bankCheckoutForm" style="display:flex;">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <% if (isGuest) { %>
-            <input type="hidden" id="bankGuestName" name="guestName" value="<%= guestInfo?.guestName || '' %>">
-            <input type="hidden" id="bankGuestEmail" name="guestEmail" value="<%= guestInfo?.guestEmail || '' %>">
-            <input type="hidden" id="bankGuestPhone" name="guestPhone" value="<%= guestInfo?.guestPhone || '' %>">
+    <% if (paymentEnabled || bankPaymentEnabled) { %>
+      <form id="checkoutForm" method="post" action="<%= paymentEnabled ? '/shop/checkout/kakao' : '/shop/checkout/bank' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% if (isGuest) { %>
+          <div class="app-field">
+            <label class="app-field__label" for="guestName">주문자 이름</label>
+            <input class="app-field__input" id="guestName" name="guestName" required autocomplete="name"
+                   value="<%= guestInfo?.guestName || '' %>">
+          </div>
+          <div class="app-field">
+            <label class="app-field__label" for="guestEmail">이메일</label>
+            <input class="app-field__input" id="guestEmail" name="guestEmail" type="email" autocomplete="email"
+                   placeholder="이메일 또는 연락처 입력" value="<%= guestInfo?.guestEmail || '' %>">
+          </div>
+          <div class="app-field">
+            <label class="app-field__label" for="guestPhone">연락처</label>
+            <input class="app-field__input" id="guestPhone" name="guestPhone" type="tel" autocomplete="tel"
+                   placeholder="010-0000-0000" value="<%= guestInfo?.guestPhone || '' %>">
+          </div>
+        <% } %>
+        <div class="shop-actions">
+          <% if (paymentEnabled) { %>
+            <button class="app-btn app-btn--primary" type="submit" formaction="/shop/checkout/kakao">카카오페이 결제</button>
           <% } %>
-          <button class="app-btn app-btn--outline" type="submit"
-                  style="flex:1;font-size:15px;font-weight:600;">
-            계좌 입금
-          </button>
-        </form>
-      <% } else { %>
-        <button class="app-btn app-btn--outline" style="flex:1;" disabled>
-          결제 미설정 (관리자 문의)
-        </button>
-      <% } %>
-    </div>
-  </div><!-- /app-cart-cta -->
-
-<% } %><!-- /if items -->
-
+          <% if (bankPaymentEnabled) { %>
+            <button class="app-btn <%= paymentEnabled ? 'app-btn--outline' : 'app-btn--primary' %>"
+                    type="submit" formaction="/shop/checkout/bank">계좌 입금</button>
+          <% } %>
+        </div>
+      </form>
+    <% } else { %>
+      <p class="shop-muted">온라인 결제를 현재 이용할 수 없습니다.</p>
+      <a class="app-btn app-btn--outline" href="/shop/inquiries">주문 문의</a>
+    <% } %>
+  </aside>
+  </div><!-- /shop-cart__grid -->
+<% } %>
+</div><!-- /shop-cart-layout -->
 
 <!-- ── 수량 변경 시 소계 실시간 업데이트 ── -->
 <script>
@@ -283,259 +254,30 @@
 
 })();
 
-/* 비회원 계좌입금 폼 — 게스트 입력 필드 값을 hidden 필드로 동기화 */
-(function () {
-  var bankForm = document.getElementById('bankCheckoutForm');
-  if (!bankForm) return;
-
-  function syncGuestFields() {
-    ['guestName', 'guestEmail', 'guestPhone'].forEach(function (field) {
-      var src = document.getElementById(field);
-      var dst = document.getElementById('bank' + field.charAt(0).toUpperCase() + field.slice(1));
-      if (src && dst) dst.value = src.value;
-    });
-  }
-
-  bankForm.addEventListener('submit', function (e) {
-    syncGuestFields();
-  });
-
-  /* 입력할 때마다 실시간 동기화 */
-  ['guestName', 'guestEmail', 'guestPhone'].forEach(function (field) {
-    var el = document.getElementById(field);
-    if (el) el.addEventListener('input', syncGuestFields);
-  });
-})();
 </script>
 
-<!-- ══════════════════════════════════════════
-   대량 주문 드로어 (Bulk SKU Order Sheet)
-══════════════════════════════════════════ -->
-<div class="app-sheet" id="bulkOrderSheet" role="dialog" aria-modal="true" aria-label="대량 주문">
+<div class="app-sheet-overlay" id="appSheetOverlay" aria-hidden="true"></div>
+<div class="app-sheet" id="bulkOrderSheet" role="dialog" aria-modal="true" aria-labelledby="bulk-order-title">
   <div class="app-sheet__handle" aria-hidden="true"></div>
   <div class="app-sheet__head">
-    <h2 class="app-sheet__title" data-i18n-auto>📦 대량 주문</h2>
-    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
-    </button>
+    <h2 class="app-sheet__title" id="bulk-order-title" data-i18n-auto>제품코드로 대량 담기</h2>
+    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">×</button>
   </div>
-
-  <div class="app-sheet__body" style="overflow-y:auto;">
-    <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#1e40af;line-height:1.6;">
-      <strong>💡 사용법</strong><br>
-      제품코드와 수량을 한 줄에 하나씩 입력하세요.<br>
-      구분자: 콤마(,) · 탭 · 2칸 이상 공백 모두 인식<br>
-      <code style="font-size:11px;">INS-A40-001, 10</code><br>
-      <code style="font-size:11px;">NOZ-Z12-003  5</code>
+  <form id="bulk-order-form" class="shop-bulk-form" data-csrf="<%= csrfToken %>">
+    <div class="app-sheet__body">
+      <p>한 줄에 제품코드와 수량을 적으세요. 쉼표, 탭, 두 칸 이상의 공백으로 구분할 수 있습니다.</p>
+      <div class="app-field">
+        <label class="app-field__label" for="bulkSkuInput">제품코드와 수량 (최대 100줄)</label>
+        <textarea id="bulkSkuInput" name="skuList" class="app-field__input" rows="5" required
+                  placeholder="예: INS-A40-001, 10"></textarea>
+      </div>
+      <p id="bulkSheetResult" role="status" class="shop-bulk-result"></p>
     </div>
-
-    <div class="app-field" style="margin-bottom:16px;">
-      <label class="app-field__label" for="bulkSkuInput" data-i18n-auto>제품코드·수량 입력 (최대 100줄)</label>
-      <textarea class="app-field__input" id="bulkSkuInput"
-                rows="8" style="font-family:monospace;font-size:13px;resize:vertical;"
-                placeholder="INS-A40-001, 10&#10;NOZ-Z12-003  5&#10;LNR-HT200	3"></textarea>
+    <div class="app-sheet__footer">
+      <button class="app-btn app-btn--outline" type="button" data-sheet-close>닫기</button>
+      <button class="app-btn app-btn--primary" id="bulkSubmitBtn" type="submit">장바구니에 추가</button>
     </div>
-
-    <div id="bulkSheetResult" style="display:none;margin-bottom:16px;"></div>
-  </div>
-
-  <div class="app-sheet__footer">
-    <button class="app-btn app-btn--outline" style="flex:1;" type="button"
-            data-sheet-close data-i18n-auto>취소</button>
-    <button class="app-btn app-btn--primary" style="flex:2;" type="button"
-            id="bulkSubmitBtn" data-i18n-auto>장바구니에 추가</button>
-  </div>
-</div><!-- /bulkOrderSheet -->
-
-<script>
-(function () {
-  'use strict';
-  var submitBtn = document.getElementById('bulkSubmitBtn');
-  var resultEl  = document.getElementById('bulkSheetResult');
-  var csrf      = '<%= csrfToken %>';
-
-  function showResult(html, type) {
-    resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="app-alert app-alert--' + (type||'info') + '">' + html + '</div>';
-  }
-
-  if (submitBtn) {
-    submitBtn.addEventListener('click', function () {
-      var raw = (document.getElementById('bulkSkuInput').value || '').trim();
-      if (!raw) {
-        showResult('제품코드와 수량을 입력해주세요.', 'warn');
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = '처리 중…';
-      resultEl.style.display = 'none';
-
-      fetch('/shop/cart/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
-        body: JSON.stringify({ skuList: raw }),
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res.ok) {
-            showResult(
-              '✅ <strong>' + (res.addedCount || 0) + '개 SKU</strong>가 추가되었습니다. — ' + res.message,
-              'success'
-            );
-            submitBtn.textContent = '추가 완료';
-            /* 장바구니 카운트 뱃지 갱신 */
-            if (typeof window.__updateCartCount === 'function') window.__updateCartCount();
-            setTimeout(function () {
-              window.AppSheet && window.AppSheet.close('bulkOrderSheet', 'appSheetOverlay');
-              resultEl.style.display = 'none';
-              submitBtn.disabled = false;
-              submitBtn.textContent = '장바구니에 추가';
-              /* 페이지 새로고침으로 카트 목록 반영 */
-              location.reload();
-            }, 2000);
-          } else {
-            showResult('⚠️ ' + (res.message || '처리 중 오류가 발생했습니다.'), 'warn');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '장바구니에 추가';
-          }
-        })
-        .catch(function () {
-          showResult('⚠️ 네트워크 오류. 다시 시도해주세요.', 'warn');
-          submitBtn.disabled = false;
-          submitBtn.textContent = '장바구니에 추가';
-        });
-    });
-  }
-})();
-</script>
-
-<!-- ══════════════════════════════════════════
-   대량 주문 드로어 (Bulk SKU Order Sheet)
-══════════════════════════════════════════ -->
-<div class="app-sheet" id="bulkOrderSheet" role="dialog" aria-modal="true" aria-label="대량 주문">
-  <div class="app-sheet__handle" aria-hidden="true"></div>
-  <div class="app-sheet__head">
-    <h2 class="app-sheet__title" data-i18n-auto>📦 대량 주문</h2>
-    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
-
-  <div class="app-sheet__body" style="overflow-y:auto;">
-    <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#1e40af;line-height:1.6;">
-      <strong>💡 사용법</strong><br>
-      제품코드와 수량을 한 줄에 하나씩 입력하세요.<br>
-      구분자: 콤마(,) · 탭 · 2칸 이상 공백 모두 인식<br>
-      <code style="font-size:11px;">INS-A40-001, 10</code><br>
-      <code style="font-size:11px;">NOZ-Z12-003  5</code>
-    </div>
-
-    <div class="app-field" style="margin-bottom:16px;">
-      <label class="app-field__label" for="bulkSkuInput" data-i18n-auto>제품코드·수량 입력 (최대 100줄)</label>
-      <textarea class="app-field__input" id="bulkSkuInput"
-                rows="8" style="font-family:monospace;font-size:13px;resize:vertical;"
-                placeholder="INS-A40-001, 10&#10;NOZ-Z12-003  5&#10;LNR-HT200	3"></textarea>
-    </div>
-
-    <div id="bulkSheetResult" style="display:none;margin-bottom:16px;"></div>
-  </div>
-
-  <div class="app-sheet__footer">
-    <button class="app-btn app-btn--outline" style="flex:1;" type="button"
-            data-sheet-close data-i18n-auto>취소</button>
-    <button class="app-btn app-btn--primary" style="flex:2;" type="button"
-            id="bulkSubmitBtn" data-i18n-auto>장바구니에 추가</button>
-  </div>
-</div><!-- /bulkOrderSheet -->
-
-<script>
-(function () {
-  'use strict';
-  var submitBtn = document.getElementById('bulkSubmitBtn');
-  var resultEl  = document.getElementById('bulkSheetResult');
-  var csrf      = '<%= csrfToken %>';
-
-  function showResult(html, type) {
-    resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div class="app-alert app-alert--' + (type||'info') + '">' + html + '</div>';
-  }
-
-  if (submitBtn) {
-    submitBtn.addEventListener('click', function () {
-      var raw = (document.getElementById('bulkSkuInput').value || '').trim();
-      if (!raw) {
-        showResult('제품코드와 수량을 입력해주세요.', 'warn');
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = '처리 중…';
-      resultEl.style.display = 'none';
-
-      fetch('/shop/cart/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
-        body: JSON.stringify({ skuList: raw }),
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res.ok) {
-            var notFound = (res.results || []).filter(function (r) { return r.status === 'not_found'; });
-            var addedCnt = res.addedCount || 0;
-
-            /* ── 결과 HTML 조립 ── */
-            var html = '';
-            if (addedCnt > 0) {
-              html += '✅ <strong>' + addedCnt + '개 상품</strong>이 장바구니에 담겼습니다.';
-            }
-            if (notFound.length > 0) {
-              html += '<div style="margin-top:8px;padding:8px 10px;' +
-                'background:#fff7ed;border-radius:6px;border:1px solid #fed7aa;">' +
-                '<div style="font-size:12px;font-weight:600;color:#c2410c;margin-bottom:4px;">' +
-                '⚠️ 찾을 수 없는 코드 (' + notFound.length + '개) — 제품코드를 확인해주세요:</div>' +
-                '<div style="font-size:12px;font-family:monospace;color:#92400e;line-height:1.8;">';
-              notFound.forEach(function (r) { html += r.code + '<br>'; });
-              html += '</div></div>';
-            }
-
-            showResult(html, addedCnt > 0 ? 'success' : 'warn');
-            submitBtn.textContent = addedCnt > 0 ? ('추가 완료 (' + addedCnt + ')') : '장바구니에 추가';
-
-            if (addedCnt > 0) {
-              /* 장바구니 카운트 뱃지 갱신 */
-              if (typeof window.__updateCartCount === 'function') window.__updateCartCount();
-              /* not_found가 있으면 3.5초, 없으면 2초 후 닫기 */
-              var delay = notFound.length > 0 ? 3500 : 2000;
-              setTimeout(function () {
-                window.AppSheet && window.AppSheet.close('bulkOrderSheet', 'appSheetOverlay');
-                resultEl.style.display = 'none';
-                submitBtn.disabled = false;
-                submitBtn.textContent = '장바구니에 추가';
-                location.reload();
-              }, delay);
-            } else {
-              /* 전체 실패 — 자동 닫힘 없이 사용자가 코드 수정하도록 유지 */
-              submitBtn.disabled = false;
-            }
-          } else {
-            showResult('⚠️ ' + (res.message || '처리 중 오류가 발생했습니다.'), 'warn');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '장바구니에 추가';
-          }
-        })
-        .catch(function () {
-          showResult('⚠️ 네트워크 오류. 다시 시도해주세요.', 'warn');
-          submitBtn.disabled = false;
-          submitBtn.textContent = '장바구니에 추가';
-        });
-    });
-  }
-})();
-</script>
+  </form>
+</div>
 
 <%- include('../layouts/shop-bottom') %>

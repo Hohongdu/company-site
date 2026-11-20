@@ -46,6 +46,35 @@
           <div id="pw-match-msg" style="font-size:12px;margin-top:4px;display:none;"></div>
         </div>
 
+        <!-- 개인정보 보호법 제15조: 필수/선택 동의 구분 -->
+        <fieldset class="consent-box">
+          <legend class="consent-box__legend">약관 동의</legend>
+
+          <label class="consent-row consent-row--all">
+            <input type="checkbox" id="agree-all">
+            <span>전체 동의 <span class="consent-row__hint">(선택 항목 포함)</span></span>
+          </label>
+
+          <hr class="consent-divider">
+
+          <label class="consent-row">
+            <input type="checkbox" name="agreeTerms" value="1" data-required="1">
+            <span><span class="consent-required">[필수]</span> <a href="/terms" target="_blank" rel="noopener">이용약관</a>에 동의합니다.</span>
+          </label>
+
+          <label class="consent-row">
+            <input type="checkbox" name="agreePrivacy" value="1" data-required="1">
+            <span><span class="consent-required">[필수]</span> <a href="/privacy" target="_blank" rel="noopener">개인정보 수집·이용</a>에 동의합니다.</span>
+          </label>
+
+          <label class="consent-row">
+            <input type="checkbox" name="agreeMarketing" value="1">
+            <span><span class="consent-optional">[선택]</span> 마케팅 정보 수신에 동의합니다. (이벤트, 신상품 안내)</span>
+          </label>
+
+          <p class="consent-note">선택 항목은 동의하지 않아도 회원가입이 가능합니다.</p>
+        </fieldset>
+
         <button type="submit" id="reg-submit" class="btn btn-primary" style="padding:12px;">회원가입 완료</button>
       </form>
 
@@ -63,6 +92,18 @@
 .pw-rule--ok   { color: #16a34a; }
 .pw-rule--fail { color: #dc2626; }
 .pw-rule--idle { color: #888; }
+
+.consent-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #fafbfc; }
+.consent-box__legend { font-size: 13px; font-weight: 600; color: #555; padding: 0 6px; margin-left: -6px; }
+.consent-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 14px; cursor: pointer; user-select: none; line-height: 1.5; }
+.consent-row input[type="checkbox"] { margin-top: 3px; flex: 0 0 auto; }
+.consent-row a { color: #2563eb; text-decoration: underline; }
+.consent-row--all { font-weight: 600; color: #111; }
+.consent-row--all .consent-row__hint { font-weight: 400; color: #888; font-size: 12px; margin-left: 4px; }
+.consent-divider { margin: 6px 0; border: 0; border-top: 1px solid #e5e7eb; }
+.consent-required { color: #dc2626; font-weight: 600; }
+.consent-optional { color: #2563eb; font-weight: 600; }
+.consent-note { font-size: 12px; color: #888; margin: 8px 0 0; }
 </style>
 <script>
 (function () {
@@ -102,6 +143,22 @@
 
   pw.addEventListener('input', checkPw);
   pw2.addEventListener('input', checkMatch);
+
+  /* 전체 동의 토글 — 필수/선택 모든 체크박스를 일괄 on/off
+     선택 항목 미체크가 가입을 막으면 안 되므로 서버는 필수 항목만 검증 */
+  var agreeAll = document.getElementById('agree-all');
+  var consentChecks = document.querySelectorAll('.consent-box input[type="checkbox"]:not(#agree-all)');
+  if (agreeAll) {
+    agreeAll.addEventListener('change', function () {
+      consentChecks.forEach(function (cb) { cb.checked = agreeAll.checked; });
+    });
+    consentChecks.forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var allChecked = Array.from(consentChecks).every(function (x) { return x.checked; });
+        agreeAll.checked = allChecked;
+      });
+    });
+  }
 })();
 </script>
 <%- include('../layouts/company-bottom') %>

@@ -1,251 +1,63 @@
-<%- include('../layouts/shop-top', { title: '상품 목록', active: 'products' }) %>
+<%- include('../layouts/shop-top', { title: '전체 상품', active: 'products' }) %>
 
-<!-- ─────────────────────────────────────────────
-   상품 목록 페이지
-   구조: 검색바 → 카테고리 칩 → 툴바(필터/정렬) → 2열 그리드
-   사이드바 완전 제거 — 필터는 바텀시트로
-   ───────────────────────────────────────────── -->
-
-<!-- 검색바 -->
-<div class="app-section">
-  <form class="app-searchbar" action="/shop/products" method="get" role="search">
-    <% if (currentCategory && currentCategory !== 'all') { %>
-      <!-- 카테고리 필터 유지 -->
-      <input type="hidden" name="category" value="<%= currentCategory %>">
-    <% } %>
-    <span class="app-searchbar__icon" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </span>
-    <input type="search" name="q" value="<%= query || '' %>"
-           placeholder="상품명 검색" autocomplete="off" aria-label="상품 검색">
-    <% if (query) { %>
-      <a href="/shop/products<%= currentCategory && currentCategory !== 'all' ? '?category=' + currentCategory : '' %>"
-         style="color:var(--c-muted-2);display:flex;align-items:center;" aria-label="검색 초기화">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </a>
-    <% } %>
-    <button class="app-searchbar__submit" type="submit" aria-label="검색">검색</button>
-  </form>
-</div>
-
-<!-- 카테고리 칩 — 가로 스크롤 -->
-<div class="app-section">
-  <div class="app-chips">
-    <a class="app-chip <%= (!currentCategory || currentCategory === 'all') ? 'is-active' : '' %>"
-       href="/shop/products?category=all<%= query ? '&q=' + encodeURIComponent(query) : '' %>">전체</a>
-    <% (categories || []).forEach(function(c) { %>
-      <a class="app-chip <%= currentCategory === c.slug ? 'is-active' : '' %>"
-         href="/shop/products?category=<%= c.slug %><%= query ? '&q=' + encodeURIComponent(query) : '' %>">
-        <%= c.name %>
-      </a>
-    <% }); %>
+<%
+const categoryName = categories.find((item) => item.slug === currentCategory)?.name;
+const filtered = currentCategory !== 'all';
+%>
+<section class="shop-page-heading">
+  <div class="shop-shell">
+    <p class="shop-breadcrumb"><a href="/shop">제품몰 홈</a><span aria-hidden="true">/</span> 전체 상품</p>
+    <h1 data-i18n-auto><%= categoryName || '전체 상품' %></h1>
+    <p data-i18n-auto>제품명·제품코드·규격으로 검색하거나 카테고리별로 살펴보세요.</p>
   </div>
-</div>
+</section>
 
-<!-- 툴바: 상품 수 + 필터 버튼 -->
-<div class="app-section">
-  <div class="app-toolbar">
-    <span class="app-toolbar__count">
-      상품 <strong><%= (products || []).length.toLocaleString() %></strong>개
-      <% if (currentCategory && currentCategory !== 'all') { %>
-        · <span style="color:var(--c-accent);font-weight:600;"><%= currentCategory %></span>
-      <% } %>
-      <% if (query) { %>
-        · "<%= query %>"
-      <% } %>
-    </span>
+<div class="shop-shell shop-section shop-catalog">
+  <aside class="shop-catalog__sidebar" aria-label="상품 필터">
+    <h2 data-i18n-auto>카테고리</h2>
+    <%- include('partials/catalog-categories') %>
+  </aside>
 
-    <!-- 필터 바텀시트 열기 버튼 -->
-    <button class="app-filter-btn <%= (currentCategory && currentCategory !== 'all') ? 'has-filter' : '' %>"
-            type="button"
-            data-sheet-open="filterSheet"
-            aria-expanded="false"
-            aria-controls="filterSheet">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" stroke-width="2"
-              stroke-linejoin="round"/>
-      </svg>
-      필터<% if (currentCategory && currentCategory !== 'all') { %> 적용<% } %>
-    </button>
-  </div>
-</div>
-
-<!-- ── 상품 그리드 ── -->
-<div class="app-section--pad" style="padding-top:4px;">
-
-  <% if (!products || products.length === 0) { %>
-    <!-- No-Hit Recovery: 빈 상태 + 인기 검색어 제안 -->
-    <div class="app-empty">
-      <div class="app-empty__icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+  <section class="shop-catalog__results" aria-labelledby="shop-results-title">
+    <details class="shop-catalog__mobile-filter" <%= filtered ? 'data-filtered' : '' %>>
+      <summary data-i18n-auto>카테고리</summary>
+      <%- include('partials/catalog-categories') %>
+    </details>
+    <div class="shop-results-bar">
+      <h2 id="shop-results-title" data-i18n-auto><%= query ? '검색 결과' : '상품 목록' %></h2>
+      <p><% if (query) { %><strong>“<%= query %>”</strong> · <% } %><%= products.length.toLocaleString('ko-KR') %>개 상품</p>
+    </div>
+    <% if (query || filtered) { %>
+      <div class="shop-active-filters">
+        <% if (filtered && categoryName) { %><span><%= categoryName %></span><% } %>
+        <a href="/shop/products">검색·필터 초기화</a>
       </div>
-      <p class="app-empty__title" data-i18n-auto>검색 결과가 없어요</p>
-      <% if (query) { %>
-        <p class="app-empty__desc">
-          "<strong><%= query %></strong>"에 해당하는 상품을 찾지 못했습니다
-        </p>
-      <% } else { %>
-        <p class="app-empty__desc" data-i18n-auto>다른 키워드나 카테고리를 시도해보세요</p>
-      <% } %>
+    <% } %>
 
-      <!-- 인기 검색어 제안 -->
-      <% if (noHitSuggestions && noHitSuggestions.length > 0) { %>
-        <div style="margin:20px 0 8px;">
-          <p style="font-size:12px;color:var(--c-muted);margin-bottom:10px;" data-i18n-auto>
-            💡 다른 고객이 많이 찾은 검색어
-          </p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-            <% noHitSuggestions.forEach(function(kw) { %>
-              <a class="app-chip"
-                 href="/shop/products?q=<%= encodeURIComponent(kw.keyword) %>">
-                <%= kw.keyword %>
-              </a>
-            <% }); %>
-          </div>
+    <% if (products.length) { %>
+      <div class="shop-product-grid">
+        <% for (const product of products) { %>
+          <%- include('partials/catalog-product', { product, quickAdd: false }) %>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="shop-empty">
+        <h3 data-i18n-auto><%= query || filtered ? '조건에 맞는 상품이 없습니다' : '현재 등록된 상품이 없습니다' %></h3>
+        <p data-i18n-auto><%= query || filtered ? '검색어 또는 카테고리를 바꾸어 확인해 보세요.' : '필요한 부품의 소재와 규격을 알려주시면 확인해 드립니다.' %></p>
+        <% if (query && noHitSuggestions.length) { %>
+          <ul class="shop-suggestions" aria-label="인기 검색어">
+            <% for (const item of noHitSuggestions) { %>
+              <li><a href="/shop/products?q=<%= encodeURIComponent(item.keyword) %>"><%= item.keyword %></a></li>
+            <% } %>
+          </ul>
+        <% } %>
+        <div class="shop-actions">
+          <% if (query || filtered) { %><a class="app-btn app-btn--outline" href="/shop/products">전체 상품 보기</a><% } %>
+          <a class="app-btn app-btn--primary" href="/shop/inquiries" data-i18n-auto>제품 문의하기</a>
         </div>
-      <% } %>
-
-      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
-        <a href="/shop/products" class="app-btn app-btn--outline app-btn--sm" data-i18n-auto>
-          전체 상품 보기
-        </a>
-        <a href="/shop/inquiries" class="app-btn app-btn--primary app-btn--sm" data-i18n-auto>
-          제품 문의하기
-        </a>
       </div>
-    </div>
-
-  <% } else { %>
-    <div class="app-product-grid">
-      <% (products || []).forEach(function(p) { %>
-        <div class="app-product-card">
-
-          <!-- 썸네일 -->
-          <div class="app-product-card__thumb">
-            <a href="/shop/products/<%= p.id %>" aria-label="<%= p.name %> 상세 보기">
-              <% if (p.image_thumb || p.image) { %>
-                <img src="<%= p.image_thumb || p.image %>" alt="<%= p.name %>" loading="lazy">
-              <% } else { %>
-                <div class="app-product-card__placeholder">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="18" height="18" rx="2"
-                          stroke="currentColor" stroke-width="1.5"/>
-                  </svg>
-                </div>
-              <% } %>
-            </a>
-          </div>
-
-          <!-- 상품 정보 -->
-          <div class="app-product-card__body">
-            <% if (p.category_name) { %>
-              <span class="app-product-card__cat" data-i18n-auto><%= p.category_name %></span>
-            <% } %>
-            <div class="app-product-card__name">
-              <a href="/shop/products/<%= p.id %>"
-                 style="color:inherit;text-decoration:none;">
-                <span data-i18n-auto><%= p.name %></span>
-              </a>
-            </div>
-            <% if (p.spec) { %>
-              <div class="app-product-card__spec" data-i18n-auto><%= p.spec %></div>
-            <% } %>
-            <div class="app-product-card__price">
-              <%= Number(p.price || 0).toLocaleString() %><span>원</span>
-            </div>
-            <% if (p.stock_quantity != null && p.stock_quantity > 0) { %>
-              <span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:#d4edda;color:#155724;">⚡ 즉시출고</span>
-            <% } else if (p.stock_quantity === 0) { %>
-              <span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:#fff3cd;color:#856404;">🏭 제작 2주</span>
-            <% } %>
-          </div>
-
-          <!-- 액션 버튼 -->
-          <div class="app-product-card__action">
-            <%# products.ejs에서는 폼 서밋(기존 동작)을 유지 %>
-            <form action="/shop/cart/add" method="post" style="flex:1;display:flex;gap:6px;">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <input type="hidden" name="productId" value="<%= p.id %>">
-              <input type="hidden" name="quantity" value="1">
-              <button class="app-btn app-btn--primary app-btn--sm" type="submit"
-                      style="flex:1;" aria-label="<%= p.name %> 장바구니 담기">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2"
-                        stroke-linecap="round"/>
-                </svg>
-                담기
-              </button>
-              <a class="app-btn app-btn--outline app-btn--sm"
-                 href="/shop/products/<%= p.id %>" aria-label="상세보기">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </a>
-            </form>
-          </div>
-
-        </div><!-- /app-product-card -->
-      <% }); %>
-    </div><!-- /app-product-grid -->
-  <% } %>
-
-</div><!-- /app-section--pad -->
-
-
-<!-- ═══════════════════════════════════════════
-   필터 바텀시트
-   카테고리 선택 → 링크 이동 (JS fetch 불필요)
-═══════════════════════════════════════════ -->
-<div class="app-sheet-overlay" id="appSheetOverlay" aria-hidden="true"></div>
-
-<div class="app-sheet" id="filterSheet" role="dialog" aria-modal="true" aria-label="필터">
-  <div class="app-sheet__handle" aria-hidden="true"></div>
-
-  <div class="app-sheet__head">
-    <h2 class="app-sheet__title">필터</h2>
-    <button class="app-sheet__close" type="button" data-sheet-close aria-label="닫기">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
-
-  <div class="app-sheet__body">
-    <!-- 카테고리 필터 -->
-    <p class="app-sheet__sec-label">카테고리</p>
-    <div class="app-chips" style="flex-wrap:wrap;overflow:visible;">
-      <a class="app-chip <%= (!currentCategory || currentCategory === 'all') ? 'is-active' : '' %>"
-         href="/shop/products<%= query ? '?q=' + encodeURIComponent(query) : '' %>">전체</a>
-      <% (categories || []).forEach(function(c) { %>
-        <a class="app-chip <%= currentCategory === c.slug ? 'is-active' : '' %>"
-           href="/shop/products?category=<%= c.slug %><%= query ? '&q=' + encodeURIComponent(query) : '' %>">
-          <%= c.name %>
-        </a>
-      <% }); %>
-    </div>
-  </div>
-
-  <!-- 적용/초기화 버튼 -->
-  <div class="app-sheet__footer">
-    <a class="app-btn app-btn--outline" style="flex:1;text-align:center;"
-       href="/shop/products<%= query ? '?q=' + encodeURIComponent(query) : '' %>">
-      초기화
-    </a>
-    <button class="app-btn app-btn--primary" style="flex:2;"
-            type="button" data-sheet-close>
-      닫기
-    </button>
-  </div>
-</div><!-- /filterSheet -->
+    <% } %>
+  </section>
+</div>
 
 <%- include('../layouts/shop-bottom') %>

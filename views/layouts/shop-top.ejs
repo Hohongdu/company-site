@@ -1,133 +1,61 @@
 <%
-/* ─────────────────────────────────────────────
-   shop-top.ejs — 앱형 공통 헤더 + HTML 시작
-   변수:
-     title    (string) 페이지 제목
-     active   (string) 현재 활성 탭 키
-     showBack (bool)   뒤로가기 버튼 표시 여부
-     backUrl  (string) 뒤로가기 URL (기본: 브라우저 히스토리)
-     query    (string) 검색어
-   ───────────────────────────────────────────── */
-const pageTitle   = (typeof title     !== 'undefined' && title)     ? title     : 'SHOP';
-const activeKey   = (typeof active    !== 'undefined' && active)    ? active    : '';
-const showBackBtn = (typeof showBack  !== 'undefined' && showBack)  ? true      : false;
-const backHref    = (typeof backUrl   !== 'undefined' && backUrl)   ? backUrl   : null;
-const q           = (typeof query     !== 'undefined' && query)     ? query     : '';
-
-/* 탭바 활성화 판단 */
-const isHome      = activeKey === 'home'         || currentPath === '/shop'  || currentPath === '/shop/';
-const isProducts  = activeKey === 'products'     || currentPath.indexOf('/shop/products') === 0;
-const isCart      = activeKey === 'cart'         || currentPath.indexOf('/shop/cart')     === 0;
-const isAccount   = activeKey === 'account'      || currentPath.indexOf('/shop/account')  === 0;
-const isWishlist  = activeKey === 'wishlist'     || currentPath.indexOf('/shop/wishlist') === 0;
-const isOrderLookup   = activeKey === 'order_lookup'   || currentPath.indexOf('/shop/orders/guest')    === 0;
-const isInquiryLookup = activeKey === 'inquiry_lookup' || currentPath.indexOf('/shop/inquiries/guest') === 0;
-const isInquiry   = activeKey === 'inquiry'      || (currentPath === '/shop/inquiries' || currentPath === '/shop/inquiries/');
-
-const safeCartCount = Number(cartCount || 0);
+const pageTitle = typeof title === 'string' ? title : '제품몰';
+const q = typeof query === 'string' ? query : '';
+const category = typeof currentCategory === 'string' ? currentCategory : 'all';
+const atCatalog = currentPath.startsWith('/shop/products');
+const count = Number(cartCount || 0);
+const brand = (typeof company !== 'undefined' && company?.name) || 'ENERMADE';
+const navLinks = [
+  { href: '/shop', label: '제품몰 홈', current: currentPath === '/shop' || currentPath === '/shop/' },
+  { href: '/shop/products', label: '전체 상품', current: atCatalog },
+  { href: '/shop/inquiries', label: '견적 문의', current: currentPath === '/shop/inquiries' },
+  { href: '/shop/orders/guest', label: '주문 조회', current: currentPath === '/shop/orders/guest' },
+];
 %>
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title><%= pageTitle %> | <%= (typeof company !== 'undefined' && company) ? company.name : 'ENERMADE' %> Shop</title>
-
-  <!-- Bootstrap (일부 컴포넌트와 폼 스타일 호환성을 위해 유지) -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= pageTitle %> | <%= brand %> 제품몰</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- 기존 디자인 토큰 및 공통 스타일 -->
-  <link rel="stylesheet" href="/css/main.css" />
-  <!-- 기존 shop.css (account.ejs 등 수정 대상 외 페이지 호환) -->
-  <link rel="stylesheet" href="/css/shop.css" />
-  <!-- 새 앱형 UI 시스템 (이 파일이 최우선 적용) -->
-  <link rel="stylesheet" href="/css/app-ui.css" />
-  <!-- favicon 없음으로 인한 404 콘솔 오류 방지 -->
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/shop.css">
+  <link rel="stylesheet" href="/css/app-ui.css">
+  <link rel="stylesheet" href="/css/shop-catalog.css">
   <link rel="icon" href="data:,">
 </head>
-<body class="app-wrap">
+<body class="app-wrap shop-store">
+<a class="shop-skip" href="#app-main">본문으로 건너뛰기</a>
+<header class="shop-header">
+  <div class="shop-shell shop-header__main">
+    <a class="shop-brand" href="/shop">
+      <span class="shop-brand__name"><%= brand %></span>
+      <span class="shop-brand__label" data-i18n-auto data-i18n-header>제품몰</span>
+    </a>
 
-<!-- ── 앱 상단 헤더 ── -->
-<header class="app-header" role="banner">
+    <form class="shop-header__search" action="/shop/products" method="get" role="search" aria-label="제품 검색">
+      <% if (atCatalog && category !== 'all') { %><input type="hidden" name="category" value="<%= category %>"><% } %>
+      <input type="search" name="q" value="<%= q %>" aria-label="제품명, 제품코드 또는 규격" placeholder="제품명, 제품코드 또는 규격" enterkeyhint="search"
+             data-i18n-placeholder data-i18n-placeholder-ko="제품명, 제품코드 또는 규격">
+      <button type="submit" data-i18n-auto data-i18n-header>검색</button>
+    </form>
 
-  <%# 뒤로가기 버튼 OR 브랜드 로고 %>
-  <% if (showBackBtn) { %>
-    <!-- 내부 페이지: 뒤로가기 -->
-    <% if (backHref) { %>
-      <a class="app-header__back" href="<%= backHref %>" aria-label="이전 페이지로">
-    <% } else { %>
-      <a class="app-header__back" href="javascript:history.back()" aria-label="이전 페이지로">
-    <% } %>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+    <div class="shop-header__tools">
+      <a href="<%= user ? '/shop/account' : '/auth/login' %>" data-i18n-auto data-i18n-header><%= user ? '내 계정' : '로그인' %></a>
+      <a class="app-header__btn shop-cart-link" href="/shop/cart" <% if (currentPath === '/shop/cart') { %>aria-current="page"<% } %>>
+        <span data-i18n-auto data-i18n-header>장바구니</span><span class="app-header-badge shop-cart-badge" aria-live="polite"><%= count || '' %></span>
       </a>
-      <!-- 타이틀 -->
-      <span class="app-header__title"><%= pageTitle %></span>
-
-  <% } else { %>
-    <!-- 홈/목록 페이지: 브랜드 로고 -->
-    <a class="app-header__brand" href="/shop" aria-label="<%= (typeof company !== 'undefined' && company) ? company.name : 'ENERMADE' %> 쇼핑몰 홈">
-      <span class="app-header__brand-name"><%= (typeof company !== 'undefined' && company) ? company.name : 'ENERMADE' %></span>
-      <span class="app-header__brand-tag">SHOP</span>
-    </a>
-  <% } %>
-
-  <!-- 헤더 우측 도구 버튼들 -->
-  <div class="app-header__tools">
-
-    <%# 회사 홈페이지 이동 버튼 %>
-    <a class="app-header__btn app-header__btn--site" href="/" aria-label="회사 홈페이지로 이동" title="ENERMADE 회사 홈">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"
-              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M9 21V12h6v9" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-      </svg>
-    </a>
-
-    <%# 검색 버튼 — 상품 목록 페이지로 이동 %>
-    <a class="app-header__btn" href="/shop/products" aria-label="상품 검색">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </a>
-
-    <%# 장바구니 버튼 %>
-    <a class="app-header__btn <%= isCart ? 'is-active' : '' %>"
-       href="/shop/cart" aria-label="장바구니<%= safeCartCount > 0 ? ' (' + safeCartCount + '개)' : '' %>">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
-              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-        <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <% if (safeCartCount > 0) { %>
-        <span class="app-header-badge shop-cart-badge"><%= safeCartCount %></span>
-      <% } %>
-    </a>
-
-    <%# 프로필/로그인 버튼 %>
-    <% if (user) { %>
-      <a class="app-header__btn <%= isAccount ? 'is-active' : '' %>"
-         href="/shop/account" aria-label="내 계정">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M20 21a8 8 0 00-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </a>
-    <% } else { %>
-      <a class="app-header__btn" href="/auth/login" aria-label="로그인">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <polyline points="10,17 15,12 10,7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </a>
-    <% } %>
-
+      <div class="shop-language" id="shopLanguageSlot"></div>
+    </div>
   </div>
-</header><!-- /app-header -->
-
-<!-- ── 메인 콘텐츠 시작 (shop-bottom.ejs에서 닫힘) ── -->
-<main class="app-main" id="app-main">
+  <div class="shop-header__nav">
+    <nav class="shop-shell shop-header__links" aria-label="제품몰 메뉴">
+      <% for (const link of navLinks) { %>
+        <a href="<%= link.href %>" <% if (link.current) { %>aria-current="page"<% } %> data-i18n-auto data-i18n-header><%= link.label %></a>
+      <% } %>
+      <a class="shop-header__links__company" href="/" data-i18n-auto data-i18n-header>회사 사이트</a>
+    </nav>
+  </div>
+</header>
+<main class="app-main" id="app-main" tabindex="-1">
