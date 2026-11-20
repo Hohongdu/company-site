@@ -9,14 +9,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  review:
-    name: Review with Claude
+  configuration:
+    name: Check Claude configuration
     if: ${{ !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      pull-requests: write
+    timeout-minutes: 2
+    permissions: {}
+    outputs:
+      configured: ${{ steps.credentials.outputs.configured }}
     steps:
       - name: Check Claude credentials
         id: credentials
@@ -30,14 +30,22 @@ jobs:
             echo "::notice::Claude review skipped. Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN in GitHub Actions secrets."
           fi
 
+  review:
+    name: Review with Claude
+    needs: configuration
+    if: needs.configuration.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
       - name: Check out repository
-        if: steps.credentials.outputs.configured == 'true'
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Review pull request
-        if: steps.credentials.outputs.configured == 'true'
         uses: anthropics/claude-code-action@c84e279f859e2591391e95bd309286eb111c345f # v1
         with:
           github_token: ${{ github.token }}
